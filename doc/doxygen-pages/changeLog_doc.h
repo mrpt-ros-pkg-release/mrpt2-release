@@ -12,6 +12,43 @@
 /** \page changelog Change Log
  *
 
+# Version 2.0.4: Released Jun 20, 2020
+- Changes in applications:
+  - rawlog-edit, rawlog-grabber: Now allows loading external "plugin" modules (.so) with user-defined types.
+  - RawLogViewer, navlog-viewer, ptg-configurator allows more than one "plugin" modules to be loaded.
+- Changes in libraries:
+  - \ref mrpt_math_grp
+    - New semantically-rich named static methods:
+      - mrpt::math::TLine3D::FromPointAndDirector()
+      - mrpt::math::TLine3D::FromTwoPoints()
+      - mrpt::math::TLine2D::FromCoefficientsABC()
+      - mrpt::math::TLine2D::FromTwoPoints()
+  - \ref mrpt_obs_grp
+    - CObservation3DRangeScan::points3D_convertToExternalStorage() stores point clouds with points as rows (vs as columns as it did before). 
+  - \ref mrpt_opengl_grp
+    - Emit warnings to std::cerr whenever opengl memory is leaked due to OpenGL buffers being created and destroyed in different threads.
+    - Overlaid text messages are now also (de)serialized in mrpt::opengl::COpenGLViewport, and hence in 3D scenes in general.
+    - All opengl shader base classes now expose their internal buffers as const ref. See children of mrpt::opengl::CRenderizable
+  - \ref mrpt_system_grp
+    - New class: mrpt::system::CControlledRateTimer (+ associated example)
+    - New functions: mrpt::system::loadPluginModule(), mrpt::system::loadPluginModules()
+    - mrpt::system::CRateTimer: enforce use of high-resolution monothonic clock.
+    - mrpt::system::CTicTac: enforce use of nanosecond monothonic clock.
+    - Misplaced functions moved to their proper namespace: mrpt::io::vectorToTextFile()
+    - New functions: mrpt::system::thread_name() to get and set thread names for debuggers.
+    - mrpt::system::setConsoleColor(): Do not change color if stdout/stderr are not real terminals.
+  - \ref mrpt_nav_grp
+    - mrpt::nav::PlannerSimple2D does not throw an exception if goal/source is out of map bounds.
+- BUG FIXES:
+    - mrpt::obs::CObservation3DRangeScan would try to (incorrectly) "autofix" camera resolution if loading an externally-stored observation.
+    - mrpt::maps::CPointsMap::determineMatching2D(): avoid potential multi-thread problems with a vector::swap()
+    - Fix build against opencv <3.4.4
+    - Fix potential pointer to local returned in CParticleFilterData
+    - Fix: mrpt::maps::CPointsMapXYZI::setFromPCLPointCloudXYZI() was using a non-existing method.
+    - Fix: mrpt::nav::PlannerSimple2D did not honored maximum path length correctly.
+    - Fix race condition in CGenericCamera_AVI unit test.
+
+------
 # Version 2.0.3: Released May 13, 2020
 - Changes in applications:
   - navlog-viewer: Can now navigate with keyboard arrows too.
