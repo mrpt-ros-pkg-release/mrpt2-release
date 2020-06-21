@@ -108,6 +108,7 @@ mkdir -p $MRPT_DEB_DIR
 # Orig tarball:
 echo "Copying orig tarball: mrpt_${MRPT_VERSION_STR}.orig.tar.gz"
 cp $HOME/mrpt_release/mrpt*.tar.gz $MRPT_DEB_DIR/mrpt_${MRPT_VERSION_STR}.orig.tar.gz
+cp $HOME/mrpt_release/mrpt*.tar.gz.asc $MRPT_DEB_DIR/mrpt_${MRPT_VERSION_STR}.orig.tar.gz.asc
 cd ${MRPT_DEB_DIR}
 tar -xf mrpt_${MRPT_VERSION_STR}.orig.tar.gz
 
@@ -132,10 +133,6 @@ cp -r ${MRPT_EXTERN_DEBIAN_DIR}/* debian
 if [ $IS_FOR_UBUNTU == "1" ];
 then
 	cp ${MRPT_EXTERN_UBUNTU_PPA_DIR}/control.in debian/
-
-  # Ubuntu: force use of gcc-7:
-  sed -i '9i\export CXX=/usr/bin/g++-7\' debian/rules
-  sed -i '9i\export CC=/usr/bin/gcc-7\' debian/rules
 fi
 
 # Export signing pub key:
@@ -149,7 +146,7 @@ sed -i "s/@MRPT_VER_MM@/${MRPT_VER_MM}/g" debian/control
 # Replace the text "REPLACE_HERE_EXTRA_CMAKE_PARAMS" in the "debian/rules" file
 # with: ${${VALUE_EXTRA_CMAKE_PARAMS}}
 RULES_FILE=debian/rules
-sed -i -e "s/REPLACE_HERE_EXTRA_CMAKE_PARAMS/${VALUE_EXTRA_CMAKE_PARAMS}/g" $RULES_FILE
+sed -i -e "s|REPLACE_HERE_EXTRA_CMAKE_PARAMS|${VALUE_EXTRA_CMAKE_PARAMS}|g" $RULES_FILE
 echo "Using these extra parameters for CMake: '${VALUE_EXTRA_CMAKE_PARAMS}'"
 
 # To avoid timeout compiling in ARM build farms, skip building heavy docs:

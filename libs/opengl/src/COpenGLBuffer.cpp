@@ -7,11 +7,16 @@
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
-#include "opengl-precomp.h"  // Precompiled header
-
+#include "opengl-precomp.h"	 // Precompiled header
+//
+#include <mrpt/core/Clock.h>
 #include <mrpt/core/exceptions.h>
 #include <mrpt/opengl/COpenGLBuffer.h>
 #include <mrpt/opengl/opengl_api.h>
+#include <mrpt/system/backtrace.h>
+
+#include <cstdlib>
+#include <iostream>
 
 using namespace mrpt::opengl;
 
@@ -42,11 +47,33 @@ void COpenGLBuffer::RAII_Impl::create()
 void COpenGLBuffer::RAII_Impl::destroy()
 {
 	if (!created) return;
+
+	static const bool showErrs =
+		(::getenv("MRPT_REVEAL_OPENGL_BUFFER_LEAKS") != nullptr);
+
 #if MRPT_HAS_OPENGL_GLUT
 	if (created_from == std::this_thread::get_id())
 	{
 		release();
 		glDeleteBuffers(1, &buffer_id);
+	}
+	else if (showErrs)
+	{
+		// at least, emit a warning:
+		static double tLast = 0;
+		auto tNow = mrpt::Clock::toDouble(mrpt::Clock::now());
+		if (tNow - tLast > 2.0)
+		{
+			tLast = tNow;
+
+			mrpt::system::TCallStackBackTrace bt;
+			mrpt::system::getCallStackBackTrace(bt);
+
+			std::cerr << "[COpenGLBuffer::RAII_Impl] *Warning* Leaking memory "
+						 "since Buffer was acquired from a different thread "
+						 "and cannot free it from this thread, call stack:"
+					  << bt.asString() << std::endl;
+		}
 	}
 #endif
 	buffer_id = 0;
