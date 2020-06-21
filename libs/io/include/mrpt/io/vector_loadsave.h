@@ -13,10 +13,11 @@
 
 namespace mrpt::io
 {
-/** @defgroup vector_loadsave Load and save vectors to files (in #include
- * <mrpt/io/vector_loadsave.h>)
+// clang-format off
+/** @defgroup vector_loadsave Load and save vectors to files (in #include <mrpt/io/vector_loadsave.h>)
  * \ingroup mrpt_io_grp
  * @{ */
+// clang-format on
 
 /** Saves a vector directly as a binary dump to a file:
  * \return Returns false on any error, true on everything OK.
@@ -45,6 +46,48 @@ bool loadTextFile(std::vector<std::string>& o, const std::string& fileName);
  * return-by-value of big objects.
  */
 std::string file_get_contents(const std::string& fileName);
+
+/** A useful function for debugging, which saves a numeric std::vector as a
+ * plain-text file compatible with MATLAB.
+ * \return Returns false on any error, true on everything OK.
+ */
+bool vectorToTextFile(
+	const std::vector<float>& vec, const std::string& fileName,
+	bool append = false, bool byRows = false);
+//! \overload
+bool vectorToTextFile(
+	const std::vector<double>& vec, const std::string& fileName,
+	bool append = false, bool byRows = false);
+//! \overload
+bool vectorToTextFile(
+	const std::vector<int>& vec, const std::string& fileName,
+	bool append = false, bool byRows = false);
+//! \overload
+bool vectorToTextFile(
+	const std::vector<size_t>& vec, const std::string& fileName,
+	bool append = false, bool byRows = false);
+//! \overload
+template <class EIGEN_MATRIX>
+bool vectorToTextFile(const EIGEN_MATRIX& vec, const std::string& fileName)
+{
+	try
+	{
+		vec.saveToTextFile(fileName);
+		return true;
+	}
+	catch (...)
+	{
+		return false;
+	}
+}
+
+/** Load a numeric std::vector<double> from a text file (compat. with MATLAB)
+ * \return Returns false on any error, true on everything OK.
+ * \sa loadBinaryFile
+ */
+bool vectorNumericFromTextFile(
+	std::vector<double>& vec, const std::string& fileName,
+	const bool byRows = false);
 
 /** @} */
 
