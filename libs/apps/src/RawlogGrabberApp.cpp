@@ -8,7 +8,8 @@
    +------------------------------------------------------------------------+ */
 
 #include "apps-precomp.h"  // Precompiled headers
-
+//
+#include <mrpt/3rdparty/tclap/CmdLine.h>
 #include <mrpt/apps/RawlogGrabberApp.h>
 #include <mrpt/config/CConfigFile.h>
 #include <mrpt/core/lock_helper.h>
@@ -27,6 +28,8 @@
 #include <mrpt/system/CRateTimer.h>
 #include <mrpt/system/filesystem.h>
 #include <mrpt/system/os.h>
+#include <mrpt/system/thread_name.h>
+
 #include <thread>
 
 using namespace mrpt::apps;
@@ -52,15 +55,27 @@ void RawlogGrabberApp::initialize(int argc, const char** argv)
 		mrpt::system::MRPT_getVersion().c_str(),
 		mrpt::system::MRPT_getCompilationDate().c_str());
 
-	// Process arguments:
-	if (argc < 2)
-		THROW_EXCEPTION_FMT("Usage: %s <config_file.ini>\n\n", argv[0]);
+	// Declare the supported options.
+	TCLAP::CmdLine cmd(
+		"rawlog-grabber", ' ', mrpt::system::MRPT_getVersion().c_str());
 
-	{
-		std::string INI_FILENAME(argv[1]);
-		ASSERT_FILE_EXISTS_(INI_FILENAME);
-		params.setContent(mrpt::io::file_get_contents(INI_FILENAME));
-	}
+	TCLAP::UnlabeledValueArg<std::string> argConfigFile(
+		"config", "Config file", true, "", "<configFile.ini>", cmd);
+	TCLAP::ValueArg<std::string> argPlugins(
+		"p", "plugins",
+		"Load one or more plug-in modules (.so/.dll) with additional sensor "
+		"drivers (comma-separated list)",
+		false, "", "myModule.so", cmd);
+
+	// Process arguments:
+	if (!cmd.parse(argc, argv))
+		THROW_EXCEPTION("CLI arguments parsing tells we should exit.");
+
+	ASSERT_FILE_EXISTS_(argConfigFile.getValue());
+	params.setContent(mrpt::io::file_get_contents(argConfigFile.getValue()));
+
+	if (argPlugins.isSet())
+		mrpt::system::loadPluginModules(argPlugins.getValue());
 
 	MRPT_END
 }
@@ -122,7 +137,9 @@ void RawlogGrabberApp::runImpl()
 	rawlog_postfix += string(".rawlog");
 	rawlog_postfix = fileNameStripInvalidChars(rawlog_postfix);
 
+	results_mtx.lock();
 	rawlog_filename = rawlog_prefix + rawlog_postfix;
+	results_mtx.unlock();
 
 	MRPT_LOG_INFO_STREAM("Output rawlog filename: " << rawlog_filename);
 	MRPT_LOG_INFO_STREAM("External image storage: " << m_rawlog_ext_imgs_dir);
@@ -141,7 +158,10 @@ void RawlogGrabberApp::runImpl()
 			params.read_bool(section, "rawlog-grabber-ignore", false, false))
 			continue;  // This is not a sensor:
 
-		lstThreads.emplace_back(&RawlogGrabberApp::SensorThread, this, section);
+		std::thread& newThread = lstThreads.emplace_back(
+			&RawlogGrabberApp::SensorThread, this, section);
+
+		mrpt::system::thread_name(section, newThread);
 
 		std::this_thread::sleep_for(
 			std::chrono::milliseconds(time_between_launches));
@@ -184,7 +204,10 @@ void RawlogGrabberApp::runImpl()
 	while (!os::kbhit() && !allThreadsMustExit)
 	{
 		// Check "run for X seconds" flag:
-		if (run_for_seconds > 0 && run_timer.Tac() > run_for_seconds) break;
+		{
+			auto lk = mrpt::lockHelper(params_mtx);
+			if (run_for_seconds > 0 && run_timer.Tac() > run_for_seconds) break;
+		}
 
 		// See if we have observations and process them:
 		lambdaProcessPending();
@@ -220,13 +243,21 @@ void RawlogGrabberApp::run()
 {
 	try
 	{
+		m_isRunningMtx.lock();
 		m_isRunning = true;
+		m_isRunningMtx.unlock();
+
 		runImpl();
+
+		m_isRunningMtx.lock();
 		m_isRunning = false;
+		m_isRunningMtx.unlock();
 	}
 	catch (const std::exception& e)
 	{
+		m_isRunningMtx.lock();
 		m_isRunning = false;
+		m_isRunningMtx.unlock();
 		throw;
 	}
 }
@@ -453,7 +484,6 @@ void RawlogGrabberApp::process_observations_for_sf(
 			act->velocityLocal = odom->velocityLocal;
 
 			(*m_out_arch_ptr) << m_curSF;
-			rawlog_saved_objects++;
 
 			MRPT_LOG_INFO_STREAM(
 				"Saved SF with " << m_curSF.size() << " objects.");
@@ -464,7 +494,10 @@ void RawlogGrabberApp::process_observations_for_sf(
 			act.reset();
 
 			(*m_out_arch_ptr) << acts;
-			rawlog_saved_objects++;
+			{
+				auto lk = mrpt::lockHelper(results_mtx);
+				rawlog_saved_objects += 2;  // m_curSF + acts;
+			}
 		}
 		else if (IS_DERIVED(*it->second, CObservation))
 		{
@@ -482,7 +515,10 @@ void RawlogGrabberApp::process_observations_for_sf(
 
 				// Save and start a new one:
 				(*m_out_arch_ptr) << m_curSF;
-				rawlog_saved_objects++;
+				{
+					auto lk = mrpt::lockHelper(results_mtx);
+					rawlog_saved_objects++;
+				}
 
 				MRPT_LOG_INFO_STREAM(
 					"Saved SF with " << m_curSF.size() << " objects.");
@@ -509,7 +545,10 @@ void RawlogGrabberApp::process_observations_for_nonsf(
 	{
 		auto& obj_ptr = ob.second;
 		(*m_out_arch_ptr) << *obj_ptr;
-		rawlog_saved_objects++;
+		{
+			auto lk = mrpt::lockHelper(results_mtx);
+			rawlog_saved_objects++;
+		}
 
 		dump_verbose_info(obj_ptr);
 	}

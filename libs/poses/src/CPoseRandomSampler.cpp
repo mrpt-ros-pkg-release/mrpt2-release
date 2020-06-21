@@ -7,8 +7,8 @@
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
-#include "poses-precomp.h"  // Precompiled headers
-
+#include "poses-precomp.h"	// Precompiled headers
+//
 #include <mrpt/poses/CPose3DPDFGaussian.h>
 #include <mrpt/poses/CPose3DPDFParticles.h>
 #include <mrpt/poses/CPose3DPDFSOG.h>
@@ -17,7 +17,9 @@
 #include <mrpt/poses/CPosePDFSOG.h>
 #include <mrpt/poses/CPoseRandomSampler.h>
 #include <mrpt/random.h>
+
 #include <Eigen/Dense>
+
 
 using namespace mrpt;
 using namespace mrpt::math;
@@ -124,7 +126,7 @@ void CPoseRandomSampler::setPosePDF(const CPosePDF& pdf)
 	}
 	else if (IS_CLASS(pdf, CPosePDFParticles))
 	{
-		return;  // Nothing to prepare.
+		return;	 // Nothing to prepare.
 	}
 	else
 	{
@@ -166,7 +168,7 @@ void CPoseRandomSampler::setPosePDF(const CPose3DPDF& pdf)
 	}
 	else if (IS_CLASS(pdf, CPose3DPDFParticles))
 	{
-		return;  // Nothing to prepare.
+		return;	 // Nothing to prepare.
 	}
 	else
 	{
@@ -428,5 +430,5 @@ void CPoseRandomSampler::getOriginalPDFCov3D(
 {
 	mrpt::math::CMatrixDouble66 M;
 	this->getOriginalPDFCov3D(M);
-	cov6x6 = mrpt::math::CMatrixDouble(M);
+	cov6x6 = M;
 }
