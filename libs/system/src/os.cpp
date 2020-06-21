@@ -8,11 +8,13 @@
    +------------------------------------------------------------------------+ */
 
 #include "system-precomp.h"  // Precompiled headers
+//
 
 #include <mrpt/core/exceptions.h>
 #include <mrpt/core/format.h>
 #include <mrpt/system/filesystem.h>
 #include <mrpt/system/os.h>
+#include <mrpt/system/string_utils.h>
 
 #ifndef HAVE_TIMEGM
 #endif  // HAVE_TIMEGM
@@ -24,10 +26,11 @@
 #include <cstring>
 #include <ctime>
 #include <iostream>
+#include <mutex>
 
 #ifdef _WIN32
 #include <windows.h>
-
+//
 #include <conio.h>
 #include <direct.h>
 #include <io.h>
@@ -41,13 +44,20 @@
 #include <termios.h>
 #include <unistd.h>
 #include <utime.h>
+
 #include <cerrno>
 #include <ctime>
 //	#include <signal.h>
 #endif
 
+#if defined(MRPT_OS_LINUX) || defined(MRPT_OS_APPLE)
+#include <dlfcn.h>
+#endif
+
 #include <sys/stat.h>
 #include <sys/types.h>
+
+#include <map>
 
 #ifdef MRPT_OS_LINUX
 #define _access access
@@ -145,6 +155,7 @@ time_t mrpt::system::os::timegm(struct tm* tm)
 					mrpt::system::MRPT_getCompilationDate
 ---------------------------------------------------------------*/
 #include <mrpt/version.h>
+
 #include <cerrno>
 #include <climits>
 #include <cstdlib>
@@ -472,13 +483,6 @@ uint64_t mrpt::system::os::_strtoull(const char* nptr, char** endptr, int base)
 #endif
 }
 
-/** Changes the text color in the console for the text written from now on.
- * The parameter "color" can be:
- *  - 0 : Normal text color
- *  - 1 : Blue text color
- *  - 2 : Green text color
- *  - 4 : Red text color
- */
 void mrpt::system::setConsoleColor(TConsoleColor color, bool changeStdErr)
 {
 	static const int TS_NORMAL = 0;
@@ -508,16 +512,22 @@ void mrpt::system::setConsoleColor(TConsoleColor color, bool changeStdErr)
 								  FOREGROUND_INTENSITY)));
 #else
 	// *nix:
+	FILE* f = changeStdErr ? stdout : stderr;
+	const int fd = changeStdErr ? STDOUT_FILENO : STDERR_FILENO;
+
+	// No color support if it is not a real console:
+	if (!isatty(fd)) return;
+
 	static TConsoleColor last_color = mrpt::system::CONCOL_NORMAL;
 	if (color == last_color) return;
 	last_color = color;
 
 	static const uint8_t ansi_tab[] = {30, 34, 32, 36, 31, 35, 33, 37};
 	int code = 0;
-	fflush(changeStdErr ? stdout : stderr);
+	fflush(f);
 	if (color != TS_NORMAL)
 		code = ansi_tab[color & (TS_BLUE | TS_GREEN | TS_RED)];
-	fprintf(changeStdErr ? stdout : stderr, "\x1b[%dm", code);
+	fprintf(f, "\x1b[%dm", code);
 #endif
 }
 
@@ -811,3 +821,164 @@ int mrpt::system::executeCommand(
 	// Return exit code
 	return exit_code;
 }  // end of executeCommand
+
+struct LoadedModuleInfo
+{
+#if defined(MRPT_OS_LINUX) || defined(MRPT_OS_APPLE)
+	void* handle = nullptr;
+#endif
+#ifdef MRPT_OS_WINDOWS
+	HMODULE handle;
+#endif
+};
+
+struct ModulesRegistry
+{
+	static ModulesRegistry& Instance()
+	{
+		static ModulesRegistry obj;
+		return obj;
+	}
+
+	ModulesRegistry() = default;
+	~ModulesRegistry()
+	{
+		try
+		{
+			// Make a copy, since each unload() call would invalidate iterators
+			// to the changing list "loadedModules":
+			loadedModules_mtx.lock();
+			auto lstCopy = loadedModules;
+			loadedModules_mtx.unlock();
+
+			for (auto& ent : lstCopy) unloadPluginModule(ent.first);
+		}
+		catch (const std::exception& e)
+		{
+			std::cerr << "[~ModulesRegistry] Exception: "
+					  << mrpt::exception_to_str(e);
+		}
+	}
+
+	using full_path_t = std::string;
+	std::map<full_path_t, LoadedModuleInfo> loadedModules;
+	std::mutex loadedModules_mtx;
+};
+
+bool mrpt::system::loadPluginModule(
+	const std::string& moduleFileName,
+	mrpt::optional_ref<std::string> outErrorMsgs)
+{
+	auto& md = ModulesRegistry::Instance();
+	std::lock_guard<std::mutex> lck(md.loadedModules_mtx);
+
+	std::string sError;
+
+#if defined(MRPT_OS_LINUX) || defined(MRPT_OS_APPLE)
+	void* handle = dlopen(moduleFileName.c_str(), RTLD_LAZY);
+#elif defined(MRPT_OS_WINDOWS)
+	HMODULE handle = LoadLibraryA(moduleFileName.c_str());
+#else
+	void* handle = nullptr;
+	sError = "Unsupported OS";
+#endif
+
+	if (handle)
+	{
+		// register for future dlclose()
+		md.loadedModules[moduleFileName].handle = handle;
+		return true;
+	}
+
+#if defined(MRPT_OS_LINUX) || defined(MRPT_OS_APPLE)
+	sError = mrpt::format(
+		"Error loading '%s':\n%s\n", moduleFileName.c_str(), dlerror());
+#elif defined(MRPT_OS_WINDOWS)
+	sError = mrpt::format(
+		"Error loading '%s':\nWindows error: %u\n", moduleFileName.c_str(),
+		GetLastError());
+#endif
+
+	if (outErrorMsgs)
+		outErrorMsgs.value().get() += sError;
+	else
+		std::cerr << sError;
+	return false;
+}
+
+bool mrpt::system::unloadPluginModule(
+	const std::string& moduleFileName,
+	mrpt::optional_ref<std::string> outErrorMsgs)
+{
+	auto& md = ModulesRegistry::Instance();
+	std::lock_guard<std::mutex> lck(md.loadedModules_mtx);
+
+	std::string sError;
+
+	const auto it = md.loadedModules.find(moduleFileName);
+	if (it == md.loadedModules.end())
+	{
+		sError = "Module filename '" + moduleFileName +
+				 "' not found in previous calls to loadPluginModule().";
+	}
+	else
+	{
+#if defined(MRPT_OS_LINUX) || defined(MRPT_OS_APPLE)
+		if (0 != dlclose(it->second.handle))
+		{
+			sError = mrpt::format(
+				"Error unloading '%s':\n%s\n", moduleFileName.c_str(),
+				dlerror());
+		}
+#elif defined(MRPT_OS_WINDOWS)
+		if (!FreeLibrary(it->second.handle))
+		{
+			sError = mrpt::format(
+				"Error unloading '%s':\nWindows error: %u\n",
+				moduleFileName.c_str(), GetLastError());
+		}
+#endif
+	}
+
+	if (!sError.empty())
+	{
+		if (outErrorMsgs)
+			outErrorMsgs.value().get() += sError;
+		else
+			std::cerr << sError;
+		return false;
+	}
+	else
+	{
+		md.loadedModules.erase(it);
+		return true;
+	}
+}
+
+bool mrpt::system::loadPluginModules(
+	const std::string& moduleFileNames,
+	mrpt::optional_ref<std::string> outErrorMsgs)
+{
+	std::vector<std::string> lstModules;
+	mrpt::system::tokenize(moduleFileNames, ",", lstModules);
+
+	bool allOk = true;
+	for (const auto& sLib : lstModules)
+		if (!loadPluginModule(sLib, outErrorMsgs)) allOk = false;
+
+	return allOk;
+}
+
+bool mrpt::system::unloadPluginModules(
+	const std::string& moduleFileNames,
+	mrpt::optional_ref<std::string> outErrorMsgs)
+{
+	std::vector<std::string> lstModules;
+	mrpt::system::tokenize(moduleFileNames, ",", lstModules);
+
+	bool allOk = true;
+	for (const auto& sLib : lstModules)
+		if (!unloadPluginModule(sLib, outErrorMsgs)) allOk = false;
+
+	return allOk;
+}
