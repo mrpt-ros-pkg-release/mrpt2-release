@@ -1,4 +1,4 @@
-From 252838b364a2b4917c4f20bedfb5c4990e811ee0 Mon Sep 17 00:00:00 2001
+From 9e307927f26027e703c5c3d02f14b16ff770274d Mon Sep 17 00:00:00 2001
 From: Jose Luis Blanco-Claraco <joseluisblancoc@gmail.com>
 Date: Mon, 5 Oct 2020 07:39:33 +0200
 Subject: [PATCH] fix debian/rules multiarch paths
