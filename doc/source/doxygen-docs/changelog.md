@@ -1,5 +1,51 @@
 \page changelog Change Log
 
+# Version 2.1.3: Released Oct 21st, 2020
+- Changes in libraries:
+  - \ref mrpt_config_grp
+    - Refactor parsing functionality as new exposed method mrpt::config::config_parser()
+  - \ref mrpt_gui_grp
+    - mrpt::gui::CDisplayWindowGUI subwindows control UI automatically keep tracks of focused subwindows.
+- Build system:
+  - Support for ccache, enabled by default if found.
+  - Fix build with system libsimpleini-dev.
+- BUG FIXES:
+  - Fix mrpt::opengl::CFBORender requiring images with origin at the bottom-left corner.
+
+------
+# Version 2.1.2: Released Oct 20th, 2020
+- BUG FIXES:
+  - Fix wrong coloring of graph edges in mrpt::opengl::graph_visualize() (Closes [#1111](https://github.com/MRPT/mrpt/issues/1111)).
+  - Fix Debian Lintian error: exporting copyrighted sources as part of simpleini submodule.
+
+------
+# Version 2.1.1: Released Oct 19th, 2020
+- Changes in applications:
+  - SceneViewer3D:
+    - Command-line argument is now interpreted as ASSIMP model to open if it is not a 3Dscene.
+    - New menu: "File -> Import -> Show image" useful to test image-mode viewport rendering.
+- Changes in libraries:
+  - \ref mrpt_core_grp
+    - mrpt::Clock now has a simulated time mode. See mrpt::Clock::setSimulatedTime()
+  - \ref mrpt_gui_grp
+    - Useless nanogui_win() converted into mrpt::gui::CDisplayWindowGUI::nanogui_screen()
+    - nanogui: New methods: nanogui::Screen::mouseState(), nanogui::Screen::mouseModifiers()
+    - Managed subwindows with minimize/restore capability. See mrpt::gui::CDisplayWindowGUI::createManagedSubWindow()
+  - \ref mrpt_img_grp
+    - New method mrpt::img::CImage::channelCount()
+  - \ref mrpt_opengl_grp
+    - New load flags in mrpt::opengl::CAssimpModel::loadScene()
+- BUG FIXES:
+  - navlog-viewer: Crash when clicking "play" (Closes [#1103](https://github.com/MRPT/mrpt/issues/1103)).
+  - RawLogViewer: Fix wrong indices in tree view. Fix freezed progress bar loading a second rawlog.
+  - RawLogViewer: Fix wrong rendering if font is missing in the system (Ubuntu 20.04)
+  - rawlog-edit: Fix --cut operation leaving empty sensory frames/action collections.
+  - mrpt::opengl::CCylinder::setHasBases() was ignored since last OpenGL3 refactor.
+  - Fix building against OpenCV 4.4
+  - Correct texture loading in mrpt::opengl::CAssimpModel.
+  - Fix wrong aspect ratio of image-mode opengl viewports (Closes [#1101](https://github.com/MRPT/mrpt/issues/1101)).
+
+------
 # Version 2.1.0: Released Aug 31st, 2020
 - Incompatible API changes:
   - mrpt::system::TParameters has been removed, superseded by mrpt::containers::yaml.
