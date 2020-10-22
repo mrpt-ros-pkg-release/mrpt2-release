@@ -147,7 +147,9 @@ set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "CMakeTargets")
 set(DEFAULT_BUILD_ROBOPEAK_LIDAR ON) # Default: Yes
 if ((${CMAKE_MRPT_KERNEL} MATCHES "GNU") # It doesnt build in hurd
     OR APPLE # and macos
+    OR ("$ENV{DEB_TARGET_ARCH_CPU}" STREQUAL "ppc64")   # fails: termios2
     OR ("$ENV{DEB_TARGET_ARCH_CPU}" STREQUAL "ppc64el") # fails: termios2
+    OR ("$ENV{DEB_TARGET_ARCH_CPU}" STREQUAL "powerpc") # fails: termios2
     )
 	set(DEFAULT_BUILD_ROBOPEAK_LIDAR OFF)
 endif()
@@ -231,6 +233,22 @@ set_target_properties(uninstall PROPERTIES FOLDER "CMakeTargets")
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads) # Defines imported target Threads::Threads
 
+# ccache:
+if(NOT MSVC AND NOT XCODE_VERSION)
+    option(MRPT_BUILD_WITH_CCACHE "Use ccache compiler cache" ON)
+    find_program(CCACHE_FOUND ccache)
+	mark_as_advanced(CCACHE_FOUND)
+    if(CCACHE_FOUND)
+        if(MRPT_BUILD_WITH_CCACHE)
+            set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
+            set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
+        else()
+            set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "")
+            set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK "")
+        endif()
+    endif()
+endif()
+
 # ----------------------------------------------------------------------------
 # Other sub-scripts:
 # ----------------------------------------------------------------------------
@@ -268,6 +286,7 @@ include(cmakemodules/script_phidget.cmake REQUIRED)     # Support for phidget In
 include(cmakemodules/script_qt.cmake REQUIRED)          # Check for wxWidgets + GL
 include(cmakemodules/script_ros1.cmake REQUIRED)        # Check for ROS1
 include(cmakemodules/script_SIMD.cmake REQUIRED)        # SSE2/SSE3/... optimization options
+include(cmakemodules/script_simpleini.cmake REQUIRED)   # SimpleINI lib
 include(cmakemodules/script_suitesparse.cmake REQUIRED) # SuiteSparse libs
 include(cmakemodules/script_swissrange.cmake REQUIRED)  # Support for SWISSRANGE 3D camera:
 include(cmakemodules/script_tinyxml2.cmake REQUIRED)    # tinyxml2 lib
