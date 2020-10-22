@@ -1,0 +1,25 @@
+From 2f40741117bc6dcf8a26c59df7191ea6621f43a5 Mon Sep 17 00:00:00 2001
+From: Jose Luis Blanco-Claraco <joseluisblancoc@gmail.com>
+Date: Mon, 5 Oct 2020 07:42:51 +0200
+Subject: [PATCH] fix debian/rules multiarch paths
+
+---
+ debian/rules | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/debian/rules b/debian/rules
+index a229984..f5969a8 100755
+--- a/debian/rules
++++ b/debian/rules
+@@ -51,7 +51,7 @@ override_dh_shlibdeps:
+ 	# in the install tree that was dropped by catkin, and source it.  It will
+ 	# set things like CMAKE_PREFIX_PATH, PKG_CONFIG_PATH, and PYTHONPATH.
+ 	if [ -f "/opt/ros/noetic/setup.sh" ]; then . "/opt/ros/noetic/setup.sh"; fi && \
+-	dh_shlibdeps -l$(CURDIR)/debian/ros-noetic-mrpt2//opt/ros/noetic/lib/ -l$(CURDIR)/debian/ros-noetic-mrpt2//opt/ros/noetic/lib/${DEB_HOST_MULTIARCH}
++	dh_shlibdeps -l$(CURDIR)/debian/ros-noetic-mrpt2//opt/ros/noetic/lib/:$(CURDIR)/debian/ros-noetic-mrpt2//opt/ros/noetic/lib/${DEB_HOST_MULTIARCH}
+ 
+ 
+ override_dh_auto_install:
+-- 
+2.17.1
+
