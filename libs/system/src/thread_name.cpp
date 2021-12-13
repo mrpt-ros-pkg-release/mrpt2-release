@@ -2,20 +2,21 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
-#include "system-precomp.h"  // Precompiled headers
+#include "system-precomp.h"	 // Precompiled headers
 //
 #include <mrpt/config.h>
 #include <mrpt/core/exceptions.h>
 #include <mrpt/system/thread_name.h>
 
 #if defined(MRPT_OS_WINDOWS)
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-
+//
 #include <cwchar>
 #include <vector>
 
@@ -51,7 +52,7 @@ static std::string GetThreadName()
 
 void mrpt::system::thread_name(const std::string& name)
 {
-#if defined(MRPT_OS_WINDOWS)
+#if defined(MRPT_OS_WINDOWS) && !defined(__MINGW32_MAJOR_VERSION)
 	wchar_t wName[50];
 	std::mbstowcs(wName, name.c_str(), sizeof(wName) / sizeof(wName[0]));
 	SetThreadDescription(GetCurrentThread(), wName);
@@ -62,7 +63,7 @@ void mrpt::system::thread_name(const std::string& name)
 
 void mrpt::system::thread_name(const std::string& name, std::thread& theThread)
 {
-#if defined(MRPT_OS_WINDOWS)
+#if defined(MRPT_OS_WINDOWS) && !defined(__MINGW32_MAJOR_VERSION)
 	wchar_t wName[50];
 	std::mbstowcs(wName, name.c_str(), sizeof(wName) / sizeof(wName[0]));
 	SetThreadDescription(theThread.native_handle(), wName);
@@ -86,7 +87,7 @@ static std::string w2cstr(wchar_t** wstrnc)
 
 std::string mrpt::system::thread_name()
 {
-#if defined(MRPT_OS_WINDOWS)
+#if defined(MRPT_OS_WINDOWS) && !defined(__MINGW32_MAJOR_VERSION)
 	std::string ret = "NoName";
 	PWSTR str;
 	HRESULT hr = GetThreadDescription(GetCurrentThread(), &str);
@@ -105,7 +106,7 @@ std::string mrpt::system::thread_name()
 
 std::string mrpt::system::thread_name(std::thread& theThread)
 {
-#if defined(MRPT_OS_WINDOWS)
+#if defined(MRPT_OS_WINDOWS) && !defined(__MINGW32_MAJOR_VERSION)
 	std::string ret = "NoName";
 	PWSTR str;
 	HRESULT hr = GetThreadDescription(theThread.native_handle(), &str);

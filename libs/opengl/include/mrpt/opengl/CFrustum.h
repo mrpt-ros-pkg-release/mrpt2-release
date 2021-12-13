@@ -2,12 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 #pragma once
 
+#include <mrpt/img/TCamera.h>
 #include <mrpt/math/TPoint3D.h>
 #include <mrpt/opengl/CRenderizableShaderTriangles.h>
 #include <mrpt/opengl/CRenderizableShaderWireFrame.h>
@@ -37,16 +38,10 @@ namespace mrpt::opengl
  * (below 180deg in total).
  *  If you try to set FOVs to larger values they'll truncated to 89.9deg.
  *
+ *
+ * ![mrpt::opengl::CFrustum](preview_CFrustum.png)
+ *
  * \sa opengl::COpenGLScene,opengl::CRenderizable
- *
- *  <div align="center">
- *  <table border="0" cellspan="4" cellspacing="4" style="border-width: 1px;
- * border-style: solid;">
- *   <tr> <td> mrpt::opengl::CFrustum </td> <td> \image html
- * preview_CFrustum.png </td> </tr>
- *  </table>
- *  </div>
- *
  * \ingroup mrpt_opengl_grp
  */
 class CFrustum : public CRenderizableShaderTriangles,
@@ -116,9 +111,7 @@ class CFrustum : public CRenderizableShaderTriangles,
 	float getVertFOVUp() const { return mrpt::RAD2DEG(m_fov_vert_up); }
 
 	bool traceRay(const mrpt::poses::CPose3D& o, double& dist) const override;
-	void getBoundingBox(
-		mrpt::math::TPoint3D& bb_min,
-		mrpt::math::TPoint3D& bb_max) const override;
+	mrpt::math::TBoundingBox getBoundingBox() const override;
 
 	/** Basic empty constructor. Set all parameters to default. */
 	CFrustum();
@@ -127,6 +120,18 @@ class CFrustum : public CRenderizableShaderTriangles,
 		float near_distance, float far_distance, float horz_FOV_degrees,
 		float vert_FOV_degrees, float lineWidth, bool draw_lines,
 		bool draw_planes);
+
+	/** Constructor from camera intrinsic parameters: creates a frustrum with
+	 * the correct vertical and horizontal FOV angles for the given camera
+	 * model, in wireframe.
+	 *
+	 * \param intrinsics Camera intrinsics. Distortion is ignored here.
+	 * \param focalDistScale Scale for the far plane, in meters/pixels.
+	 *
+	 * \note (New in MRPT 2.1.8)
+	 */
+	CFrustum(
+		const mrpt::img::TCamera& intrinsics, double focalDistScale = 5e-3);
 
 	/** Destructor  */
 	~CFrustum() override = default;

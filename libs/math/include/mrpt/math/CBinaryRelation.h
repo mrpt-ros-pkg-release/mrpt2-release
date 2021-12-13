@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -490,7 +490,8 @@ class CBinaryRelation
 			}  //	else exist.push_back(dist);
 		}
 		std::sort(added.begin(), added.end());
-		for (size_t j = 1; j < added.size(); ++j) added[j] -= j;
+		for (size_t j = 1; j < added.size(); ++j)
+			added[j] -= j;
 		std::multiset<size_t> poss(added.begin(), added.end());
 		relation.insertRowsAndCols(poss, poss);
 		return added.size();

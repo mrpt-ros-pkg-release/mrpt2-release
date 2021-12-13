@@ -2,19 +2,18 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #pragma once
-#include <QMainWindow>
-#include <QSettings>
-
-#include <memory>
-
 #include <mrpt/maps/CSimpleMap.h>
 #include <mrpt/opengl/CSetOfObjects.h>
+
+#include <QMainWindow>
+#include <QSettings>
+#include <memory>
 
 /** This class implements GUI of main window and connection with other classes
  */

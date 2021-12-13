@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -15,6 +15,7 @@
 #include <mrpt/math/TPoint3D.h>
 #include <mrpt/math/TPolygon3D.h>
 #include <mrpt/serialization/serialization_frwds.h>
+
 #include <array>
 
 namespace mrpt::opengl
@@ -37,8 +38,8 @@ struct TTriangle
 	struct Vertex
 	{
 		mrpt::math::TPointXYZfRGBAu8 xyzrgba;
-		mrpt::math::TVector3Df normal;  //!< Must not be normalized
-		mrpt::math::TVector2Df uv;  //!< texture coordinates (0,0)-(1,1)
+		mrpt::math::TVector3Df normal;	//!< Must not be normalized
+		mrpt::math::TVector2Df uv;	//!< texture coordinates (0,0)-(1,1)
 
 		void setColor(const mrpt::img::TColor& c)
 		{

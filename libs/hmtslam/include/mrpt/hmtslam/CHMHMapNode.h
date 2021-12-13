@@ -2,19 +2,19 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 #pragma once
 
 #include <mrpt/core/safe_pointers.h>
-#include <mrpt/hmtslam/HMT_SLAM_common.h>
-#include <mrpt/obs/CSensoryFrame.h>
-
 #include <mrpt/graphs/TNodeID.h>
 #include <mrpt/hmtslam/CMHPropertiesValuesList.h>
+#include <mrpt/hmtslam/HMT_SLAM_common.h>
+#include <mrpt/obs/CSensoryFrame.h>
 #include <mrpt/serialization/CSerializable.h>
+
 #include <map>
 
 namespace mrpt::hmtslam
@@ -133,7 +133,7 @@ class CHMHMapNode : public mrpt::serialization::CSerializable
 	bool isNeighbor(
 		const TNodeID& otherArea, const THypothesisID& hyp_id) const;
 
-};  // End of class def.
+};	// End of class def.
 
 /** A map between node IDs and nodes (used in HMT-SLAM).
  * \sa CHMTSLAM

@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -274,7 +274,7 @@ class CImageGrabber_FlyCapture2
 
 	/** Returns if current configuration is stereo or not */
 	inline bool isStereo() { return m_options.stereo_mode; }
-};  // End of class
+};	// End of class
 static_assert(
 	!std::is_copy_constructible_v<CImageGrabber_FlyCapture2> &&
 		!std::is_copy_assignable_v<CImageGrabber_FlyCapture2>,

@@ -2,27 +2,25 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "maps-precomp.h"  // Precomp header
-
-#include <octomap/ColorOcTree.h>
-#include <octomap/octomap.h>
-
+//
+#include <mrpt/io/CFileOutputStream.h>
 #include <mrpt/maps/CColouredOctoMap.h>
 #include <mrpt/maps/CPointsMap.h>
 #include <mrpt/obs/CObservation2DRangeScan.h>
 #include <mrpt/obs/CObservation3DRangeScan.h>
-
 #include <mrpt/opengl/COctoMapVoxels.h>
 #include <mrpt/opengl/COpenGLScene.h>
 #include <mrpt/opengl/CPointCloudColoured.h>
-
-#include <mrpt/io/CFileOutputStream.h>
 #include <mrpt/system/filesystem.h>
+#include <octomap/ColorOcTree.h>
+#include <octomap/octomap.h>
+
 #include <sstream>
 
 #include "COctoMapBase_impl.h"
@@ -95,7 +93,7 @@ uint8_t CColouredOctoMap::serializeGetVersion() const { return 3; }
 void CColouredOctoMap::serializeTo(mrpt::serialization::CArchive& out) const
 {
 	this->likelihoodOptions.writeToStream(out);
-	this->renderingOptions.writeToStream(out);  // Added in v1
+	this->renderingOptions.writeToStream(out);	// Added in v1
 	out << genericMapParams;  // v2
 
 	// v2->v3: remove CMemoryChunk
@@ -139,8 +137,7 @@ void CColouredOctoMap::serializeFrom(
 			}
 		}
 		break;
-		default:
-			MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
 	};
 }
 
@@ -148,13 +145,14 @@ void CColouredOctoMap::serializeFrom(
 				insertObservation
  ---------------------------------------------------------------*/
 bool CColouredOctoMap::internal_insertObservation(
-	const mrpt::obs::CObservation& obs, const CPose3D* robotPose)
+	const mrpt::obs::CObservation& obs,
+	const std::optional<const mrpt::poses::CPose3D>& robotPose)
 {
 	octomap::point3d sensorPt;
 	octomap::Pointcloud scan;
 
 	CPose3D robotPose3D;
-	if (robotPose)  // Default values are (0,0,0)
+	if (robotPose)	// Default values are (0,0,0)
 		robotPose3D = (*robotPose);
 
 	if (IS_CLASS(obs, CObservation2DRangeScan))
@@ -213,7 +211,7 @@ bool CColouredOctoMap::internal_insertObservation(
 		mrpt::opengl::CPointCloudColoured::Ptr pts =
 			mrpt::opengl::CPointCloudColoured::Create();
 		T3DPointsProjectionParams proj_params;
-		proj_params.robotPoseInTheWorld = robotPose;
+		proj_params.robotPoseInTheWorld = robotPose3D;
 		const_cast<CObservation3DRangeScan&>(o).unprojectInto(
 			*pts, proj_params);
 
@@ -306,14 +304,11 @@ void CColouredOctoMap::updateVoxelColour(
 		case INTEGRATE:
 			m_impl->m_octomap.integrateNodeColor(x, y, z, r, g, b);
 			break;
-		case SET:
-			m_impl->m_octomap.setNodeColor(x, y, z, r, g, b);
-			break;
+		case SET: m_impl->m_octomap.setNodeColor(x, y, z, r, g, b); break;
 		case AVERAGE:
 			m_impl->m_octomap.averageNodeColor(x, y, z, r, g, b);
 			break;
-		default:
-			THROW_EXCEPTION("Invalid value found for 'm_colour_method'");
+		default: THROW_EXCEPTION("Invalid value found for 'm_colour_method'");
 	}
 }
 
@@ -327,7 +322,7 @@ void CColouredOctoMap::getAsOctoMapVoxels(
 	// OcTreeVolume voxel; // current voxel, possibly transformed
 	octomap::ColorOcTree::tree_iterator it_end = m_impl->m_octomap.end_tree();
 
-	const unsigned char max_depth = 0;  // all
+	const unsigned char max_depth = 0;	// all
 	const TColorf general_color = gl_obj.getColor();
 	const TColor general_color_u(
 		general_color.R * 255, general_color.G * 255, general_color.B * 255,
@@ -336,7 +331,7 @@ void CColouredOctoMap::getAsOctoMapVoxels(
 	gl_obj.clear();
 	gl_obj.reserveGridCubes(this->calcNumNodes());
 
-	gl_obj.resizeVoxelSets(2);  // 2 sets of voxels: occupied & free
+	gl_obj.resizeVoxelSets(2);	// 2 sets of voxels: occupied & free
 
 	gl_obj.showVoxels(
 		VOXEL_SET_OCCUPIED, renderingOptions.visibleOccupiedVoxels);
@@ -370,8 +365,8 @@ void CColouredOctoMap::getAsOctoMapVoxels(
 				vx_color = TColor(node_color.r, node_color.g, node_color.b);
 
 				const size_t vx_set = (m_impl->m_octomap.isNodeOccupied(*it))
-										  ? VOXEL_SET_OCCUPIED
-										  : VOXEL_SET_FREESPACE;
+					? VOXEL_SET_OCCUPIED
+					: VOXEL_SET_FREESPACE;
 
 				gl_obj.push_back_Voxel(
 					vx_set,

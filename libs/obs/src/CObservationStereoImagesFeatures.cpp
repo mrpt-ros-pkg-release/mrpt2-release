@@ -2,15 +2,16 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "obs-precomp.h"  // Precompiled headers
-
+//
 #include <mrpt/obs/CObservationStereoImagesFeatures.h>
 #include <mrpt/serialization/CArchive.h>
+
 #include <fstream>
 
 using namespace mrpt::obs;
@@ -92,8 +93,7 @@ void CObservationStereoImagesFeatures::serializeFrom(
 			in >> sensorLabel >> timestamp;
 		}
 		break;
-		default:
-			MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
 	};
 }
 
@@ -104,8 +104,8 @@ void CObservationStereoImagesFeatures::getDescriptionAsText(
 
 	o << "Homogeneous matrix for the sensor's 3D pose, relative to robot "
 		 "base:\n";
-	o << cameraPoseOnRobot.getHomogeneousMatrixVal<CMatrixDouble44>()
-	  << cameraPoseOnRobot << endl;
+	o << cameraPoseOnRobot.getHomogeneousMatrixVal<CMatrixDouble44>() << "\n"
+	  << cameraPoseOnRobot << "\n";
 
 	o << "Homogeneous matrix for the RIGHT camera's 3D pose, relative to LEFT "
 		 "camera reference system:\n";
@@ -117,7 +117,8 @@ void CObservationStereoImagesFeatures::getDescriptionAsText(
 	o << aux.inMatlabFormat() << endl << aux << endl;
 
 	o << "Distortion parameters vector for the LEFT camera:" << endl << "[ ";
-	for (unsigned int i = 0; i < 5; ++i) o << cameraLeft.dist[i] << " ";
+	for (unsigned int i = 0; i < 5; ++i)
+		o << cameraLeft.dist[i] << " ";
 	o << "]" << endl;
 
 	o << "Intrinsic parameters matrix for the RIGHT camera:" << endl;
@@ -125,7 +126,8 @@ void CObservationStereoImagesFeatures::getDescriptionAsText(
 	o << aux.inMatlabFormat() << endl << aux << endl;
 
 	o << "Distortion parameters vector for the RIGHT camera:" << endl << "[ ";
-	for (unsigned int i = 0; i < 5; ++i) o << cameraRight.dist[i] << " ";
+	for (unsigned int i = 0; i < 5; ++i)
+		o << cameraRight.dist[i] << " ";
 	o << "]" << endl;
 
 	o << endl

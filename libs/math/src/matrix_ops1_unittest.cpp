@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -15,9 +15,10 @@
 #include <mrpt/io/CMemoryStream.h>
 #include <mrpt/math/CMatrixD.h>
 #include <mrpt/math/CMatrixFixed.h>
-#include <mrpt/math/matrix_serialization.h>  // serialization of matrices
+#include <mrpt/math/matrix_serialization.h>	 // serialization of matrices
 #include <mrpt/random.h>
 #include <mrpt/serialization/CArchive.h>
+
 #include <Eigen/Dense>
 
 using namespace mrpt;
@@ -85,7 +86,7 @@ TEST(Matrices, SerializeCMatrixD)
 		// exception:
 		membuf.Seek(0);
 		CMatrixFixed<double, 2, 2> fB;
-		arch >> fB;  // Wrong size!
+		arch >> fB;	 // Wrong size!
 
 		GTEST_FAIL() << "Exception not launched when it was expected!";
 	}

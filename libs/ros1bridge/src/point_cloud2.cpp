@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -29,7 +29,8 @@ static bool check_field(
 	{
 		if (input_field.datatype != sensor_msgs::PointField::FLOAT32 &&
 			input_field.datatype != sensor_msgs::PointField::FLOAT64 &&
-			input_field.datatype != sensor_msgs::PointField::UINT16)
+			input_field.datatype != sensor_msgs::PointField::UINT16 &&
+			input_field.datatype != sensor_msgs::PointField::UINT8)
 		{
 			*output = nullptr;
 			coherence_error = true;
@@ -65,6 +66,8 @@ static void get_uint16_from_field(
 	{
 		if (field->datatype == sensor_msgs::PointField::UINT16)
 			output = *(reinterpret_cast<const uint16_t*>(&data[field->offset]));
+		else if (field->datatype == sensor_msgs::PointField::UINT8)
+			output = *(reinterpret_cast<const uint8_t*>(&data[field->offset]));
 	}
 	else
 		output = 0;
@@ -73,7 +76,8 @@ static void get_uint16_from_field(
 std::set<std::string> extractFields(const sensor_msgs::PointCloud2& msg)
 {
 	std::set<std::string> lst;
-	for (const auto& f : msg.fields) lst.insert(f.name);
+	for (const auto& f : msg.fields)
+		lst.insert(f.name);
 	return lst;
 }
 

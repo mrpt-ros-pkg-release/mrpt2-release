@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -11,6 +11,7 @@
 #include <mrpt/core/bits_math.h>  // DEG2RAD
 #include <mrpt/math/CAtan2LookUpTable.h>
 #include <mrpt/random.h>
+
 #include <cmath>
 
 template <class LUT_CLASS>
@@ -56,10 +57,10 @@ TEST(CAtan2LookUpTable, MultiResTest)
 	mrpt::math::CAtan2LookUpTableMultiRes atan2lut;
 
 	std::map<double, double> res2extension;
-	res2extension[0.001] = 0.8;  // 0.1 cm resolution
-	res2extension[0.01] = 2.0;  // 1.0 cm resolution
-	res2extension[0.02] = 5.0;  // 2.0 cm resolution
-	res2extension[0.05] = 11.0;  // 5.0 cm resolution
+	res2extension[0.001] = 0.8;	 // 0.1 cm resolution
+	res2extension[0.01] = 2.0;	// 1.0 cm resolution
+	res2extension[0.02] = 5.0;	// 2.0 cm resolution
+	res2extension[0.05] = 11.0;	 // 5.0 cm resolution
 	atan2lut.resize(res2extension);
 
 	atan2_lut_test(atan2lut, SIZE, 0.5 /*max error*/, 0.4 /* skip zone */);

@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -114,7 +114,7 @@ struct TCaptureOptions_DUO3D
 	TYMLReadResult m_rectify_map_from_yml(
 		const std::string& _file_name = std::string());
 
-};  // end-TCaptureOptions_DUO3D
+};	// end-TCaptureOptions_DUO3D
 
 // clang-format off
 /** This "software driver" implements the communication protocol for interfacing
@@ -246,7 +246,7 @@ class CDUO3DCamera
 	void m_set_led(float value);
 
    public:
-};  // End of class
+};	// End of class
 
 static_assert(!std::is_copy_constructible_v<CDUO3DCamera>, "Copy Check");
 static_assert(!std::is_copy_assignable_v<CDUO3DCamera>, "Assign Check");

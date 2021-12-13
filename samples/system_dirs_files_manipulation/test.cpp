@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -46,7 +46,7 @@ void setupDirContents()
 	{
 		cout << "Creating directory... " << endl;
 		createDirectory(dir_name);
-		f.open(dir_name + "/" + file_name);
+		f.open(dir_name + "/" + file_name, OpenMode::TRUNCATE);
 		if (f.fileOpenCorrectly())
 		{  // checking for errors...
 			cout << "file was opened correctly" << endl;
@@ -109,7 +109,7 @@ void renameDirContents()
 	{
 		ss_tmp.str("");
 		ss_tmp << dir_name << "/" << fname << i;
-		f.open(ss_tmp.str());
+		f.open(ss_tmp.str(), OpenMode::TRUNCATE);
 		f.printf("dummy text in file...");
 		f.close();
 	}
@@ -127,12 +127,9 @@ void renameDirContents()
 	// finally rename the directory itself
 	cout << "Renaming directory " << dir_name << " to: " << dir_name
 		 << string_to_add << endl;
-	string* err_msg = nullptr;  // flag for catching the error msg if any..
+	string* err_msg = nullptr;	// flag for catching the error msg if any..
 	success = renameFile(dir_name, dir_name + string_to_add, err_msg);
-	if (success)
-	{
-		cout << "Directory renaming was successful!" << endl;
-	}
+	if (success) { cout << "Directory renaming was successful!" << endl; }
 	else
 	{
 		THROW_EXCEPTION("Error while trying to rename directory: " + dir_name);

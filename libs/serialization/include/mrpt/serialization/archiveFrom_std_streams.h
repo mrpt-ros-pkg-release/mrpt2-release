@@ -2,13 +2,14 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 #pragma once
 
 #include <mrpt/serialization/CArchive.h>
+
 #include <iosfwd>
 #include <istream>
 #include <ostream>
@@ -33,8 +34,7 @@ class CArchiveStreamBase<std::istream> : public CArchive
 	}
 	size_t read(void* d, size_t n) override
 	{
-		if (m_s.read(reinterpret_cast<char*>(d), n))
-			return n;
+		if (m_s.read(reinterpret_cast<char*>(d), n)) return n;
 		else
 			return 0;
 	}
@@ -52,8 +52,7 @@ class CArchiveStreamBase<std::ostream> : public CArchive
    protected:
 	size_t write(const void* d, size_t n) override
 	{
-		if (m_s.write(reinterpret_cast<const char*>(d), n))
-			return n;
+		if (m_s.write(reinterpret_cast<const char*>(d), n)) return n;
 		else
 			return 0;
 	}
@@ -77,15 +76,13 @@ class CArchiveStreamBase<std::iostream> : public CArchive
    protected:
 	size_t write(const void* d, size_t n) override
 	{
-		if (m_s.write(reinterpret_cast<const char*>(d), n))
-			return n;
+		if (m_s.write(reinterpret_cast<const char*>(d), n)) return n;
 		else
 			return 0;
 	}
 	size_t read(void* d, size_t n) override
 	{
-		if (m_s.read(reinterpret_cast<char*>(d), n))
-			return n;
+		if (m_s.read(reinterpret_cast<char*>(d), n)) return n;
 		else
 			return 0;
 	}

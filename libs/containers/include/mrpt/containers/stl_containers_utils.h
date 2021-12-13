@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -79,7 +79,8 @@ template <class T>
 std::string getSTLContainerAsString(const T& t)
 {
 	std::stringstream ss;
-	for (auto& e : t) ss << e << ", ";
+	for (auto& e : t)
+		ss << e << ", ";
 	return ss.str();
 }
 /**\brief Print the given vector t.

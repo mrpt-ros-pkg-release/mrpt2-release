@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "nav-precomp.h"  // Precomp header
-
+//
 #include <mrpt/config/CConfigFileMemory.h>
 #include <mrpt/nav/reactive/CReactiveNavigationSystem.h>
 #include <mrpt/system/filesystem.h>
@@ -45,9 +45,7 @@ void CReactiveNavigationSystem::changeRobotShape(const math::CPolygon& shape)
 {
 	m_PTGsMustBeReInitialized = true;
 	if (shape.verticesCount() < 3)
-	{
-		THROW_EXCEPTION("The robot shape has less than 3 vertices!!");
-	}
+	{ THROW_EXCEPTION("The robot shape has less than 3 vertices!!"); }
 	m_robotShape = shape;
 }
 void CReactiveNavigationSystem::changeRobotCircularShapeRadius(const double R)
@@ -94,7 +92,8 @@ void CReactiveNavigationSystem::loadConfigFile(
 	if (!xs.empty())
 	{
 		math::CPolygon shape;
-		for (size_t i = 0; i < xs.size(); i++) shape.AddVertex(xs[i], ys[i]);
+		for (size_t i = 0; i < xs.size(); i++)
+			shape.AddVertex(xs[i], ys[i]);
 		changeRobotShape(shape);
 	}
 
@@ -104,9 +103,7 @@ void CReactiveNavigationSystem::loadConfigFile(
 		c.read_double(sectCfg, "RobotModel_circular_shape_radius", .0, false);
 	ASSERT_(robot_shape_radius >= .0);
 	if (robot_shape_radius != .0)
-	{
-		changeRobotCircularShapeRadius(robot_shape_radius);
-	}
+	{ changeRobotCircularShapeRadius(robot_shape_radius); }
 
 	// Load PTGs from file:
 	// ---------------------------------------------
@@ -124,7 +121,7 @@ void CReactiveNavigationSystem::loadConfigFile(
 	}
 
 	CAbstractPTGBasedReactive::loadConfigFile(
-		c);  // call parent's overriden method:
+		c);	 // call parent's overriden method:
 
 	MRPT_END
 }
@@ -249,10 +246,7 @@ void CReactiveNavigationSystem::STEP3_WSpaceToTPSpace(
 			oz <= params_reactive_nav.max_obstacles_height)
 		{
 			ptg->updateTPObstacle(ox, oy, out_TPObstacles);
-			if (eval_clearance)
-			{
-				ptg->updateClearance(ox, oy, out_clearance);
-			}
+			if (eval_clearance) { ptg->updateClearance(ox, oy, out_clearance); }
 		}
 	}
 }
@@ -321,9 +315,7 @@ bool CReactiveNavigationSystem::checkCollisionWithLatestObstacles(
 			const double gox = xs[obs], goy = ys[obs], oz = zs[obs];
 			if (oz < params_reactive_nav.min_obstacles_height ||
 				oz > params_reactive_nav.max_obstacles_height)
-			{
-				continue;
-			}
+			{ continue; }
 			mrpt::math::TPoint2D lo = relative_robot_pose.inverseComposePoint(
 				mrpt::math::TPoint2D(gox, goy));
 

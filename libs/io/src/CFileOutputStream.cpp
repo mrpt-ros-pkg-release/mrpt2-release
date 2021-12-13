@@ -2,25 +2,26 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
-#include "io-precomp.h"  // Precompiled headers
-
+#include "io-precomp.h"	 // Precompiled headers
+//
 #include <mrpt/core/exceptions.h>
 #include <mrpt/io/CFileOutputStream.h>
 
 using namespace mrpt::io;
 using namespace std;
 
-CFileOutputStream::CFileOutputStream(const string& fileName, bool append)
+CFileOutputStream::CFileOutputStream(
+	const string& fileName, const OpenMode mode)
 	: m_of()
 {
 	MRPT_START
 
-	if (!open(fileName, append))
+	if (!open(fileName, mode))
 		THROW_EXCEPTION_FMT(
 			"Error creating/opening for write file: '%s'", fileName.c_str());
 
@@ -28,21 +29,23 @@ CFileOutputStream::CFileOutputStream(const string& fileName, bool append)
 }
 
 CFileOutputStream::CFileOutputStream() : m_of() {}
-bool CFileOutputStream::open(const string& fileName, bool append)
+bool CFileOutputStream::open(const string& fileName, const OpenMode mode)
 {
 	close();
 
 	// Open for write/append:
 	ios_base::openmode openMode = ios_base::binary | ios_base::out;
-	if (append) openMode |= ios_base::app;
+	if (mode == OpenMode::APPEND) openMode |= ios_base::app;
 
 	m_of.open(fileName.c_str(), openMode);
+	m_filename = fileName;
 	return m_of.is_open();
 }
 
 void CFileOutputStream::close()
 {
 	if (m_of.is_open()) m_of.close();
+	m_filename.clear();
 }
 
 CFileOutputStream::~CFileOutputStream() { close(); }
@@ -69,17 +72,10 @@ uint64_t CFileOutputStream::Seek(int64_t Offset, CStream::TSeekOrigin Origin)
 
 	switch (Origin)
 	{
-		case sFromBeginning:
-			way = ios_base::beg;
-			break;
-		case sFromCurrent:
-			way = ios_base::cur;
-			break;
-		case sFromEnd:
-			way = ios_base::end;
-			break;
-		default:
-			THROW_EXCEPTION("Invalid value for 'Origin'");
+		case sFromBeginning: way = ios_base::beg; break;
+		case sFromCurrent: way = ios_base::cur; break;
+		case sFromEnd: way = ios_base::end; break;
+		default: THROW_EXCEPTION("Invalid value for 'Origin'");
 	}
 
 	m_of.seekp(offset, way);
@@ -102,10 +98,15 @@ uint64_t CFileOutputStream::getTotalBytesCount() const
 uint64_t CFileOutputStream::getPosition() const
 {
 	auto& f = const_cast<std::ofstream&>(m_of);
-	if (m_of.is_open())
-		return f.tellp();
+	if (m_of.is_open()) return f.tellp();
 	else
 		return 0;
 }
 
 bool CFileOutputStream::fileOpenCorrectly() const { return m_of.is_open(); }
+
+std::string CFileOutputStream::getStreamDescription() const
+{
+	return mrpt::format(
+		"mrpt::io::CFileOutputStream for file '%s'", m_filename.c_str());
+}

@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -11,6 +11,7 @@
 #include <gtest/gtest.h>
 #include <mrpt/math/CSparseMatrix.h>
 #include <mrpt/random.h>
+
 #include <Eigen/Dense>
 
 using namespace mrpt;
@@ -189,8 +190,7 @@ void op_sparse_multiply_AB(
 void op_dense_multiply_AB(
 	const CMatrixDouble& M1, const CMatrixDouble& M2, CMatrixDouble& res)
 {
-	if (M1.isSquare() && M2.isSquare())
-		res = M1 * M2;
+	if (M1.isSquare() && M2.isSquare()) res = M1 * M2;
 	else
 		res = M1.asEigen() * M2.asEigen();
 }

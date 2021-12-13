@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -84,7 +84,7 @@ class CGPS_NTRIP : public CGenericSensor
 	/** Destructor */
 	~CGPS_NTRIP() override;
 
-	void doProcess() override;  // See docs in parent class
+	void doProcess() override;	// See docs in parent class
 
 	void initialize() override;
 
@@ -93,6 +93,6 @@ class CGPS_NTRIP : public CGenericSensor
 	void loadConfig_sensorSpecific(
 		const mrpt::config::CConfigFileBase& configSource,
 		const std::string& iniSection) override;
-};  // end class
+};	// end class
 
 }  // namespace mrpt::hwdrivers

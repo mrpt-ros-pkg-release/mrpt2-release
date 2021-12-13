@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "maps-precomp.h"  // Precomp header
-
+//
 #include <mrpt/bayes/CParticleFilter.h>
 #include <mrpt/bayes/CParticleFilterCapable.h>
 #include <mrpt/config/CConfigFileBase.h>
@@ -26,6 +26,7 @@
 #include <mrpt/serialization/CArchive.h>
 #include <mrpt/system/os.h>
 #include <mrpt/system/string_utils.h>
+
 #include <Eigen/Dense>
 
 using namespace mrpt;
@@ -110,7 +111,8 @@ void CBeaconMap::serializeTo(mrpt::serialization::CArchive& out) const
 	const uint32_t n = m_beacons.size();
 	out << n;
 	// Write all landmarks:
-	for (const auto& it : *this) out << it;
+	for (const auto& it : *this)
+		out << it;
 }
 
 void CBeaconMap::serializeFrom(
@@ -132,19 +134,16 @@ void CBeaconMap::serializeFrom(
 			// Read all landmarks:
 			in >> n;
 			m_beacons.resize(n);
-			for (i = 0; i < n; i++) in >> m_beacons[i];
+			for (i = 0; i < n; i++)
+				in >> m_beacons[i];
 		}
 		break;
-		default:
-			MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
 	};
 }
 
-/*---------------------------------------------------------------
-					computeObservationLikelihood
-  ---------------------------------------------------------------*/
 double CBeaconMap::internal_computeObservationLikelihood(
-	const CObservation& obs, const CPose3D& robotPose3D)
+	const CObservation& obs, const CPose3D& robotPose3D) const
 {
 	MRPT_START
 
@@ -212,11 +211,12 @@ double CBeaconMap::internal_computeObservationLikelihood(
 							// expectedRange +=
 							// float(0.1*(1-exp(-0.16*expectedRange)));
 
-							*itLW = it->log_w;  // Linear weight of this
+							*itLW = it->log_w;	// Linear weight of this
 							// likelihood component
-							*itLL = -0.5 * square(
-											   (sensedRange - expectedRange) /
-											   likelihoodOptions.rangeStd);
+							*itLL = -0.5 *
+								square(
+									(sensedRange - expectedRange) /
+									likelihoodOptions.rangeStd);
 							// ret+= exp(
 							// -0.5*square((sensedRange-expectedRange)/likelihoodOptions.rangeStd)
 							// );
@@ -294,9 +294,8 @@ double CBeaconMap::internal_computeObservationLikelihood(
 							H(0, 2) = Az;
 							double expectedRange =
 								sensor3D.distanceTo(it->val.mean);
-							H.asEigen() *=
-								1.0 /
-								expectedRange;  // sqrt(Ax*Ax+Ay*Ay+Az*Az);
+							H.asEigen() *= 1.0 /
+								expectedRange;	// sqrt(Ax*Ax+Ay*Ay+Az*Az);
 
 							varZ = mrpt::math::multiply_HCHt_scalar(
 								H, it->val.cov);
@@ -307,10 +306,10 @@ double CBeaconMap::internal_computeObservationLikelihood(
 							// float(0.1*(1-exp(-0.16*expectedRange)));
 
 							// Compute the likelihood:
-							*itLW = it->log_w;  // log-weight of this likelihood
+							*itLW = it->log_w;	// log-weight of this likelihood
 							// component
 							*itLL = -0.5 * square(sensedRange - expectedRange) /
-									varZ;
+								varZ;
 						}  // end for each mode
 
 						// Accumulate to the overall (log) likelihood value:
@@ -321,8 +320,7 @@ double CBeaconMap::internal_computeObservationLikelihood(
 					}
 					break;
 
-					default:
-						THROW_EXCEPTION("Invalid beac->m_typePDF!!!");
+					default: THROW_EXCEPTION("Invalid beac->m_typePDF!!!");
 				};
 			}
 			else
@@ -353,7 +351,8 @@ double CBeaconMap::internal_computeObservationLikelihood(
 						insertObservation
   ---------------------------------------------------------------*/
 bool CBeaconMap::internal_insertObservation(
-	const mrpt::obs::CObservation& obs, const CPose3D* robotPose)
+	const mrpt::obs::CObservation& obs,
+	const std::optional<const mrpt::poses::CPose3D>& robotPose)
 {
 	MRPT_START
 
@@ -449,7 +448,7 @@ bool CBeaconMap::internal_insertObservation(
 						newBeac.m_typePDF = CBeacon::pdfSOG;
 						CBeacon::generateRingSOG(
 							sensedRange,  // Sensed range
-							newBeac.m_locationSOG,  // Output SOG
+							newBeac.m_locationSOG,	// Output SOG
 							this,  // My CBeaconMap, for options.
 							sensorPnt  // Sensor point
 						);
@@ -478,10 +477,10 @@ bool CBeaconMap::internal_insertObservation(
 							{
 								float expectedRange = sensorPnt.distance3DTo(
 									p.d->x, p.d->y, p.d->z);
-								p.log_w +=
-									-0.5 * square(
-											   (sensedRange - expectedRange) /
-											   likelihoodOptions.rangeStd);
+								p.log_w += -0.5 *
+									square(
+										(sensedRange - expectedRange) /
+										likelihoodOptions.rangeStd);
 								maxW = max(p.log_w, maxW);
 								sumW += exp(p.log_w);
 							}
@@ -554,8 +553,9 @@ bool CBeaconMap::internal_insertObservation(
 									 beac->m_locationMC.m_particles.end();)
 								{
 									if (it_p->log_w <
-										(maxW - insertionOptions
-													.MC_thresholdNegligible))
+										(maxW -
+										 insertionOptions
+											 .MC_thresholdNegligible))
 									{
 										it_p->d.reset();
 										it_p = beac->m_locationMC.m_particles
@@ -600,11 +600,11 @@ bool CBeaconMap::internal_insertObservation(
 									COV *= square(0.01f);
 									if (insertionOptions.minElevation_deg ==
 										insertionOptions.maxElevation_deg)
-										COV(2, 2) = 0;  // We are in a 2D map:
+										COV(2, 2) = 0;	// We are in a 2D map:
 								}
 
 								beac->m_typePDF =
-									CBeacon::pdfGauss;  // Pass to gaussian.
+									CBeacon::pdfGauss;	// Pass to gaussian.
 								beac->m_locationGauss.mean = MEAN;
 								beac->m_locationGauss.cov = COV;
 							}
@@ -648,9 +648,8 @@ bool CBeaconMap::internal_insertObservation(
 								H(0, 0) = Ax;
 								H(0, 1) = Ay;
 								H(0, 2) = Az;
-								H.asEigen() *=
-									1.0 /
-									expectedRange;  // sqrt(Ax*Ax+Ay*Ay+Az*Az);
+								H.asEigen() *= 1.0 /
+									expectedRange;	// sqrt(Ax*Ax+Ay*Ay+Az*Az);
 								varZ = mrpt::math::multiply_HCHt_scalar(
 									H, beac->m_locationGauss.cov);
 								varZ += varR;
@@ -718,7 +717,7 @@ bool CBeaconMap::internal_insertObservation(
 
 								mode.val.cov = (Eigen::Matrix3d::Identity() -
 												K * H.asEigen()) *
-											   mode.val.cov.asEigen();
+									mode.val.cov.asEigen();
 
 								// Update the weight of this mode:
 								// ----------------------------------
@@ -764,8 +763,7 @@ bool CBeaconMap::internal_insertObservation(
 							}
 						}
 						break;
-						default:
-							THROW_EXCEPTION("Invalid beac->m_typePDF!!!");
+						default: THROW_EXCEPTION("Invalid beac->m_typePDF!!!");
 					};
 
 				}  // end fuse
@@ -885,19 +883,19 @@ void CBeaconMap::computeMatchingWith3DLandmarks(
 					// OK: A correspondence found!!
 					otherCorrespondences[k] = true;
 
-					match.this_idx = j;
+					match.globalIdx = j;
 
 					CPoint3D mean_j = m_beacons[j].getMeanVal();
 
-					match.this_x = mean_j.x();
-					match.this_y = mean_j.y();
-					match.this_z = mean_j.z();
+					match.global.x = mean_j.x();
+					match.global.y = mean_j.y();
+					match.global.z = mean_j.z();
 
 					CPoint3D mean_k = anotherMap->m_beacons[k].getMeanVal();
-					match.other_idx = k;
-					match.other_x = mean_k.x();
-					match.other_y = mean_k.y();
-					match.other_z = mean_k.z();
+					match.localIdx = k;
+					match.local.x = mean_k.x();
+					match.local.y = mean_k.y();
+					match.local.z = mean_k.z();
 
 					correspondences.push_back(match);
 				}
@@ -1095,10 +1093,7 @@ void CBeaconMap::saveMetricMapRepresentationToFile(
 
 	// 3D Scene:
 	opengl::COpenGLScene scene;
-	opengl::CSetOfObjects::Ptr obj3D =
-		std::make_shared<opengl::CSetOfObjects>();
-
-	getAs3DObject(obj3D);
+	const opengl::CSetOfObjects::Ptr obj3D = getVisualization();
 	auto objGround = opengl::CGridPlaneXY::Create(
 		-100.0f, 100.0f, -100.0f, 100.0f, .0f, 1.f);
 
@@ -1130,9 +1125,7 @@ void CBeaconMap::saveMetricMapRepresentationToFile(
 					case CBeacon::pdfSOG:
 						nGaussians += m_beacon.m_locationSOG.size();
 						break;
-					case CBeacon::pdfGauss:
-						nGaussians++;
-						break;
+					case CBeacon::pdfGauss: nGaussians++; break;
 				};
 			}
 
@@ -1146,10 +1139,7 @@ void CBeaconMap::saveMetricMapRepresentationToFile(
 	MRPT_END
 }
 
-/*---------------------------------------------------------------
-						getAs3DObject
-  ---------------------------------------------------------------*/
-void CBeaconMap::getAs3DObject(mrpt::opengl::CSetOfObjects::Ptr& outObj) const
+void CBeaconMap::getVisualizationInto(mrpt::opengl::CSetOfObjects& o) const
 {
 	MRPT_START
 
@@ -1158,10 +1148,11 @@ void CBeaconMap::getAs3DObject(mrpt::opengl::CSetOfObjects::Ptr& outObj) const
 	// ------------------------------------------------
 	//  Add the XYZ corner for the current area:
 	// ------------------------------------------------
-	outObj->insert(opengl::stock_objects::CornerXYZ());
+	o.insert(opengl::stock_objects::CornerXYZ());
 
 	// Save 3D ellipsoids or whatever representation:
-	for (const auto& m_beacon : m_beacons) m_beacon.getAs3DObject(outObj);
+	for (const auto& m_beacon : m_beacons)
+		m_beacon.getVisualizationInto(o);
 
 	MRPT_END
 }

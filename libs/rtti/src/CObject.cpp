@@ -2,15 +2,17 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "rtti-precomp.h"  // Precompiled headers
-
+//
 #include <mrpt/rtti/CObject.h>
+
 #include <cstdio>
+
 #include "internal_class_registry.h"
 
 using namespace mrpt;
@@ -102,8 +104,8 @@ CObject::Ptr TRuntimeClassId::createObject() const
 // since it has no base class. These methods are defined
 // automatically for derived classes.
 TRuntimeClassId* CObject::_GetBaseClass() { return nullptr; }
-const struct TRuntimeClassId CObject::runtimeClassId = {"CObject", nullptr,
-														nullptr};
+const struct TRuntimeClassId CObject::runtimeClassId = {
+	"CObject", nullptr, nullptr};
 
 mrpt::rtti::CObject::Ptr mrpt::rtti::classFactory(const std::string& className)
 {

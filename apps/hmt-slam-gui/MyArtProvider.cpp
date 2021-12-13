@@ -2,18 +2,15 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "MyArtProvider.h"
-#include "hmt_slam_guiMain.h"  // Needed to avoid UNICODE WX build errors sometimes
 
 #include "../wx-common/mrpt_logo.xpm"
-
-#include "imgs/main_icon.xpm"
-
+#include "hmt_slam_guiMain.h"  // Needed to avoid UNICODE WX build errors sometimes
 #include "imgs/icon_about.xpm"
 #include "imgs/icon_exit.xpm"
 #include "imgs/icon_load.xpm"
@@ -22,6 +19,7 @@
 #include "imgs/icon_save.xpm"
 #include "imgs/icon_step.xpm"
 #include "imgs/icon_stop.xpm"
+#include "imgs/main_icon.xpm"
 
 // CreateBitmap function
 wxBitmap CMyArtProvider::CreateBitmap(

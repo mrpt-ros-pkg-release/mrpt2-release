@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -68,15 +68,13 @@ class deepcopy_poly_ptr
 	~deepcopy_poly_ptr() = default;
 	typename T::element_type* get()
 	{
-		if (m_smartptr)
-			return m_smartptr.get();
+		if (m_smartptr) return m_smartptr.get();
 		else
 			throw std::runtime_error("dereferencing nullptr poly_ptr");
 	}
 	const typename T::element_type* get() const
 	{
-		if (m_smartptr)
-			return m_smartptr.get();
+		if (m_smartptr) return m_smartptr.get();
 		else
 			throw std::runtime_error("dereferencing nullptr poly_ptr");
 	}

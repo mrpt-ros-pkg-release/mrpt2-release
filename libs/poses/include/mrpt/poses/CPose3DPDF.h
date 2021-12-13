@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -17,9 +17,8 @@ namespace mrpt::poses
 {
 class CPosePDF;
 
-/** Declares a class that represents a Probability Density Function (PDF) of a
- * 3D pose (6D actually).
- *   This class is just the base class for unifying many diferent
+/** A Probability Density Function (PDF) of a SE(3) pose.
+ * This class is just the base class for unifying many diferent
  *    ways this PDF can be implemented.
  *
  *  For convenience, a pose composition is also defined for any
@@ -136,5 +135,5 @@ class CPose3DPDF : public mrpt::serialization::CSerializable,
 		return SETOFOBJECTS::posePDF2opengl(*this);
 	}
 
-};  // End of class def.
+};	// End of class def.
 }  // namespace mrpt::poses

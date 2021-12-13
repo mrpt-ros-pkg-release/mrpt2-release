@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -89,13 +89,29 @@ class CWaypointsNavigator : public mrpt::nav::CAbstractNavigator
 		TWaypointStatusSequence& out_nav_status) const;
 
 	/** Get a copy of the control structure which describes the progress status
-	 * of the waypoint navigation. */
+	 * of the waypoint navigation.
+	 * \ref getWaypointsRef()
+	 */
 	TWaypointStatusSequence getWaypointNavStatus() const
 	{
 		TWaypointStatusSequence nav_status;
 		this->getWaypointNavStatus(nav_status);
 		return nav_status;
 	}
+
+	/** Gets a write-enabled reference to the list of waypoints, simultanously
+	 * acquiring the critical section mutex.
+	 * Caller must call endWaypointsAccess() when done editing the waypoints.
+	 */
+	TWaypointStatusSequence& beginWaypointsAccess()
+	{
+		m_nav_waypoints_cs.lock();
+		return m_waypoint_nav_status;
+	}
+
+	/** Must be called after beginWaypointsAccess() */
+	void endWaypointsAccess() { m_nav_waypoints_cs.unlock(); }
+
 	/** @}*/
 
 	/** Returns `true` if, according to the information gathered at the last
@@ -135,7 +151,7 @@ class CWaypointsNavigator : public mrpt::nav::CAbstractNavigator
 	void loadConfigFile(const mrpt::config::CConfigFileBase& c)
 		override;  // See base class docs!
 	void saveConfigFile(mrpt::config::CConfigFileBase& c)
-		const override;  // See base class docs!
+		const override;	 // See base class docs!
 
    protected:
 	/** The latest waypoints navigation command and the up-to-date control

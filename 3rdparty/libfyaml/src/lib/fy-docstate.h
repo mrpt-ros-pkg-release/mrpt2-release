@@ -26,9 +26,7 @@
 
 struct fy_document;
 
-FY_TYPE_FWD_DECL_LIST(document_state);
 struct fy_document_state {
-	struct list_head node;
 	int refs;
 	struct fy_version version;
 	bool version_explicit : 1;
@@ -40,7 +38,6 @@ struct fy_document_state {
 	struct fy_token *fyt_vd;		/* version directive */
 	struct fy_token_list fyt_td;		/* tag directives */
 };
-FY_TYPE_DECL_LIST(document_state);
 
 struct fy_document_state *fy_document_state_alloc(void);
 void fy_document_state_free(struct fy_document_state *fyds);
@@ -48,8 +45,13 @@ struct fy_document_state *fy_document_state_ref(struct fy_document_state *fyds);
 void fy_document_state_unref(struct fy_document_state *fyds);
 
 int fy_document_state_append_tag(struct fy_document_state *fyds,
-				 const char *handle, const char *prefix);
-struct fy_document_state *fy_document_state_default(void);
+				 const char *handle, const char *prefix,
+				 bool is_default);
+
+struct fy_document_state *fy_document_state_default(
+		const struct fy_version *default_version,
+		const struct fy_tag * const *default_tags);
+
 struct fy_document_state *fy_document_state_copy(struct fy_document_state *fyds);
 int fy_document_state_merge(struct fy_document_state *fyds,
 			    struct fy_document_state *fydsc);

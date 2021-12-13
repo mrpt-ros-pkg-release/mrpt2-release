@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -27,6 +27,8 @@ BEGIN_EVENT_TABLE(CRawlogTreeView, wxScrolledWindow)
 EVT_LEFT_DOWN(CRawlogTreeView::OnLeftDown)
 EVT_MOUSEWHEEL(CRawlogTreeView::OnMouseWheel)
 EVT_CHAR(CRawlogTreeView::OnKey)
+EVT_SCROLLWIN_THUMBTRACK(CRawlogTreeView::onScrollThumbTrack)
+EVT_SCROLLWIN_THUMBRELEASE(CRawlogTreeView::onScrollThumbRelease)
 END_EVENT_TABLE()
 
 #include <mrpt/system/datetime.h>
@@ -34,9 +36,9 @@ END_EVENT_TABLE()
 std::atomic_bool CRawlogTreeView::RAWLOG_UNDERGOING_CHANGES{false};
 
 #define MRPT_NO_WARN_BIG_HDR  // It's ok here
-#include <mrpt/obs.h>
-
 #include <mrpt/gui/WxUtils.h>
+#include <mrpt/obs.h>
+#include <mrpt/obs/CObservationPointCloud.h>  // this one is in mrpt-maps
 
 using namespace mrpt;
 using namespace mrpt::system;
@@ -85,8 +87,7 @@ void CRawlogTreeView::reloadFromRawlog(int hint_rawlog_items)
 
 	if (m_rawlog)
 	{
-		if (hint_rawlog_items < 0)
-			m_tree_nodes.reserve(m_rawlog->size() + 100);
+		if (hint_rawlog_items < 0) m_tree_nodes.reserve(m_rawlog->size() + 100);
 		else
 			m_tree_nodes.reserve(hint_rawlog_items + 100);
 	}
@@ -187,8 +188,6 @@ void CRawlogTreeView::OnDrawImpl(wxDC& dc)
 	wxRect visibleArea(
 		xc0 * ROW_HEIGHT, y0 * ROW_HEIGHT, w * ROW_HEIGHT, h * ROW_HEIGHT);
 
-	// wxBufferedDC	dc(&real_dc, visibleArea.GetSize() ); //wxSize(w,h) );
-
 	dc.SetPen(*wxTRANSPARENT_PEN);
 	dc.SetBrush(*wxWHITE_BRUSH);
 	dc.DrawRectangle(xc0 * ROW_HEIGHT, y0 * ROW_HEIGHT, w, h);
@@ -198,8 +197,9 @@ void CRawlogTreeView::OnDrawImpl(wxDC& dc)
 		11, wxFONTFAMILY_ROMAN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
 	static wxFont font_bold(
 		11, wxFONTFAMILY_ROMAN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
-	static wxColour wxColorGray(40, 40, 40);
-	static wxColour brush_SELECTED_COLOR(0, 200, 200);
+
+	static wxColor wxColorGray(40, 40, 40);
+	static wxColor brush_SELECTED_COLOR(0, 200, 200);
 	static wxPen gray_thick(brush_SELECTED_COLOR, 3);
 	static wxPen gray_thin(brush_SELECTED_COLOR, 1);
 
@@ -231,7 +231,7 @@ void CRawlogTreeView::OnDrawImpl(wxDC& dc)
 
 	for (size_t i = first_item; i < last_item; i++)
 	{
-		int y = i * ROW_HEIGHT;  // y= bottom of that row
+		int y = i * ROW_HEIGHT;	 // y= bottom of that row
 		TNodeData& d = m_tree_nodes[i];
 
 		switch (d.level)
@@ -276,9 +276,7 @@ void CRawlogTreeView::OnDrawImpl(wxDC& dc)
 
 				// Text:
 				if (d.level == 1)
-				{
-					s << "[" << std::to_string(d.index) << "] ";
-				}
+				{ s << "[" << std::to_string(d.index) << "] "; }
 
 				s << d.data->GetRuntimeClass()->className;
 
@@ -340,64 +338,94 @@ void CRawlogTreeView::OnDrawImpl(wxDC& dc)
 
 	// timestamps in time-line:
 	// -----------------------------------------------
-	if (m_rawlog_start != INVALID_TIMESTAMP &&
-		m_rawlog_last != INVALID_TIMESTAMP && last_tim_y > first_tim_y)
+	if (m_rawlog_start == INVALID_TIMESTAMP ||
+		m_rawlog_last == INVALID_TIMESTAMP || last_tim_y <= first_tim_y)
+		return;
+
+	dc.SetFont(font_normal);
+
+	const double len_tim =
+		mrpt::system::timeDifference(m_rawlog_start, m_rawlog_last);
+
+	std::optional<TTimeStamp> firstTim;
+
+	for (size_t i = first_item; i < last_item; i++)
 	{
-		dc.SetFont(font_normal);
+		const int y = i * ROW_HEIGHT;  // y= bottom of that row
+		TNodeData& d = m_tree_nodes[i];
 
-		const double len_tim =
-			mrpt::system::timeDifference(m_rawlog_start, m_rawlog_last);
-
-		for (size_t i = first_item; i < last_item; i++)
+		if (d.data)
 		{
-			int y = i * ROW_HEIGHT;  // y= bottom of that row
-			TNodeData& d = m_tree_nodes[i];
-
-			if (d.data)
+			TTimeStamp t_this = INVALID_TIMESTAMP;
+			if (d.data->GetRuntimeClass()->derivedFrom(CLASS_ID(CObservation)))
 			{
-				TTimeStamp t_this = INVALID_TIMESTAMP;
-				if (d.data->GetRuntimeClass()->derivedFrom(
-						CLASS_ID(CObservation)))
+				CObservation::Ptr obs =
+					std::dynamic_pointer_cast<CObservation>(d.data);
+				t_this = obs->timestamp;
+			}
+
+			if (t_this == INVALID_TIMESTAMP) continue;
+
+			if (!firstTim) firstTim = t_this;
+
+			// Draw line:
+			if (m_selectedItem == int(i)) dc.SetPen(gray_thick);
+			else
+				dc.SetPen(gray_thin);
+
+			// Calc. the "y" coordinate for this time:
+			const double At =
+				mrpt::system::timeDifference(m_rawlog_start, t_this);
+			double rat = At / len_tim;
+			int ty = first_tim_y + (last_tim_y - first_tim_y) * rat;
+
+			dc.DrawLine(15, ty, x0, y + 1);
+
+			// Draw some text labels with times:
+			if ((i % 5) == 0)
+			{
+				dc.DrawLine(10, ty, 15, ty);
+
+				// Seconds from start of rawlog:
+				if (m_rawlog_start != INVALID_TIMESTAMP)
 				{
-					CObservation::Ptr obs =
-						std::dynamic_pointer_cast<CObservation>(d.data);
-					t_this = obs->timestamp;
-				}
-
-				if (t_this != INVALID_TIMESTAMP)
-				{
-					// Draw line:
-					if (m_selectedItem == int(i))
-						dc.SetPen(gray_thick);
-					else
-						dc.SetPen(gray_thin);
-
-					// Calc. the "y" coordinate for this time:
-					double At =
-						mrpt::system::timeDifference(m_rawlog_start, t_this);
-					double rat = At / len_tim;
-					int ty = first_tim_y + (last_tim_y - first_tim_y) * rat;
-
-					dc.DrawLine(15, ty, x0, y + 1);
-
-					// Draw some text labels with times:
-					if ((i % 5) == 0)
-					{
-						dc.DrawLine(10, ty, 15, ty);
-
-						// Seconds from start of rawlog:
-						if (m_rawlog_start != INVALID_TIMESTAMP)
-						{
-							double sec = mrpt::system::timeDifference(
-								m_rawlog_start, t_this);
-							wxString s = (format("%.03fs", sec).c_str());
-							dc.DrawRotatedText(s, 17, ty + 3, -90);
-						}
-					}
+					wxString s = (format("%.03fs", At).c_str());
+					dc.DrawRotatedText(s, 17, ty + 3, -90);
 				}
 			}
-		}  // end for i
-	}
+		}
+	}  // end for i
+
+	// If thumb tracking, show time as text too:
+	if (!m_is_thumb_tracking || !firstTim) return;
+
+	using namespace std::string_literals;
+
+	const auto t_this_d = mrpt::Clock::toDouble(*firstTim);
+	const auto yb = y0 * ROW_HEIGHT;
+
+	// White background:
+	dc.SetPen(*wxBLACK_PEN);
+	const auto colorDarkGray = wxColor(30, 30, 30);
+	dc.SetBrush(wxBrush(colorDarkGray));
+	dc.DrawRoundedRectangle(
+		xc0 * ROW_HEIGHT + 5, y0 * ROW_HEIGHT + 5, w - 30, 4 * ROW_HEIGHT, 4);
+
+	dc.SetTextForeground(*wxWHITE);
+	dc.SetTextBackground(colorDarkGray);
+	dc.SetFont(font_normal);
+
+	dc.DrawText(wxString::Format("t=%.03f", t_this_d), 10, yb + 5);
+	dc.DrawText(
+		mrpt::system::dateTimeLocalToString(*firstTim) + " (Local)"s, 10,
+		yb + 20);
+	dc.DrawText(
+		mrpt::system::dateTimeToString(*firstTim) + " (UTC)"s, 10, yb + 35);
+	dc.DrawText(
+		wxString::Format(
+			"%.03f / %.03f [s]",
+			mrpt::system::timeDifference(m_rawlog_start, *firstTim), len_tim),
+		10, yb + 50);
 }
 
 // Return an icon index depending on the class of the object in the tree view:
@@ -405,8 +433,7 @@ int CRawlogTreeView::iconIndexFromClass(const TRuntimeClassId* class_ID)
 {
 	int iconIndex = -1;
 
-	if (class_ID == CLASS_ID(CObservation2DRangeScan))
-		iconIndex = 6;
+	if (class_ID == CLASS_ID(CObservation2DRangeScan)) iconIndex = 6;
 	else if (class_ID == CLASS_ID(CObservationImage))
 		iconIndex = 4;
 	else if (class_ID == CLASS_ID(CObservationStereoImages))
@@ -419,8 +446,17 @@ int CRawlogTreeView::iconIndexFromClass(const TRuntimeClassId* class_ID)
 		iconIndex = 8;
 	else if (class_ID == CLASS_ID(CObservationRFID))
 		iconIndex = 8;
+	else if (class_ID == CLASS_ID(CObservationOdometry))
+		iconIndex = 9;
+	else if (
+		class_ID == CLASS_ID(CObservation3DRangeScan) ||
+		class_ID == CLASS_ID(CObservationVelodyneScan) ||
+		class_ID == CLASS_ID(CObservationPointCloud))
+		iconIndex = 10;
+	else if (class_ID == CLASS_ID(CObservationIMU))
+		iconIndex = 11;
 	else if (class_ID->derivedFrom(CLASS_ID(CObservation)))
-		iconIndex = 2;  // Default observation
+		iconIndex = 2;	// Default observation
 	else if (class_ID == CLASS_ID(CActionCollection))
 		iconIndex = 0;
 	else if (class_ID == CLASS_ID(CSensoryFrame))
@@ -487,8 +523,7 @@ void CRawlogTreeView::OnMouseWheel(wxMouseEvent& event)
 	int x, y;
 	GetViewStart(&x, &y);
 
-	if (event.GetWheelRotation() > 0)
-		y--;
+	if (event.GetWheelRotation() > 0) y--;
 	else
 		y++;
 
@@ -553,4 +588,15 @@ void CRawlogTreeView::OnKey(wxKeyEvent& event)
 
 	if (y >= 0 && y < ly && y != y0)
 		SetScrollbars(ROW_HEIGHT, ROW_HEIGHT, 50, ly, x, y);
+}
+
+void CRawlogTreeView::onScrollThumbTrack(wxScrollWinEvent& ev)
+{
+	m_is_thumb_tracking = true;
+	ev.Skip();	// keep processing in base class
+}
+void CRawlogTreeView::onScrollThumbRelease(wxScrollWinEvent& ev)
+{
+	m_is_thumb_tracking = false;
+	ev.Skip();	// keep processing in base class
 }

@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -19,20 +19,13 @@ namespace mrpt::opengl
 /** A planar (XY) grid where each cell has an associated height and, optionally,
  * a texture map.
  * To make it faster to render, instead of drawing lines and triangles it draws
- * a point at each
- * gridcell.
+ * a point at each gridcell.
  *  A typical usage example would be an elevation map or a 3D model of a
  * terrain.
+ *
+ * ![mrpt::opengl::CMeshFast](preview_CMeshFast.png)
+ *
  *  \sa opengl::COpenGLScene
- *
- *  <div align="center">
- *  <table border="0" cellspan="4" cellspacing="4" style="border-width: 1px;
- * border-style: solid;">
- *   <tr> <td> mrpt::opengl::CMeshFast </td> <td> \image html
- * preview_CMeshFast.png </td> </tr>
- *  </table>
- *  </div>
- *
  * \ingroup mrpt_opengl_grp
  */
 class CMeshFast : public CRenderizableShaderPoints
@@ -161,9 +154,7 @@ class CMeshFast : public CRenderizableShaderPoints
 		CRenderizable::notifyChange();
 	}
 
-	void getBoundingBox(
-		mrpt::math::TPoint3D& bb_min,
-		mrpt::math::TPoint3D& bb_max) const override;
+	mrpt::math::TBoundingBox getBoundingBox() const override;
 
 	/** Assigns a texture image, and disable transparency.
 	 */
@@ -184,7 +175,7 @@ class CMeshFast : public CRenderizableShaderPoints
 		const float ycenter = 0.5f * (yMin + yMax);
 		const float xwidth = xMax - xMin;
 		const float newratio = float(m_textureImage.getWidth()) /
-							   float(m_textureImage.getHeight());
+			float(m_textureImage.getHeight());
 		yMax = ycenter + 0.5f * newratio * xwidth;
 		yMin = ycenter - 0.5f * newratio * xwidth;
 		CRenderizable::notifyChange();

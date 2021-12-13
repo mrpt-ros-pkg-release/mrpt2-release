@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -72,7 +72,7 @@ class CPtuDPerception : public CPtuBase
 
 	/** Query if exist movement limits */
 
-	bool enableLimitsQ(bool& enable) override;  // Query if exist some limit
+	bool enableLimitsQ(bool& enable) override;	// Query if exist some limit
 
 	/** Enable/Disable movement limits */
 
@@ -417,6 +417,6 @@ class CPtuDPerception : public CPtuBase
 		Com4 = 4
 	};
 
-};  // End of class
+};	// End of class
 
 }  // namespace mrpt::hwdrivers

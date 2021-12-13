@@ -2,15 +2,14 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 // Reuse code from unit test:
-#include "common.h"
-
 #include "../../libs/graphslam/src/graph_slam_levmarq_test_common.h"
+#include "common.h"
 
 using namespace mrpt;
 using namespace mrpt::math;
@@ -53,7 +52,7 @@ double graphslam_levmarq_solve(int nVertices, int N)
 		timer.leave("test");
 	}
 	const double ret = timer.getMeanTime("test");
-	timer.clear(true);  // this disables dump to cout upon destruction
+	timer.clear(true);	// this disables dump to cout upon destruction
 	return ret;
 }
 

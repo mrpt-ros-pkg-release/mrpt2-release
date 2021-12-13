@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>org.mrpt.navlog-viewer.desktop</id>
+  <metadata_license>MIT</metadata_license>
+  <name>navlog-viewer</name>
+  <summary>Navigation log viewer</summary>
+  <description>
+    <p>Navigation log viewer.</p>
+  </description>
+  <launchable type="desktop-id">navlog-viewer.desktop</launchable>
+  <screenshots>
+    <screenshot type="default">
+        <caption>Application screenshot</caption>
+        <image>https://static.mrpt.org/screenshots/navlog-viewer.png</image>
+    </screenshot>
+  </screenshots>
+  <url type="homepage">https://www.mrpt.org/</url>
+  <update_contact>joseluisblancoc@gmail.com</update_contact>
+</component>

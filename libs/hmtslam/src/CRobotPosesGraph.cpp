@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "hmtslam-precomp.h"  // Precomp header
-
+//
 #include <mrpt/hmtslam/CRobotPosesGraph.h>
 
 using namespace mrpt::slam;
@@ -24,7 +24,8 @@ void CRobotPosesGraph::serializeTo(mrpt::serialization::CArchive& out) const
 {
 	auto N = static_cast<uint32_t>(size());
 	out << N;
-	for (const auto& e : *this) out << e.first << e.second.sf << e.second.pdf;
+	for (const auto& e : *this)
+		out << e.first << e.second.sf << e.second.pdf;
 }
 
 void CRobotPosesGraph::serializeFrom(
@@ -49,8 +50,7 @@ void CRobotPosesGraph::serializeFrom(
 			}
 		}
 		break;
-		default:
-			MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
 	};
 }
 
@@ -63,7 +63,7 @@ void CRobotPosesGraph::insertIntoMetricMap(CMultiMetricMap& metricMap) const
 	for (const auto& it : *this)
 	{
 		it.second.pdf.getMean(meanPose);
-		it.second.sf.insertObservationsInto(&metricMap, &meanPose);
+		it.second.sf.insertObservationsInto(metricMap, meanPose);
 	}
 }
 
@@ -74,5 +74,5 @@ void CRobotPosesGraph::convertIntoSimplemap(CSimpleMap& out_simplemap) const
 {
 	out_simplemap.clear();
 	for (const auto& it : *this)
-		out_simplemap.insert(&it.second.pdf, it.second.sf);
+		out_simplemap.insert(it.second.pdf, it.second.sf);
 }

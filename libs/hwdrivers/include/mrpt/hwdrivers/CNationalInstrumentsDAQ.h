@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -397,7 +397,7 @@ class CNationalInstrumentsDAQ : public mrpt::system::COutputLogger,
 			double initialDelay{0}, freq{1000}, dutyCycle{0.5};
 		} co_pulses;
 
-	};  // end of TaskDescription
+	};	// end of TaskDescription
 
 	/** Publicly accessible vector with the list of tasks to be launched upon
 	 * call to CNationalInstrumentsDAQ::initialize().
@@ -438,6 +438,6 @@ class CNationalInstrumentsDAQ : public mrpt::system::COutputLogger,
 	/** Method to be executed in each parallel thread. */
 	void grabbing_thread(TInfoPerTask& ipt);
 
-};  // end class
+};	// end class
 
 }  // namespace mrpt::hwdrivers

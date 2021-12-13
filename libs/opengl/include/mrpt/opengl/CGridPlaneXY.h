@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -14,16 +14,10 @@
 namespace mrpt::opengl
 {
 /** A grid of lines over the XY plane.
- *  \sa opengl::COpenGLScene
  *
- *  <div align="center">
- *  <table border="0" cellspan="4" cellspacing="4" style="border-width: 1px;
- * border-style: solid;">
- *   <tr> <td> mrpt::opengl::CGridPlaneXY </td> <td> \image html
- * preview_CGridPlaneXY.png </td> </tr>
- *  </table>
- *  </div>
+ * ![mrpt::opengl::CGridPlaneXY](preview_CGridPlaneXY.png)
  *
+ * \sa opengl::COpenGLScene
  * \ingroup mrpt_opengl_grp
  */
 class CGridPlaneXY : public CRenderizableShaderWireFrame
@@ -71,9 +65,7 @@ class CGridPlaneXY : public CRenderizableShaderWireFrame
 
 	void onUpdateBuffers_Wireframe() override;
 
-	void getBoundingBox(
-		mrpt::math::TPoint3D& bb_min,
-		mrpt::math::TPoint3D& bb_max) const override;
+	mrpt::math::TBoundingBox getBoundingBox() const override;
 
 	/** Constructor  */
 	CGridPlaneXY(

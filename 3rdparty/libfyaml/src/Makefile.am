@@ -18,11 +18,14 @@ libfyaml_@MAJOR@_@MINOR@_la_SOURCES = \
 	lib/fy-input.c lib/fy-input.h \
 	lib/fy-docstate.c lib/fy-docstate.h \
 	lib/fy-doc.c lib/fy-doc.h \
-	lib/fy-emit.c lib/fy-emit.h \
+	lib/fy-emit.c lib/fy-emit.h lib/fy-emit-accum.h \
 	lib/fy-utils.c lib/fy-utils.h \
-	lib/fy-event.h \
+	lib/fy-event.h lib/fy-event.c \
 	xxhash/xxhash.c xxhash/xxhash.h \
-	lib/fy-accel.c lib/fy-accel.h
+	lib/fy-accel.c lib/fy-accel.h \
+	lib/fy-walk.c lib/fy-walk.h \
+	lib/fy-path.c lib/fy-path.h \
+	lib/fy-composer.c lib/fy-composer.h
 
 libfyaml_@MAJOR@_@MINOR@_la_CPPFLAGS = $(AM_CPPFLAGS) \
 				       -I$(top_srcdir)/src/lib \
@@ -72,6 +75,8 @@ install-exec-hook:
 	(cd "$(DESTDIR)$(bindir)" && $(LN_S) -f fy-tool fy-filter)
 	(cd "$(DESTDIR)$(bindir)" && $(LN_S) -f fy-tool fy-testsuite)
 	(cd "$(DESTDIR)$(bindir)" && $(LN_S) -f fy-tool fy-join)
+	(cd "$(DESTDIR)$(bindir)" && $(LN_S) -f fy-tool fy-ypath)
+	(cd "$(DESTDIR)$(bindir)" && $(LN_S) -f fy-tool fy-compose)
 
 uninstall-hook:
-	(cd "$(DESTDIR)$(bindir)" && rm -f fy-dump fy-filter fy-testsuite fy-join)
+	(cd "$(DESTDIR)$(bindir)" && rm -f fy-dump fy-filter fy-testsuite fy-join fy-ypath fy-compose)

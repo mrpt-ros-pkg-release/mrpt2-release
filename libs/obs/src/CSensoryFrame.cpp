@@ -2,18 +2,19 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "obs-precomp.h"  // Precompiled headers
-
+//
 #include <mrpt/obs/CObservation2DRangeScan.h>
 #include <mrpt/obs/CSensoryFrame.h>
 #include <mrpt/serialization/CArchive.h>
 #include <mrpt/serialization/metaprogramming_serialization.h>
 #include <mrpt/system/os.h>
+
 #include <iterator>
 
 using namespace mrpt::obs;
@@ -22,22 +23,6 @@ using namespace mrpt::system;
 using namespace std;
 
 IMPLEMENTS_SERIALIZABLE(CSensoryFrame, CSerializable, mrpt::obs)
-
-CSensoryFrame::CSensoryFrame(const CSensoryFrame& o) : m_observations()
-{
-	*this = o;
-}
-
-CSensoryFrame& CSensoryFrame::operator=(const CSensoryFrame& o)
-{
-	MRPT_START
-	clear();
-	if (this == &o) return *this;  // It may be used sometimes
-	m_observations = o.m_observations;
-	m_cachedMap.reset();
-	return *this;
-	MRPT_END
-}
 
 void CSensoryFrame::clear()
 {
@@ -90,8 +75,7 @@ void CSensoryFrame::serializeFrom(
 					m_observations[i]->timestamp = tempTimeStamp;
 		}
 		break;
-		default:
-			MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
 	};
 
 	m_cachedMap.reset();
@@ -99,19 +83,11 @@ void CSensoryFrame::serializeFrom(
 	MRPT_END
 }
 
-/*---------------------------------------------------------------
-						operator +=
-  ---------------------------------------------------------------*/
-void CSensoryFrame::operator+=([[maybe_unused]] const CSensoryFrame& sf)
+void CSensoryFrame::operator+=(const CSensoryFrame& sf)
 {
 	m_cachedMap.reset();
-	for (auto it = begin(); it != end(); ++it)
-	{
-		CObservation::Ptr newObs = *it;
-		newObs.reset(dynamic_cast<CObservation*>(newObs->clone()));
-		m_observations.push_back(
-			newObs);  // static_cast<CObservation*>( (*it)->clone()) );
-	}
+	for (const auto& obs : sf)
+		m_observations.push_back(obs);
 }
 
 /*---------------------------------------------------------------
@@ -123,19 +99,7 @@ void CSensoryFrame::operator+=(const CObservation::Ptr& obs)
 	m_observations.push_back(obs);
 }
 
-/*---------------------------------------------------------------
-					push_back
-  ---------------------------------------------------------------*/
 void CSensoryFrame::push_back(const CObservation::Ptr& obs)
-{
-	m_cachedMap.reset();
-	m_observations.push_back(obs);
-}
-
-/*---------------------------------------------------------------
-				insert
-  ---------------------------------------------------------------*/
-void CSensoryFrame::insert(const CObservation::Ptr& obs)
 {
 	m_cachedMap.reset();
 	m_observations.push_back(obs);
@@ -226,9 +190,7 @@ void CSensoryFrame::eraseByLabel(const std::string& label)
 	for (auto it = begin(); it != end();)
 	{
 		if (!os::_strcmpi((*it)->sensorLabel.c_str(), label.c_str()))
-		{
-			it = erase(it);
-		}
+		{ it = erase(it); }
 		else
 			it++;
 	}
@@ -243,7 +205,7 @@ namespace mrpt::obs
 using scan2pts_functor = void (*)(
 	const mrpt::obs::CObservation2DRangeScan& obs,
 	mrpt::maps::CMetricMap::Ptr& out_map, const void* insertOps);
-extern scan2pts_functor ptr_internal_build_points_map_from_scan2D;  // impl in
+extern scan2pts_functor ptr_internal_build_points_map_from_scan2D;	// impl in
 // CObservation2DRangeScan.cpp
 }  // namespace mrpt::obs
 /*---------------------------------------------------------------
@@ -264,7 +226,8 @@ void CSensoryFrame::internal_buildAuxPointsMap(const void* options) const
 }
 
 bool CSensoryFrame::insertObservationsInto(
-	mrpt::maps::CMetricMap* theMap, const CPose3D* robotPose) const
+	maps::CMetricMap& theMap,
+	const std::optional<const mrpt::poses::CPose3D>& robotPose) const
 {
 	bool anyone = false;
 	for (const auto& it : *this)

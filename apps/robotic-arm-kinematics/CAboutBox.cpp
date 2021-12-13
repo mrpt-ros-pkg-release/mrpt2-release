@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -20,7 +20,9 @@
 #include <mrpt/gui/CMyRedirector.h>
 #include <mrpt/gui/WxUtils.h>
 #include <mrpt/system/os.h>
-#include <Eigen/Dense>  // for version
+
+#include <Eigen/Dense>	// for version
+
 #include "robotic_arm_kinematicsMain.h"
 
 using namespace mrpt;
@@ -167,7 +169,7 @@ void CAboutBox::OnInit([[maybe_unused]] wxInitDialogEvent& event)
 	wxVer << _T("-Unicode build");
 #else
 	wxVer << _T("-ANSI build");
-#endif  // wxUSE_UNICODE
+#endif	// wxUSE_UNICODE
 
 	// Set the label with MRPT version:
 	wxString s(_("Build: "));

@@ -2,20 +2,25 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
-#include "vision-precomp.h"  // Precompiled headers
-
+#include "vision-precomp.h"	 // Precompiled headers
+//
 #include <mrpt/3rdparty/do_opencv_includes.h>
 #include <mrpt/config/CConfigFileMemory.h>
 #include <mrpt/system/filesystem.h>
 #include <mrpt/vision/chessboard_camera_calib.h>
 #include <mrpt/vision/chessboard_find_corners.h>
 #include <mrpt/vision/pinhole.h>
+
 #include <Eigen/Dense>
+
+#if MRPT_HAS_OPENCV
+#include <opencv2/core/eigen.hpp>
+#endif
 
 using namespace mrpt;
 using namespace mrpt::vision;
@@ -47,10 +52,6 @@ bool mrpt::vision::checkerBoardCameraCalibration(
 	distortionParams = cam.getDistortionParamsAsVector();
 	return ret;
 }
-
-#if MRPT_HAS_OPENCV
-#include <opencv2/core/eigen.hpp>
-#endif
 
 /* -------------------------------------------------------
 				checkerBoardCameraCalibration
@@ -90,7 +91,7 @@ bool mrpt::vision::checkerBoardCameraCalibration(
 				for (unsigned int x = 0; x < check_size_x; x++, k++)
 				{
 					pattern_obj_points[k].x = -check_squares_length_X_meters *
-											  x;  // The "-" is for convenience,
+						x;	// The "-" is for convenience,
 					// so the camera poses appear
 					// with Z>0
 					pattern_obj_points[k].y = check_squares_length_Y_meters * y;
@@ -106,7 +107,7 @@ bool mrpt::vision::checkerBoardCameraCalibration(
 		{
 			TImageCalibData& dat = it->second;
 
-			dat.projectedPoints_distorted.clear();  // Clear reprojected points.
+			dat.projectedPoints_distorted.clear();	// Clear reprojected points.
 			dat.projectedPoints_undistorted.clear();
 
 			// Skip if images are marked as "externalStorage":
@@ -167,7 +168,7 @@ bool mrpt::vision::checkerBoardCameraCalibration(
 			corners_count = CORNERS_COUNT;
 
 			vector<cv::Point2f> this_img_pts(
-				CORNERS_COUNT);  // Temporary buffer for points, to be added if
+				CORNERS_COUNT);	 // Temporary buffer for points, to be added if
 			// the points pass the checks.
 
 			dat.detected_corners.clear();
@@ -237,8 +238,9 @@ bool mrpt::vision::checkerBoardCameraCalibration(
 						cv::Scalar color = line_colors[y % line_max];
 						for (x = 0; x < check_size.width; x++, k++)
 						{
-							cv::Point pt{cvRound(this_img_pts[k].x),
-										 cvRound(this_img_pts[k].y)};
+							cv::Point pt{
+								cvRound(this_img_pts[k].x),
+								cvRound(this_img_pts[k].y)};
 
 							if (k != 0) cv::line(rgb_img, prev_pt, pt, color);
 
@@ -340,9 +342,12 @@ bool mrpt::vision::checkerBoardCameraCalibration(
 		{
 			TImageCalibData& dat = it->second;
 			if (!dat.img_original.isExternallyStored())
-				dat.img_original.undistort(
-					dat.img_rectified, out_camera_params);
-		}  // end undistort
+			{
+				mrpt::img::CImage im;
+				dat.img_original.undistort(im, out_camera_params);
+				dat.img_rectified = std::move(im);
+			}
+		}
 
 		// -----------------------------------------------
 		// Reproject points to measure the fit sqr error
@@ -357,7 +362,7 @@ bool mrpt::vision::checkerBoardCameraCalibration(
 			// Reproject all the points into pixel coordinates:
 			// -----------------------------------------------------
 			vector<TPoint3D> lstPatternPoints(
-				CORNERS_COUNT);  // Points as seen from the camera:
+				CORNERS_COUNT);	 // Points as seen from the camera:
 			for (unsigned int p = 0; p < CORNERS_COUNT; p++)
 				lstPatternPoints[p] = TPoint3D(
 					pattern_obj_points[p].x, pattern_obj_points[p].y,
@@ -371,14 +376,14 @@ bool mrpt::vision::checkerBoardCameraCalibration(
 			vision::pinhole::projectPoints_no_distortion(
 				lstPatternPoints,  // Input points
 				dat.reconstructed_camera_pose,
-				out_camera_params.intrinsicParams,  // calib matrix
-				projectedPoints  // Output points in pixels
+				out_camera_params.intrinsicParams,	// calib matrix
+				projectedPoints	 // Output points in pixels
 			);
 
 			vision::pinhole::projectPoints_with_distortion(
 				lstPatternPoints,  // Input points
 				dat.reconstructed_camera_pose,
-				out_camera_params.intrinsicParams,  // calib matrix
+				out_camera_params.intrinsicParams,	// calib matrix
 				out_camera_params.getDistortionParamsAsVector(),
 				projectedPoints_distorted  // Output points in pixels
 			);
@@ -405,8 +410,7 @@ bool mrpt::vision::checkerBoardCameraCalibration(
 				}
 
 				// Accumulate error:
-				sqrErr +=
-					square(px_d - dat.detected_corners[p].x) +
+				sqrErr += square(px_d - dat.detected_corners[p].x) +
 					square(py_d - dat.detected_corners[p].y);  // Error relative
 				// to the
 				// original

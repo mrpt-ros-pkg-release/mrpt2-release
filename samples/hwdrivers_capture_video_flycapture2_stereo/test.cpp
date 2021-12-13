@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -14,6 +14,7 @@
 #include <mrpt/serialization/CArchive.h>
 #include <mrpt/system/CTicTac.h>
 #include <mrpt/system/os.h>
+
 #include <iostream>
 
 using namespace mrpt::hwdrivers;
@@ -48,8 +49,8 @@ void TestCapture_FlyCapture2_stereo()
 	cam_options_left.camera_guid[3] = 0xDDE4EF14;
 
 	cam_options_left.strobe_enabled = true;
-	cam_options_left.strobe_source = 1;  // GPIO pin #
-	cam_options_left.strobe_duration = 1.0;  // ms
+	cam_options_left.strobe_source = 1;	 // GPIO pin #
+	cam_options_left.strobe_duration = 1.0;	 // ms
 
 	capture_left.open(
 		cam_options_left, false /*only open, don't start grabbing*/);

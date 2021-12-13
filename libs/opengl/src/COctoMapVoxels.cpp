@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
-#include "opengl-precomp.h"  // Precompiled header
-
+#include "opengl-precomp.h"	 // Precompiled header
+//
 #include <mrpt/opengl/COctoMapVoxels.h>
 #include <mrpt/opengl/opengl_api.h>
 #include <mrpt/serialization/CArchive.h>
@@ -93,11 +93,11 @@ static const uint8_t cube_indices[2 * 6 * 3] = {
 
 // normal array: one per triangle
 static const mrpt::math::TPoint3Df normals_cube[6 * 2] = {
-	{1, 0, 0},  {1, 0, 0},  // v0,v1,v2,v3 (front)
-	{0, 1, 0},  {0, 1, 0},  // v0,v3,v4,v5 (right)
-	{0, 0, 1},  {0, 0, 1},  // v0,v5,v6,v1 (top)
-	{0, -1, 0}, {0, -1, 0},  // v1,v6,v7,v2 (left)
-	{0, 0, -1}, {0, 0, -1},  // v7,v4,v3,v2 (bottom)
+	{1, 0, 0},	{1, 0, 0},	// v0,v1,v2,v3 (front)
+	{0, 1, 0},	{0, 1, 0},	// v0,v3,v4,v5 (right)
+	{0, 0, 1},	{0, 0, 1},	// v0,v5,v6,v1 (top)
+	{0, -1, 0}, {0, -1, 0},	 // v1,v6,v7,v2 (left)
+	{0, 0, -1}, {0, 0, -1},	 // v7,v4,v3,v2 (bottom)
 	{-1, 0, 0}, {-1, 0, 0}};  // v4,v7,v6,v5 (back)
 
 void COctoMapVoxels::onUpdateBuffers_Wireframe()
@@ -251,7 +251,7 @@ CArchive& operator>>(CArchive& in, COctoMapVoxels::TVoxel& a)
 }
 }  // end of namespace mrpt::opengl
 
-uint8_t COctoMapVoxels::serializeGetVersion() const { return 2; }
+uint8_t COctoMapVoxels::serializeGetVersion() const { return 3; }
 void COctoMapVoxels::serializeTo(CArchive& out) const
 {
 	writeToStreamRender(out);
@@ -260,7 +260,8 @@ void COctoMapVoxels::serializeTo(CArchive& out) const
 		<< m_enable_lighting << m_showVoxelsAsPoints << m_showVoxelsAsPointsSize
 		<< m_show_grids << m_grid_width << m_grid_color
 		<< m_enable_cube_transparency  // added in v1
-		<< uint32_t(m_visual_mode);  // added in v2
+		<< uint32_t(m_visual_mode);	 // added in v2
+	CRenderizableShaderTriangles::params_serialize(out);  // v3
 }
 
 void COctoMapVoxels::serializeFrom(CArchive& in, uint8_t version)
@@ -270,6 +271,7 @@ void COctoMapVoxels::serializeFrom(CArchive& in, uint8_t version)
 		case 0:
 		case 1:
 		case 2:
+		case 3:
 		{
 			readFromStreamRender(in);
 
@@ -278,8 +280,7 @@ void COctoMapVoxels::serializeFrom(CArchive& in, uint8_t version)
 				m_showVoxelsAsPointsSize >> m_show_grids >> m_grid_width >>
 				m_grid_color;
 
-			if (version >= 1)
-				in >> m_enable_cube_transparency;
+			if (version >= 1) in >> m_enable_cube_transparency;
 			else
 				m_enable_cube_transparency = false;
 
@@ -292,24 +293,20 @@ void COctoMapVoxels::serializeFrom(CArchive& in, uint8_t version)
 			}
 			else
 				m_visual_mode = COctoMapVoxels::COLOR_FROM_OCCUPANCY;
+
+			if (version >= 3)
+				CRenderizableShaderTriangles::params_deserialize(in);
 		}
 		break;
-		default:
-			MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
 	};
 
 	CRenderizable::notifyChange();
 }
 
-void COctoMapVoxels::getBoundingBox(
-	mrpt::math::TPoint3D& bb_min, mrpt::math::TPoint3D& bb_max) const
+auto COctoMapVoxels::getBoundingBox() const -> mrpt::math::TBoundingBox
 {
-	bb_min = m_bb_min;
-	bb_max = m_bb_max;
-
-	// Convert to coordinates of my parent:
-	m_pose.composePoint(bb_min, bb_min);
-	m_pose.composePoint(bb_max, bb_max);
+	return mrpt::math::TBoundingBox(m_bb_min, m_bb_max).compose(m_pose);
 }
 
 bool sort_voxels_z(

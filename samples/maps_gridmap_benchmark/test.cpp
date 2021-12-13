@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -15,6 +15,7 @@
 #include <mrpt/obs/stock_observations.h>
 #include <mrpt/random.h>
 #include <mrpt/system/CTicTac.h>
+
 #include <iostream>
 
 using namespace mrpt;
@@ -188,7 +189,7 @@ void BenchmarkGridmaps()
 			CPose3D pose3D;
 #endif
 
-			gridMap->insertObservation(scan1, &pose3D);
+			gridMap->insertObservation(scan1, pose3D);
 		}
 		double T = tictac.Tac();
 		cout << "-> " << 1000 * T / N << " ms/iter, scans/sec:" << N / T
@@ -196,7 +197,7 @@ void BenchmarkGridmaps()
 
 		CPose3D pose3D;
 		gridMap->clear();
-		gridMap->insertObservation(scan1, &pose3D);
+		gridMap->insertObservation(scan1, pose3D);
 		gridMap->saveAsBitmapFile("./gridmap_without_widening.png");
 	}
 
@@ -220,7 +221,7 @@ void BenchmarkGridmaps()
 #else
 			CPose3D pose3D;
 #endif
-			gridMap->insertObservation(scan1, &pose3D);
+			gridMap->insertObservation(scan1, pose3D);
 		}
 		double T = tictac.Tac();
 		cout << "-> " << 1000 * T / N << " ms/iter, scans/sec:" << N / T
@@ -228,7 +229,7 @@ void BenchmarkGridmaps()
 
 		CPose3D pose3D;
 		gridMap->clear();
-		gridMap->insertObservation(scan1, &pose3D);
+		gridMap->insertObservation(scan1, pose3D);
 		gridMap->saveAsBitmapFile("./gridmap_with_widening.png");
 	}
 
@@ -257,7 +258,7 @@ void BenchmarkGridmaps()
 
 		*gridMap = gridMapCopy;
 		CPose3D pose3D(0, 0, 0);
-		gridMap->insertObservation(scan1, &pose3D);
+		gridMap->insertObservation(scan1, pose3D);
 
 		cout << "Running test #8: Likelihood... ";
 		cout.flush();
@@ -265,10 +266,10 @@ void BenchmarkGridmaps()
 		tictac.Tic();
 		for (i = 0; i < N; i++)
 		{
-			CPose2D pose(
+			const auto pose = mrpt::poses::CPose3D::FromXYZYawPitchRoll(
 				getRandomGenerator().drawUniform(-1.0, 1.0),
-				getRandomGenerator().drawUniform(-1.0, 1.0),
-				getRandomGenerator().drawUniform(-M_PI, M_PI));
+				getRandomGenerator().drawUniform(-1.0, 1.0), .0,
+				getRandomGenerator().drawUniform(-M_PI, M_PI), .0, .0);
 			R += gridMap->computeObservationLikelihood(scan1, pose);
 		}
 		double T = tictac.Tac();

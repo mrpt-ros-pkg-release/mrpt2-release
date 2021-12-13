@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -11,6 +11,7 @@
 #include <mrpt/config.h>
 #include <mrpt/containers/yaml.h>
 #include <mrpt/io/vector_loadsave.h>
+#include <mrpt/system/COutputLogger.h>	// for enum type tests
 #include <mrpt/system/os.h>
 
 #include <algorithm>  // count()
@@ -443,6 +444,38 @@ MRPT_TEST(yaml, macros)
 	EXPECT_EQ(Foo, 9.0);
 
 	EXPECT_THROW(MCP_LOAD_REQ(p, Bar), std::exception);
+
+	{
+		mrpt::containers::yaml p2;
+		int i = 10;
+		MCP_SAVE(p2, i);
+
+		EXPECT_EQ(p2["i"].as<int>(), 10);
+
+		{
+			mrpt::system::VerbosityLevel vl = mrpt::system::LVL_WARN;
+			MCP_SAVE(p2, vl);
+		}
+
+		EXPECT_EQ(p2["vl"].as<std::string>(), "WARN");
+
+		{
+			mrpt::system::VerbosityLevel vl;
+			MCP_LOAD_REQ(p2, vl);
+			EXPECT_EQ(vl, mrpt::system::LVL_WARN);
+		}
+		{
+			mrpt::system::VerbosityLevel vl = mrpt::system::LVL_ERROR;
+			MCP_LOAD_OPT(p2, vl);
+			EXPECT_EQ(vl, mrpt::system::LVL_WARN);
+		}
+		{
+			auto p3 = p2;
+			mrpt::system::VerbosityLevel vl = mrpt::system::LVL_ERROR;
+			p3["vl"] = "FakeEnumValue";
+			EXPECT_THROW(MCP_LOAD_OPT(p3, vl), std::exception);
+		}
+	}
 }
 MRPT_TEST_END()
 
@@ -487,16 +520,16 @@ MRPT_TEST_END()
 #if MRPT_HAS_FYAML
 
 // clang-format off
-const auto sampleYamlBlock_1 = std::string(R"xxx(
+const auto sampleYamlBlock_1 = R"xxx(
 ~
-)xxx");
+)xxx";
 
-const auto sampleYamlBlock_2 = std::string(R"xxx(
+const auto sampleYamlBlock_2 = R"xxx(
 ---
 foo  # comment
-)xxx");
+)xxx";
 
-const auto sampleYamlBlock_3 = std::string(R"xxx(
+const auto sampleYamlBlock_3 = R"xxx(
 # blah blah
 mySeq:
   - "first"
@@ -505,13 +538,33 @@ mySeq:
   - ~
 myMap:
   K: 10.0
-  P: -5.0
   Q: ~
+  P: -5.0
+  # comment for nestedMap map
   nestedMap:
     a: 1  # comment for a
+    # comment for b
     b: 2
     c: 3
-)xxx");
+)xxx";
+
+const auto sampleYamlBlock_4 = R"xxx(
+myMap:
+  e1: 10.0  # Right comment for e1 value
+myMap2:
+  # Top comment for e2
+  e2: 10.0
+myMap3:
+  # Top comment for e3
+  e3: 10.0 # right comment for e3 value
+# Top comment for myMap4
+myMap4:
+  ~
+# Top comment for myMap5
+myMap5:
+  # top comment for a4
+  a4: 1
+)xxx";
 
 // clang-format on
 
@@ -558,39 +611,115 @@ MRPT_TEST(yaml, fromYAML)
 		EXPECT_EQ(e.comment(), "comment for a");
 		EXPECT_EQ(e.comment(CommentPosition::RIGHT), "comment for a");
 		EXPECT_THROW(e.comment(CommentPosition::TOP), std::exception);
+
+#if 0
+		p.printDebugStructure(std::cout);
+		p.printAsYAML();
+#endif
+
+		const auto& eb = p["myMap"]["nestedMap"].asMap().find("b")->first;
+		EXPECT_TRUE(eb.hasComment());
+		EXPECT_EQ(eb.comment(), "comment for b");
+
+#if 0
+		const auto& ec = p["myMap"]["nestedMap"].asMap().find("c")->first;
+		EXPECT_TRUE(ec.hasComment());
+		EXPECT_EQ(ec.comment(), "Example of multiline");
+#endif
+	}
+
+	{
+		const auto p = mrpt::containers::yaml::FromText(sampleYamlBlock_4);
+
+		EXPECT_EQ(p["myMap"]["e1"].comment(), "Right comment for e1 value");
+		EXPECT_FALSE(p["myMap4"].hasComment());
+		EXPECT_TRUE(p["myMap5"].asMap().find("a4")->first.hasComment());
+		EXPECT_TRUE(p.asMap().find("myMap5")->first.hasComment());
 	}
 }
 MRPT_TEST_END()
 
+MRPT_TEST(yaml, printInShortFormat)
+{
+	mrpt::containers::yaml n1 = mrpt::containers::yaml::Sequence({1, 2, 3});
+
+	n1.node().printInShortFormat = true;
+
+	mrpt::containers::YamlEmitOptions eo;
+	eo.emitHeader = false;
+
+	{
+		std::stringstream ss;
+		n1.printAsYAML(ss, eo);
+		EXPECT_EQ(ss.str(), "[1, 2, 3]\n");
+	}
+
+	mrpt::containers::yaml n2 = mrpt::containers::yaml::Map();
+	n2["foo"] = 1.0;
+	n2["bar"] = n1;
+
+	{
+		std::stringstream ss;
+		n2.printAsYAML(ss, eo);
+		EXPECT_EQ(ss.str(), "bar: [1, 2, 3]\nfoo: 1\n");
+	}
+
+	mrpt::containers::yaml n3 = mrpt::containers::yaml::Map();
+	n3["alpha"] = 1.0;
+	n3["beta"] = n2;
+
+	{
+		std::stringstream ss;
+		n3.printAsYAML(ss, eo);
+		EXPECT_EQ(ss.str(), "alpha: 1\nbeta:\n  bar: [1, 2, 3]\n  foo: 1\n");
+	}
+}
+MRPT_TEST_END()
+
+MRPT_TEST(yaml, outOfRangeIntegers)
+{
+	mrpt::containers::yaml p;
+	p["N1"] = "1292889";
+	p["N2"] = "1171717171717171771782288282822129288118189";
+	p["N3"] = "65535";
+	p["N4"] = "65536";
+
+	EXPECT_EQ(p["N1"].as<int>(), 1292889);
+	EXPECT_THROW(p["N2"].as<int>(), std::exception);
+	EXPECT_EQ(p["N3"].as<uint16_t>(), 65535);
+	EXPECT_THROW(p["N4"].as<uint16_t>(), std::exception);
+}
+MRPT_TEST_END()
+
 // clang-format off
-const auto testYamlParseEmit_1 = std::string(//
+const auto testYamlParseEmit_1 =
 R"xxx(# comment line 1, and
 # comment line 2
 1.0
-)xxx");
+)xxx";
 
-const auto testYamlParseEmit_2 = std::string(//
+const auto testYamlParseEmit_2 =
 R"xxx(- a  # comment for A
 - b  # comment for B
 - c  # comment for C
 -
   d1: xxx  # cool
   d2: xxx  # facts
-)xxx");
+)xxx";
 
-const auto testYamlParseEmit_3 = std::string(//
+const auto testYamlParseEmit_3 =
 R"xxx(a: 1.0  # A comment
 b: 2.0  # B comment
-)xxx");
+)xxx";
 
-const auto testYamlParseEmit_4 = std::string(//
+const auto testYamlParseEmit_4 =
 R"xxx(plain scalars:
   - a string
   - a string with a \ backslash that doesn't need to be escaped
   - can also use " quotes ' and $ a % lot /&?+ of other {} [] stuff
-)xxx");
+)xxx";
 
-const auto testYamlParseEmit_5 = std::string(//
+const auto testYamlParseEmit_5 =
 R"xxx(literal: |
   a
   b
@@ -601,9 +730,9 @@ literal block scalar: |
 literal2: |-
   a
   b
-)xxx");
+)xxx";
 
-const auto testYamlParseEmit_6 = std::string(//
+const auto testYamlParseEmit_6 =
 R"xxx(release_platforms:
   ubuntu:
   - focal
@@ -684,8 +813,7 @@ repositories:
       url: https://github.com/ament/ament_index.git
       version: foxy
     status: maintained
-)xxx");
-
+)xxx";
 // clang-format on
 
 MRPT_TEST(yaml, parseAndEmit)
@@ -696,7 +824,7 @@ MRPT_TEST(yaml, parseAndEmit)
 		//
 		testYamlParseEmit_1, testYamlParseEmit_2, testYamlParseEmit_3,
 		testYamlParseEmit_4, testYamlParseEmit_5,
-		testYamlParseEmit_6  // "indentSequences=false" for this one
+		testYamlParseEmit_6	 // "indentSequences=false" for this one
 		//
 	};
 
@@ -718,7 +846,7 @@ MRPT_TEST(yaml, parseAndEmit)
 			<< "=== Input:\n"
 			<< testText << "=== Output:\n"
 			<< ss.str() << "=== Debug dump of test yaml doc [" << idx
-			<< "]:\n",  // Yes, it is an intentional ","
+			<< "]:\n",	// Yes, it is an intentional ","
 			p.printDebugStructure(std::cout);
 
 		// Test with yamllint
@@ -731,8 +859,8 @@ MRPT_TEST(yaml, parseAndEmit)
 			{
 				p.printAsYAML(f);
 
-				const auto sCmd = mrpt::format(
-					"python3 -m yamllint %s -f parsable", tmpFil.c_str());
+				const auto sCmd =
+					mrpt::format("yamllint %s -f parsable", tmpFil.c_str());
 
 				// std::cout << "Running '" << sCmd << "'...\n";
 				std::string lintOut;
@@ -798,4 +926,4 @@ MRPT_TEST(yaml, fromJSON)
 }
 MRPT_TEST_END()
 
-#endif  // MRPT_HAS_FYAML
+#endif	// MRPT_HAS_FYAML

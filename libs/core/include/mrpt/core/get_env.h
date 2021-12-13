@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -10,7 +10,9 @@
 #pragma once
 
 #include <mrpt/core/from_string.h>
+
 #include <cstdlib>
+#include <string_view>
 
 namespace mrpt
 {
@@ -18,18 +20,20 @@ namespace mrpt
  * \ingroup mrpt_core_grp
  */
 template <class T>
-inline T get_env(const std::string& varname, const T& defValue = T())
+inline T get_env(const std::string_view& varname, const T& defValue = T())
 {
-	auto s = ::getenv(varname.c_str());
+	const std::string v(varname.data(), varname.size());
+	auto s = ::getenv(v.c_str());
 	if (!s) return defValue;
 	return mrpt::from_string<T>(s, defValue, false /*dont throw*/);
 }
 
 /** Specialization for bool: understands "true", "True", number!=0 as `true` */
 template <>
-inline bool get_env(const std::string& varname, const bool& defValue)
+inline bool get_env(const std::string_view& varname, const bool& defValue)
 {
-	auto s = ::getenv(varname.c_str());
+	const std::string v(varname.data(), varname.size());
+	auto s = ::getenv(v.c_str());
 	if (!s) return defValue;
 	const std::string str(s);
 	if (str == "true" || str == "TRUE" || str == "True") return true;

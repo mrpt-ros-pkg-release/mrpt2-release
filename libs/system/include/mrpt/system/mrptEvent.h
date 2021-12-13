@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -57,7 +57,7 @@ class mrptEvent
 
 	mrpt::Clock::time_point timestamp;
 
-};  // End of class def.
+};	// End of class def.
 
 /**  An event sent by any CObservable object (automatically) just before being
  * destroyed and telling its observers to unsubscribe.
@@ -73,6 +73,6 @@ class mrptEventOnDestroy : public mrptEvent
 	inline mrptEventOnDestroy(const CObservable* obj) : source_object(obj) {}
 	const CObservable* source_object;
 
-};  // End of class def.
+};	// End of class def.
 
 }  // namespace mrpt::system

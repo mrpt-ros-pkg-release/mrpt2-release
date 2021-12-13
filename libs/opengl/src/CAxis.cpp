@@ -2,17 +2,18 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
-#include "opengl-precomp.h"  // Precompiled header
-
+#include "opengl-precomp.h"	 // Precompiled header
+//
 #include <mrpt/opengl/CAxis.h>
 #include <mrpt/opengl/CText3D.h>
 #include <mrpt/serialization/CArchive.h>
 #include <mrpt/system/os.h>
+
 #include "gltext.h"
 
 using namespace mrpt;
@@ -119,9 +120,9 @@ void CAxis::onUpdateBuffers_Wireframe()
 			label->setScale(m_textScale);
 
 			label->setPose(mrpt::poses::CPose3D(
-				cur_tf.x, cur_tf.y, cur_tf.z, mrpt::DEG2RAD(m_textRot[0][0]),
-				mrpt::DEG2RAD(m_textRot[0][1]),
-				mrpt::DEG2RAD(m_textRot[0][2])));
+				cur_tf.x, cur_tf.y, cur_tf.z, mrpt::DEG2RAD(m_textRot[axis][0]),
+				mrpt::DEG2RAD(m_textRot[axis][1]),
+				mrpt::DEG2RAD(m_textRot[axis][2])));
 			label->setString(n);
 			m_gl_labels.emplace_back(label);
 
@@ -135,15 +136,17 @@ void CAxis::onUpdateBuffers_Wireframe()
 		label->setScale(m_textScale * 1.2f);
 		label->setPose(mrpt::poses::CPose3D(
 			endMark[axis].x, endMark[axis].y, endMark[axis].z,
-			mrpt::DEG2RAD(m_textRot[0][0]), mrpt::DEG2RAD(m_textRot[0][1]),
-			mrpt::DEG2RAD(m_textRot[0][2])));
+			mrpt::DEG2RAD(m_textRot[axis][0]),
+			mrpt::DEG2RAD(m_textRot[axis][1]),
+			mrpt::DEG2RAD(m_textRot[axis][2])));
 		label->setString(axis2name[axis]);
 		m_gl_labels.emplace_back(label);
 	}
 
 	cbd.assign(vbd.size(), m_color);
 
-	for (auto& lb : m_gl_labels) lb->updateBuffers();
+	for (auto& lb : m_gl_labels)
+		lb->updateBuffers();
 }
 
 void CAxis::enqueForRenderRecursive(
@@ -172,7 +175,8 @@ void CAxis::serializeTo(mrpt::serialization::CArchive& out) const
 	// v1:
 	out << m_marks[0] << m_marks[1] << m_marks[2] << m_textScale;
 	for (auto i : m_textRot)
-		for (int j = 0; j < 3; j++) out << i[j];
+		for (int j = 0; j < 3; j++)
+			out << i[j];
 	// v2:
 	out << m_markLen;
 }
@@ -193,7 +197,8 @@ void CAxis::serializeFrom(mrpt::serialization::CArchive& in, uint8_t version)
 			{
 				in >> m_marks[0] >> m_marks[1] >> m_marks[2] >> m_textScale;
 				for (auto& i : m_textRot)
-					for (int j = 0; j < 3; j++) in >> i[j];
+					for (int j = 0; j < 3; j++)
+						in >> i[j];
 			}
 			else
 			{
@@ -205,26 +210,16 @@ void CAxis::serializeFrom(mrpt::serialization::CArchive& in, uint8_t version)
 			if (version >= 2) in >> m_markLen;
 		}
 		break;
-		default:
-			MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
 	};
 	CRenderizable::notifyChange();
 }
 
-void CAxis::getBoundingBox(
-	mrpt::math::TPoint3D& bb_min, mrpt::math::TPoint3D& bb_max) const
+auto CAxis::getBoundingBox() const -> mrpt::math::TBoundingBox
 {
-	bb_min.x = m_xmin;
-	bb_min.y = m_ymin;
-	bb_min.z = m_zmin;
-
-	bb_max.x = m_xmax;
-	bb_max.y = m_ymax;
-	bb_max.z = m_zmax;
-
-	// Convert to coordinates of my parent:
-	m_pose.composePoint(bb_min, bb_min);
-	m_pose.composePoint(bb_max, bb_max);
+	return mrpt::math::TBoundingBox(
+			   {m_xmin, m_ymin, m_zmin}, {m_xmax, m_ymax, m_zmax})
+		.compose(m_pose);
 }
 
 void CAxis::setFrequency(float f)

@@ -26,6 +26,7 @@
 #endif
 
 #include "fy-parse.h"
+#include "fy-walk.h"
 
 #include "fy-valgrind.h"
 
@@ -44,6 +45,18 @@
 #define MMAP_DISABLE_DEFAULT		false
 
 #define OPT_DISABLE_MMAP		128
+#define OPT_USE_CALLBACK		129
+#define OPT_DISABLE_ACCEL		130
+#define OPT_DISABLE_BUFFERING		131
+#define OPT_DISABLE_DEPTH_LIMIT		132
+#define OPT_NULL_OUTPUT			133
+
+#define OPT_SLOPPY_FLOW_INDENTATION	2007
+#define OPT_YPATH_ALIASES		2008
+
+#define OPT_YAML_1_1			4000
+#define OPT_YAML_1_2			4001
+#define OPT_YAML_1_3			4002
 
 static struct option lopts[] = {
 	{"include",		required_argument,	0,	'I' },
@@ -58,18 +71,30 @@ static struct option lopts[] = {
 	{"diag",		required_argument,	0,	'D' },
 	{"module",		required_argument,	0,	'M' },
 	{"disable-mmap",	no_argument,		0,	OPT_DISABLE_MMAP },
+	{"disable-accel",	no_argument,		0,	OPT_DISABLE_ACCEL },
+	{"disable-buffering",	no_argument,		0,	OPT_DISABLE_BUFFERING },
+	{"disable-depth-limit",	no_argument,		0,	OPT_DISABLE_DEPTH_LIMIT },
+	{"use-callback",	no_argument,		0,	OPT_USE_CALLBACK },
+	{"null-output",		no_argument,		0,	OPT_NULL_OUTPUT },
+	{"walk-path",		required_argument,	0,	'W' },
+	{"walk-start",		required_argument,	0,	'S' },
+	{"yaml-1.1",		no_argument,		0,	OPT_YAML_1_1 },
+	{"yaml-1.2",		no_argument,		0,	OPT_YAML_1_2 },
+	{"yaml-1.3",		no_argument,		0,	OPT_YAML_1_3 },
+	{"sloppy-flow-indentation", no_argument,	0,	OPT_SLOPPY_FLOW_INDENTATION },
+	{"ypath-aliases",	no_argument,		0,	OPT_YPATH_ALIASES },
 	{"quiet",		no_argument,		0,	'q' },
 	{"help",		no_argument,		0,	'h' },
 	{0,			0,              	0,	 0  },
 };
 
 #if defined(HAVE_LIBYAML) && HAVE_LIBYAML
-#define LIBYAML_MODES	"|libyaml-scan|libyaml-parse|libyaml-testsuite|libyaml-dump"
+#define LIBYAML_MODES	"|libyaml-scan|libyaml-parse|libyaml-testsuite|libyaml-dump|libyaml-diff"
 #else
 #define LIBYAML_MODES	""
 #endif
 
-#define MODES	"parse|scan|copy|testsuite|dump|build" LIBYAML_MODES
+#define MODES	"parse|scan|copy|testsuite|dump|dump2|build|walk|reader|compose|iterate|comment|pathspec" LIBYAML_MODES
 
 static void display_usage(FILE *fp, char *progname)
 {
@@ -106,6 +131,7 @@ static void display_usage(FILE *fp, char *progname)
 						" (source, position, type, module, all, none)\n");
 	fprintf(fp, "\t--module, -M <mod,[mod]> : Set debug message module enable"
 						" (unknown, atom, scan, parse, doc, build, internal, system, all, none)\n");
+	fprintf(fp, "\t--walk-path, -W <path>   : Walk path for work mode\n");
 	fprintf(fp, "\t--quiet, -q              : Quiet operation, do not "
 						"output messages (default %s)\n",
 						QUIET_DEFAULT ? "true" : "false");
@@ -116,30 +142,9 @@ static void display_usage(FILE *fp, char *progname)
 		exit(EXIT_FAILURE);
 }
 
-void print_escaped(const char *str, int length)
+void print_escaped(FILE *fp, const char *str, int length)
 {
-	int i;
-	char c;
-
-	if (length < 0)
-		length = strlen(str);
-	for (i = 0; i < length; i++) {
-		c = *str++;
-		if (c == '\\')
-			printf("\\\\");
-		else if (c == '\0')
-			printf("\\0");
-		else if (c == '\b')
-			printf("\\b");
-		else if (c == '\n')
-			printf("\\n");
-		else if (c == '\r')
-			printf("\\r");
-		else if (c == '\t')
-			printf("\\t");
-		else
-			printf("%c", c);
-	}
+	fprintf(fp, "%s", fy_utf8_format_text_a(str, length, fyue_doublequote));
 }
 
 static int txt2esc_internal(const char *s, int l, char *out, int *outszp, int delim)
@@ -365,7 +370,7 @@ int do_parse(struct fy_parser *fyp)
 	return fyp->stream_error ? -1 : 0;
 }
 
-void dump_testsuite_event(struct fy_parser *fyp, struct fy_event *fye)
+void dump_testsuite_event(FILE *fp, struct fy_parser *fyp, struct fy_event *fye)
 {
 	const char *anchor = NULL, *tag = NULL, *value = NULL;
 	size_t anchor_len = 0, tag_len = 0, value_len = 0;
@@ -373,49 +378,49 @@ void dump_testsuite_event(struct fy_parser *fyp, struct fy_event *fye)
 
 	switch (fye->type) {
 	case FYET_NONE:
-		printf("???\n");
+		fprintf(fp, "???\n");
 		break;
 	case FYET_STREAM_START:
-		printf("+STR\n");
+		fprintf(fp, "+STR\n");
 		break;
 	case FYET_STREAM_END:
-		printf("-STR\n");
+		fprintf(fp, "-STR\n");
 		break;
 	case FYET_DOCUMENT_START:
-		printf("+DOC%s\n", !fy_document_event_is_implicit(fye) ? " ---" : "");
+		fprintf(fp, "+DOC%s\n", !fy_document_event_is_implicit(fye) ? " ---" : "");
 		break;
 	case FYET_DOCUMENT_END:
-		printf("-DOC%s\n", !fy_document_event_is_implicit(fye) ? " ..." : "");
+		fprintf(fp, "-DOC%s\n", !fy_document_event_is_implicit(fye) ? " ..." : "");
 		break;
 	case FYET_MAPPING_START:
 		if (fye->mapping_start.anchor)
 			anchor = fy_token_get_text(fye->mapping_start.anchor, &anchor_len);
 		if (fye->mapping_start.tag)
 			tag = fy_token_get_text(fye->mapping_start.tag, &tag_len);
-		printf("+MAP");
+		fprintf(fp, "+MAP");
 		if (anchor)
-			printf(" &%.*s", (int)anchor_len, anchor);
+			fprintf(fp, " &%.*s", (int)anchor_len, anchor);
 		if (tag)
-			printf(" <%.*s>", (int)tag_len, tag);
-		printf("\n");
+			fprintf(fp, " <%.*s>", (int)tag_len, tag);
+		fprintf(fp, "\n");
 		break;
 	case FYET_MAPPING_END:
-		printf("-MAP\n");
+		fprintf(fp, "-MAP\n");
 		break;
 	case FYET_SEQUENCE_START:
 		if (fye->sequence_start.anchor)
 			anchor = fy_token_get_text(fye->sequence_start.anchor, &anchor_len);
 		if (fye->sequence_start.tag)
 			tag = fy_token_get_text(fye->sequence_start.tag, &tag_len);
-		printf("+SEQ");
+		fprintf(fp, "+SEQ");
 		if (anchor)
-			printf(" &%.*s", (int)anchor_len, anchor);
+			fprintf(fp, " &%.*s", (int)anchor_len, anchor);
 		if (tag)
-			printf(" <%.*s>", (int)tag_len, tag);
-		printf("\n");
+			fprintf(fp, " <%.*s>", (int)tag_len, tag);
+		fprintf(fp, "\n");
 		break;
 	case FYET_SEQUENCE_END:
-		printf("-SEQ\n");
+		fprintf(fp, "-SEQ\n");
 		break;
 	case FYET_SCALAR:
 		if (fye->scalar.anchor)
@@ -426,131 +431,106 @@ void dump_testsuite_event(struct fy_parser *fyp, struct fy_event *fye)
 		if (fye->scalar.value)
 			value = fy_token_get_text(fye->scalar.value, &value_len);
 
-		printf("=VAL");
+		fprintf(fp, "=VAL");
 		if (anchor)
-			printf(" &%.*s", (int)anchor_len, anchor);
+			fprintf(fp, " &%.*s", (int)anchor_len, anchor);
 		if (tag)
-			printf(" <%.*s>", (int)tag_len, tag);
+			fprintf(fp, " <%.*s>", (int)tag_len, tag);
 
 		style = fy_token_scalar_style(fye->scalar.value);
 		switch (style) {
 		case FYAS_PLAIN:
-			printf(" :");
+			fprintf(fp, " :");
 			break;
 		case FYAS_SINGLE_QUOTED:
-			printf(" '");
+			fprintf(fp, " '");
 			break;
 		case FYAS_DOUBLE_QUOTED:
-			printf(" \"");
+			fprintf(fp, " \"");
 			break;
 		case FYAS_LITERAL:
-			printf(" |");
+			fprintf(fp, " |");
 			break;
 		case FYAS_FOLDED:
-			printf(" >");
+			fprintf(fp, " >");
 			break;
 		default:
 			abort();
 		}
-		print_escaped(value, value_len);
-		printf("\n");
+		print_escaped(fp, value, value_len);
+		fprintf(fp, "\n");
 		break;
 	case FYET_ALIAS:
 		anchor = fy_token_get_text(fye->alias.anchor, &anchor_len);
-		printf("=ALI *%.*s\n", (int)anchor_len, anchor);
+		fprintf(fp, "=ALI *%.*s\n", (int)anchor_len, anchor);
 		break;
 	default:
 		assert(0);
 	}
 }
 
-int do_testsuite(struct fy_parser *fyp)
+int do_testsuite(FILE *fp, struct fy_parser *fyp, bool null_output)
 {
 	struct fy_eventp *fyep;
 
 	while ((fyep = fy_parse_private(fyp)) != NULL) {
-		dump_testsuite_event(fyp, &fyep->e);
+		if (!null_output)
+			dump_testsuite_event(fp, fyp, &fyep->e);
 		fy_parse_eventp_recycle(fyp, fyep);
 	}
 
 	return fyp->stream_error ? -1 : 0;
 }
 
-static void dump_token(struct fy_parser *fyp, struct fy_token *fyt)
+static void dump_token(struct fy_token *fyt)
 {
 	const char *style;
+	const struct fy_version *vers;
+	const char *handle, *prefix, *suffix;
+	const char *typetxt;
+
+	typetxt = fy_token_type_txt[fyt->type];
+	assert(typetxt);
 
 	switch (fyt->type) {
-	case FYTT_NONE:
-		printf("%s\n", "NONE");
-		break;
-	case FYTT_STREAM_START:
-		printf("%s\n", "STREAM_START");
-		break;
-	case FYTT_STREAM_END:
-		printf("%s\n", "STREAM_END");
-		break;
 	case FYTT_VERSION_DIRECTIVE:
-		printf("%s handle=%s\n", "VERSION_DIRECTIVE",
-				fy_atom_get_esc_text_a(&fyt->handle));
+		vers = fy_version_directive_token_version(fyt);
+		assert(vers);
+		printf("%s value=%d.%d\n", typetxt,
+				vers->major, vers->minor);
 		break;
 	case FYTT_TAG_DIRECTIVE:
-		printf("%s handle='%s'\n", "TAG_DIRECTIVE",
-				fy_atom_get_esc_text_a(&fyt->handle));
-		break;
-	case FYTT_DOCUMENT_START:
-		printf("%s\n", "DOCUMENT_START");
-		break;
-	case FYTT_DOCUMENT_END:
-		printf("%s\n", "DOCUMENT_END");
-		break;
-	case FYTT_BLOCK_SEQUENCE_START:
-		printf("%s\n", "BLOCK_SEQUENCE_START");
-		break;
-	case FYTT_BLOCK_MAPPING_START:
-		printf("%s\n", "BLOCK_MAPPING_START");
-		break;
-	case FYTT_BLOCK_END:
-		printf("%s\n", "BLOCK_END");
-		break;
-	case FYTT_FLOW_SEQUENCE_START:
-		printf("%s\n", "FLOW_SEQUENCE_START");
-		break;
-	case FYTT_FLOW_SEQUENCE_END:
-		printf("%s\n", "FLOW_SEQUENCE_END");
-		break;
-	case FYTT_FLOW_MAPPING_START:
-		printf("%s\n", "FLOW_MAPPING_START");
-		break;
-	case FYTT_FLOW_MAPPING_END:
-		printf("%s\n", "FLOW_MAPPING_END");
-		break;
-	case FYTT_BLOCK_ENTRY:
-		printf("%s\n", "BLOCK_ENTRY");
-		break;
-	case FYTT_FLOW_ENTRY:
-		printf("%s\n", "FLOW_ENTRY");
-		break;
-	case FYTT_KEY:
-		printf("%s\n", "KEY");
-		break;
-	case FYTT_VALUE:
-		printf("%s\n", "VALUE");
+		handle = fy_tag_directive_token_handle0(fyt);
+		if (!handle)
+			handle = "";
+		prefix = fy_tag_directive_token_prefix0(fyt);
+		if (!prefix)
+			prefix = "";
+		printf("%s handle='%s' prefix='%s'\n", typetxt,
+				txt2esc_a(handle, -1),
+				txt2esc_a(prefix, -1));
 		break;
 	case FYTT_ALIAS:
-		printf("%s value='%s'\n", "ALIAS",
+		printf("%s value='%s'\n", typetxt,
 				fy_atom_get_esc_text_a(&fyt->handle));
 		break;
 	case FYTT_ANCHOR:
-		printf("%s value='%s'\n", "ANCHOR",
+		printf("%s value='%s'\n", typetxt,
 				fy_atom_get_esc_text_a(&fyt->handle));
 		break;
 	case FYTT_TAG:
-		printf("%s tag='%s''\n", "TAG",
-				fy_atom_get_esc_text_a(&fyt->handle));
+		handle = fy_tag_token_handle0(fyt);
+		if (!handle)
+			handle = "";
+		suffix = fy_tag_token_suffix0(fyt);
+		if (!suffix)
+			suffix = "";
+		printf("%s handle='%s' suffix='%s'\n", typetxt,
+				txt2esc_a(handle, -1),
+				txt2esc_a(suffix, -1));
 		break;
 	case FYTT_SCALAR:
-		switch (fyt->scalar.style) {
+		switch (fy_token_scalar_style(fyt)) {
 		case FYSS_ANY:
 			style = "ANY";
 			break;
@@ -573,14 +553,38 @@ static void dump_token(struct fy_parser *fyp, struct fy_token *fyt)
 			style = "*illegal*";
 			break;
 		}
-		printf("%s value='%s' style=%s\n", "SCALAR",
+		printf("%s value='%s' style=%s\n", typetxt,
 				fy_atom_get_esc_text_a(&fyt->handle),
 				style);
 		break;
 
 	case FYTT_INPUT_MARKER:
-		printf("%s value='%s'\n", "INPUT_MARKER",
+		printf("%s value='%s'\n", typetxt,
 				fy_atom_get_esc_text_a(&fyt->handle));
+		break;
+
+	case FYTT_PE_MAP_KEY:
+		printf("%s value='%s'\n", typetxt,
+				fy_atom_get_esc_text_a(&fyt->handle));
+		break;
+
+	case FYTT_PE_SEQ_INDEX:
+		printf("%s value=%d\n", typetxt,
+				fyt->seq_index.index);
+		break;
+
+	case FYTT_PE_SEQ_SLICE:
+		printf("%s value=%d:%d\n", typetxt,
+				fyt->seq_slice.start_index, fyt->seq_slice.end_index);
+		break;
+
+	case FYTT_PE_ALIAS:
+		printf("%s value='%s'\n", "PE-ALIAS",
+				fy_atom_get_esc_text_a(&fyt->handle));
+		break;
+
+	default:
+		printf("%s\n", typetxt);
 		break;
 	}
 }
@@ -590,7 +594,7 @@ int do_scan(struct fy_parser *fyp)
 	struct fy_token *fyt;
 
 	while ((fyt = fy_scan(fyp)) != NULL) {
-		dump_token(fyp, fyt);
+		dump_token(fyt);
 		fy_token_unref(fyt);
 	}
 
@@ -605,8 +609,8 @@ int do_copy(struct fy_parser *fyp)
 
 	count = 0;
 	for (;;) {
-		line = fyp->line;
-		column = fyp->column;
+		line = fyp_line(fyp);
+		column = fyp_column(fyp);
 
 		c = fy_parse_get(fyp);
 		if (c < 0) {
@@ -656,7 +660,7 @@ int do_copy(struct fy_parser *fyp)
 	return 0;
 }
 
-int do_dump(struct fy_parser *fyp, int indent, int width, bool resolve, bool sort)
+int do_dump(struct fy_parser *fyp, int indent, int width, bool resolve, bool sort, bool null_output)
 {
 	struct fy_document *fyd;
 	unsigned int flags;
@@ -676,12 +680,416 @@ int do_dump(struct fy_parser *fyp, int indent, int width, bool resolve, bool sor
 				return -1;
 		}
 
+		if (!null_output)
+			fy_emit_document_to_file(fyd, flags, NULL);
+
+		fy_parse_document_destroy(fyp, fyd);
+
+		count++;
+	}
+
+	return count > 0 ? 0 : -1;
+}
+
+int do_dump2(struct fy_parser *fyp, int indent, int width, bool resolve, bool sort, bool null_output)
+{
+	struct fy_document *fyd;
+	struct fy_document_builder *fydb;
+	unsigned int flags;
+	int rc, count;
+
+	flags = 0;
+	if (sort)
+		flags |= FYECF_SORT_KEYS;
+	flags |= FYECF_INDENT(indent) | FYECF_WIDTH(width);
+
+	fydb = fy_document_builder_create(&fyp->cfg);
+	assert(fydb);
+
+	count = 0;
+	while ((fyd = fy_document_builder_load_document(fydb, fyp)) != NULL) {
+
+		if (resolve) {
+			rc = fy_document_resolve(fyd);
+			if (rc)
+				goto out;
+		}
+
 		fy_emit_document_to_file(fyd, flags, NULL);
 
 		fy_parse_document_destroy(fyp, fyd);
 
 		count++;
 	}
+
+	fy_document_builder_destroy(fydb);
+
+out:
+	return count > 0 ? 0 : -1;
+}
+
+struct composer_data {
+	struct fy_parser *fyp;
+	struct fy_document *fyd;
+	bool null_output;
+	bool document_ready;
+	bool single_document;
+};
+
+static enum fy_composer_return
+process_event(struct fy_parser *fyp, struct fy_event *fye, struct fy_path *path, void *userdata)
+{
+	struct composer_data *cd = userdata;
+	struct fy_document *fyd;
+	struct fy_path_component *parent, *last;
+	struct fy_node *fyn, *fyn_parent;
+	struct fy_node_pair *fynp;
+	char tbuf[80];
+	int rc;
+
+	if (cd->null_output)
+		return FYCR_OK_CONTINUE;
+
+	fyp_info(fyp, "%s: %c%c%c%c%c %3d - %-32s: %s\n", fy_event_type_txt[fye->type],
+			fy_path_in_root(path) ? 'R' : '-',
+			fy_path_in_sequence(path) ? 'S' : '-',
+			fy_path_in_mapping(path) ? 'M' : '-',
+			fy_path_in_mapping_key(path) ? 'K' :
+				fy_path_in_mapping_value(path) ? 'V' : '-',
+			fy_path_is_collection_root(path) ? '/' : '-',
+			fy_path_depth(path),
+			fy_path_get_text_alloca(path),
+			fy_token_dump_format(fy_event_get_token(fye), tbuf, sizeof(tbuf)));
+
+	switch (fye->type) {
+		/* nothing to do for those */
+	case FYET_NONE:
+	case FYET_STREAM_START:
+	case FYET_STREAM_END:
+		break;
+
+	case FYET_DOCUMENT_START:
+		if (cd->fyd) {
+			fy_document_destroy(cd->fyd);
+			cd->fyd = NULL;
+		}
+		cd->document_ready = false;
+
+		cd->fyd = fy_document_create_from_event(fyp, fye);
+		fyp_error_check(fyp, cd->fyd, err_out,
+			"fy_document_create_from_event() failed");
+
+		break;
+
+	case FYET_DOCUMENT_END:
+		rc = fy_document_update_from_event(cd->fyd, fyp, fye);
+		fyp_error_check(fyp, !rc, err_out,
+			"fy_document_update_from_event() failed");
+
+		cd->document_ready = true;
+		/* on single document mode we stop here */
+		if (cd->single_document)
+			return FYCR_OK_STOP;
+		break;
+
+
+	case FYET_SCALAR:
+	case FYET_ALIAS:
+	case FYET_MAPPING_START:
+	case FYET_SEQUENCE_START:
+
+		fyd = cd->fyd;
+		assert(fyd);
+
+		fyn = fy_node_create_from_event(fyd, fyp, fye);
+		fyp_error_check(fyp, fyn, err_out,
+			"fy_node_create_from_event() failed");
+
+		switch (fye->type) {
+		default:
+			/* XXX should now happen */
+			break;
+
+		case FYET_SCALAR:
+		case FYET_ALIAS:
+			last = NULL;
+			break;
+
+		case FYET_MAPPING_START:
+			last = fy_path_last_component(path);
+			assert(last);
+
+			fy_path_component_set_mapping_user_data(last, fyn);
+			fy_path_component_set_mapping_key_user_data(last, NULL);
+
+			break;
+
+		case FYET_SEQUENCE_START:
+
+			last = fy_path_last_component(path);
+			assert(last);
+
+			fy_path_component_set_sequence_user_data(last, fyn);
+			break;
+		}
+
+		/* parent */
+		parent = fy_path_last_not_collection_root_component(path);
+
+		if (fy_path_in_root(path)) {
+
+			rc = fy_document_set_root(cd->fyd, fyn);
+			fyp_error_check(fyp, !rc, err_out,
+				"fy_document_set_root() failed");
+
+		} else if (fy_path_in_sequence(path)) {
+
+			assert(parent);
+			fyn_parent = fy_path_component_get_sequence_user_data(parent);
+			assert(fyn_parent);
+			assert(fy_node_is_sequence(fyn_parent));
+
+			rc = fy_node_sequence_add_item(fyn_parent, fyn);
+			fyp_error_check(fyp, !rc, err_out,
+					"fy_node_sequence_add_item() failed");
+
+		} else {
+			/* only thing left */
+			assert(fy_path_in_mapping(path));
+
+			assert(parent);
+			fyn_parent = fy_path_component_get_mapping_user_data(parent);
+			assert(fyn_parent);
+			assert(fy_node_is_mapping(fyn_parent));
+
+			if (fy_path_in_mapping_key(path)) {
+
+				fynp = fy_node_pair_create_with_key(fyd, fyn_parent, fyn);
+				fyp_error_check(fyp, fynp, err_out,
+						"fy_node_pair_create_with_key() failed");
+
+				fy_path_component_set_mapping_key_user_data(parent, fynp);
+
+			} else {
+
+				assert(fy_path_in_mapping_value(path));
+
+				fynp = fy_path_component_get_mapping_key_user_data(parent);
+				assert(fynp);
+
+				rc = fy_node_pair_update_with_value(fynp, fyn);
+				fyp_error_check(fyp, !rc, err_out,
+						"fy_node_pair_update_with_value() failed");
+
+				fy_path_component_set_mapping_key_user_data(parent, NULL);
+			}
+		}
+
+		break;
+
+	case FYET_MAPPING_END:
+		last = fy_path_last_component(path);
+		assert(last);
+
+		fyn = fy_path_component_get_mapping_user_data(last);
+		assert(fyn);
+		assert(fy_node_is_mapping(fyn));
+
+		rc = fy_node_update_from_event(fyn, fyp, fye);
+		fyp_error_check(fyp, !rc, err_out,
+			"fy_node_update_from_event() failed");
+
+		break;
+
+	case FYET_SEQUENCE_END:
+		last = fy_path_last_component(path);
+		assert(last);
+
+		fyn = fy_path_component_get_sequence_user_data(last);
+		assert(fyn);
+		assert(fy_node_is_sequence(fyn));
+
+		rc = fy_node_update_from_event(fyn, fyp, fye);
+		fyp_error_check(fyp, !rc, err_out,
+			"fy_node_update_from_event() failed");
+
+		break;
+	}
+
+	return FYCR_OK_CONTINUE;
+
+err_out:
+	return FYCR_ERROR;
+}
+
+int do_compose(struct fy_parser *fyp, int indent, int width, bool resolve, bool sort, bool null_output)
+{
+	struct composer_data cd;
+	unsigned int flags;
+	int rc;
+
+	flags = 0;
+	if (sort)
+		flags |= FYECF_SORT_KEYS;
+	flags |= FYECF_INDENT(indent) | FYECF_WIDTH(width);
+
+	memset(&cd, 0, sizeof(cd));
+	cd.null_output = null_output;
+	cd.single_document = true;
+
+	rc = fy_parse_compose(fyp, process_event, &cd);
+	if (rc == 0 && cd.fyd)
+		fy_document_default_emit_to_fp(cd.fyd, stdout);
+
+	fy_document_destroy(cd.fyd);
+
+	return 0;
+}
+
+struct fy_node *
+fy_node_get_root(struct fy_node *fyn)
+{
+	if (!fyn)
+		return NULL;
+	while (fyn->parent)
+		fyn = fyn->parent;
+	return fyn;
+}
+
+bool
+fy_node_belongs_to_key(struct fy_document *fyd, struct fy_node *fyn)
+{
+	return fyd->root != fy_node_get_root(fyn);
+}
+
+int do_iterate(struct fy_parser *fyp)
+{
+	enum fy_node_iterator_flags flags;
+	struct fy_document *fyd;
+	int count;
+	struct fy_node *fyn;
+	struct fy_node_iterator ni;
+	enum fy_node_iterator_result res;
+	char *path;
+	size_t len;
+	const char *text;
+	char textbuf[16];
+	bool belongs_to_key;
+
+	memset(&ni, 0, sizeof(ni));
+
+	flags = FYNIF_DEPTH_FIRST;
+	fy_node_iterator_setup(&ni, flags | FYNIF_FOLLOW_KEYS | FYNIF_FOLLOW_LINKS);
+
+	count = 0;
+	while ((fyd = fy_parse_load_document(fyp)) != NULL) {
+
+		fprintf(stderr, "> Start\n");
+		fy_node_iterator_start(&ni, fy_document_root(fyd));
+		fyn = NULL;
+		while ((fyn = fy_node_iterator_next(&ni, fyn)) != NULL) {
+
+			belongs_to_key = fy_node_belongs_to_key(fyd, fyn);
+			path = fy_node_get_path(fyn);
+			if (fy_node_is_scalar(fyn)) {
+				text = fy_node_get_scalar(fyn, &len);
+				assert(text);
+				fy_utf8_format_text(text, len, textbuf, sizeof(textbuf), fyue_doublequote);
+				if (!fy_node_is_alias(fyn))
+					fprintf(stderr, "%40s \"%s\"%s\n", path, textbuf, belongs_to_key ? " KEY" : "");
+				else
+					fprintf(stderr, "%40s *%s%s\n", path, textbuf, belongs_to_key ? " KEY" : "");
+			} else if (fy_node_is_sequence(fyn)) {
+				fprintf(stderr, "%40s [%s\n", path, belongs_to_key ? " KEY" : "");
+			} else if (fy_node_is_mapping(fyn)) {
+				fprintf(stderr, "%40s {%s\n", path, belongs_to_key ? " KEY" : "");
+			}
+
+			free(path);
+		}
+
+		res = fy_node_iterator_end(&ni);
+
+		fprintf(stderr, "> End\n");
+
+		fy_parse_document_destroy(fyp, fyd);
+
+		if (res != FYNIR_OK) {
+			fprintf(stderr, "> Iterator error %d\n", (int)res);
+			break;
+		}
+
+		count++;
+	}
+
+	fy_node_iterator_cleanup(&ni);
+
+	return count > 0 ? 0 : -1;
+}
+
+int do_comment(struct fy_parser *fyp)
+{
+	enum fy_node_iterator_flags flags;
+	struct fy_document *fyd;
+	int count;
+	struct fy_node *fyn;
+	struct fy_node_iterator ni;
+	enum fy_node_iterator_result res;
+	char *path;
+	struct fy_token *fyt;
+	struct fy_atom *handle;
+	enum fy_comment_placement placement;
+	static const char *placement_txt[] =  { "top", "right", "bottom" };
+	char buf[1024];
+
+	memset(&ni, 0, sizeof(ni));
+
+	flags = FYNIF_DEPTH_FIRST;
+	fy_node_iterator_setup(&ni, flags | FYNIF_FOLLOW_KEYS | FYNIF_FOLLOW_LINKS);
+
+	count = 0;
+	while ((fyd = fy_parse_load_document(fyp)) != NULL) {
+
+		fy_node_iterator_start(&ni, fy_document_root(fyd));
+		fyn = NULL;
+		while ((fyn = fy_node_iterator_next(&ni, fyn)) != NULL) {
+
+			if (!fy_node_is_scalar(fyn))
+				continue;
+
+			fyt = fy_node_get_scalar_token(fyn);
+			if (!fyt || !fy_token_has_any_comment(fyt))
+				continue;
+
+			path = fy_node_get_path(fyn);
+
+			fprintf(stderr, "scalar at %s\n", path);
+			for (placement = fycp_top; placement < fycp_max; placement++) {
+				handle = fy_token_comment_handle(fyt, placement, false);
+				if (!handle || !fy_atom_is_set(handle))
+					continue;
+
+				if (!fy_token_get_comment(fyt, buf, sizeof(buf), placement))
+					continue;
+
+				fprintf(stderr, "%s: %s\n", placement_txt[placement], buf);
+			}
+
+			free(path);
+		}
+
+		res = fy_node_iterator_end(&ni);
+
+		fy_parse_document_destroy(fyp, fyd);
+
+		if (res != FYNIR_OK) {
+			break;
+		}
+
+		count++;
+	}
+
+	fy_node_iterator_cleanup(&ni);
 
 	return count > 0 ? 0 : -1;
 }
@@ -915,89 +1323,89 @@ int do_libyaml_parse(yaml_parser_t *parser)
 	return 0;
 }
 
-void dump_libyaml_testsuite_event(yaml_event_t *event)
+void dump_libyaml_testsuite_event(FILE *fp, yaml_event_t *event)
 {
 	switch (event->type) {
 	case YAML_NO_EVENT:
-		printf("???\n");
+		fprintf(fp, "???\n");
 		break;
 	case YAML_STREAM_START_EVENT:
-		printf("+STR\n");
+		fprintf(fp, "+STR\n");
 		break;
 	case YAML_STREAM_END_EVENT:
-		printf("-STR\n");
+		fprintf(fp, "-STR\n");
 		break;
 	case YAML_DOCUMENT_START_EVENT:
-		printf("+DOC");
+		fprintf(fp, "+DOC");
 		if (!event->data.document_start.implicit)
-			printf(" ---");
-		printf("\n");
+			fprintf(fp, " ---");
+		fprintf(fp, "\n");
 		break;
 	case YAML_DOCUMENT_END_EVENT:
-		printf("-DOC");
+		fprintf(fp, "-DOC");
 		if (!event->data.document_end.implicit)
-			printf(" ...");
-		printf("\n");
+			fprintf(fp, " ...");
+		fprintf(fp, "\n");
 		break;
 	case YAML_MAPPING_START_EVENT:
-		printf("+MAP");
+		fprintf(fp, "+MAP");
 		if (event->data.mapping_start.anchor)
-			printf(" &%s", event->data.mapping_start.anchor);
+			fprintf(fp, " &%s", event->data.mapping_start.anchor);
 		if (event->data.mapping_start.tag)
-			printf(" <%s>", event->data.mapping_start.tag);
-		printf("\n");
+			fprintf(fp, " <%s>", event->data.mapping_start.tag);
+		fprintf(fp, "\n");
 		break;
 	case YAML_MAPPING_END_EVENT:
-      		printf("-MAP\n");
+      		fprintf(fp, "-MAP\n");
 		break;
 	case YAML_SEQUENCE_START_EVENT:
-		printf("+SEQ");
+		fprintf(fp, "+SEQ");
 		if (event->data.sequence_start.anchor)
-			printf(" &%s", event->data.sequence_start.anchor);
+			fprintf(fp, " &%s", event->data.sequence_start.anchor);
 		if (event->data.sequence_start.tag)
-			printf(" <%s>", event->data.sequence_start.tag);
-		printf("\n");
+			fprintf(fp, " <%s>", event->data.sequence_start.tag);
+		fprintf(fp, "\n");
 		break;
 	case YAML_SEQUENCE_END_EVENT:
-		printf("-SEQ\n");
+		fprintf(fp, "-SEQ\n");
 		break;
 	case YAML_SCALAR_EVENT:
-		printf("=VAL");
+		fprintf(fp, "=VAL");
 		if (event->data.scalar.anchor)
-			printf(" &%s", event->data.scalar.anchor);
+			fprintf(fp, " &%s", event->data.scalar.anchor);
 		if (event->data.scalar.tag)
-			printf(" <%s>", event->data.scalar.tag);
+			fprintf(fp, " <%s>", event->data.scalar.tag);
 		switch (event->data.scalar.style) {
 		case YAML_PLAIN_SCALAR_STYLE:
-			printf(" :");
+			fprintf(fp, " :");
 			break;
 		case YAML_SINGLE_QUOTED_SCALAR_STYLE:
-			printf(" '");
+			fprintf(fp, " '");
 			break;
 		case YAML_DOUBLE_QUOTED_SCALAR_STYLE:
-			printf(" \"");
+			fprintf(fp, " \"");
 			break;
 		case YAML_LITERAL_SCALAR_STYLE:
-			printf(" |");
+			fprintf(fp, " |");
 			break;
 		case YAML_FOLDED_SCALAR_STYLE:
-			printf(" >");
+			fprintf(fp, " >");
 			break;
 		case YAML_ANY_SCALAR_STYLE:
 			abort();
 		}
-		print_escaped((char *)event->data.scalar.value, event->data.scalar.length);
-		printf("\n");
+		print_escaped(fp, (char *)event->data.scalar.value, event->data.scalar.length);
+		fprintf(fp, "\n");
 		break;
 	case YAML_ALIAS_EVENT:
-		printf("=ALI *%s\n", event->data.alias.anchor);
+		fprintf(fp, "=ALI *%s\n", event->data.alias.anchor);
 		break;
 	default:
 		assert(0);
 	}
 }
 
-int do_libyaml_testsuite(yaml_parser_t *parser)
+int do_libyaml_testsuite(FILE *fp, yaml_parser_t *parser, bool null_output)
 {
         yaml_event_t event;
         int done = 0;
@@ -1007,7 +1415,8 @@ int do_libyaml_testsuite(yaml_parser_t *parser)
 		if (!yaml_parser_parse(parser, &event))
 			return -1;
 
-		dump_libyaml_testsuite_event(&event);
+		if (!null_output)
+			dump_libyaml_testsuite_event(fp, &event);
 
 		done = (event.type == YAML_STREAM_END_EVENT);
 
@@ -1017,7 +1426,7 @@ int do_libyaml_testsuite(yaml_parser_t *parser)
 	return 0;
 }
 
-int do_libyaml_dump(yaml_parser_t *parser, yaml_emitter_t *emitter)
+int do_libyaml_dump(yaml_parser_t *parser, yaml_emitter_t *emitter, bool null_output)
 {
         yaml_document_t document;
         int done = 0;
@@ -1037,10 +1446,14 @@ int do_libyaml_dump(yaml_parser_t *parser, yaml_emitter_t *emitter)
 			if (counter > 0)
 				printf("# document seperator\n");
 
-			yaml_emitter_dump(emitter, &document);
+			if (!null_output)
+				yaml_emitter_dump(emitter, &document);
+			else
+				yaml_document_delete(&document);
 			counter++;
 
-			yaml_emitter_flush(emitter);
+			if (!null_output)
+				yaml_emitter_flush(emitter);
 		} else
 			yaml_document_delete(&document);
         }
@@ -1266,7 +1679,7 @@ static void do_accel_kv(const struct fy_parse_cfg *cfg, int argc, char *argv[])
 	fy_kv_store_cleanup(&kvs);
 }
 
-static int do_accel_test(const struct fy_parse_cfg *cfg, int argc, char *argv[])
+int do_accel_test(const struct fy_parse_cfg *cfg, int argc, char *argv[])
 {
 	do_accel_kv(cfg, argc, argv);
 
@@ -1899,7 +2312,7 @@ int do_build(const struct fy_parse_cfg *cfg, int argc, char *argv[])
 	cfg_tmp.flags |= FYPCF_COLLECT_DIAG;
 
 	/* this is an error */
-	fyd = fy_document_build_from_string(&cfg_tmp, "{ a: 5 ]");
+	fyd = fy_document_build_from_string(&cfg_tmp, "{ a: 5 ] }");
 	assert(fyd);
 	assert(!fyd->root);
 
@@ -2473,105 +2886,885 @@ int do_build(const struct fy_parse_cfg *cfg, int argc, char *argv[])
 	}
 #endif
 
+#if 0
 	do_accel_test(cfg, argc, argv);
+#endif
 
 	return 0;
 }
 
-static int modify_module_flags(const char *what, unsigned int *flagsp)
-{
-	static const struct {
-		const char *name;
-		unsigned int set;
-		unsigned int clr;
-	} mf[] = {
-		{ .name = "all",	.set = FYPCF_DEBUG_ALL, },
-		{ .name = "none",	.clr = FYPCF_DEBUG_ALL, },
-		{ .name = "default",	.set = FYPCF_DEBUG_DEFAULT, .clr = ~FYPCF_DEBUG_DEFAULT },
-		{ .name = "unknown",	.set = FYPCF_DEBUG_UNKNOWN },
-		{ .name = "atom",	.set = FYPCF_DEBUG_ATOM },
-		{ .name = "scan",	.set = FYPCF_DEBUG_SCAN },
-		{ .name = "parse",	.set = FYPCF_DEBUG_PARSE },
-		{ .name = "doc",	.set = FYPCF_DEBUG_DOC },
-		{ .name = "build",	.set = FYPCF_DEBUG_BUILD },
-		{ .name = "internal",	.set = FYPCF_DEBUG_INTERNAL },
-		{ .name = "system",	.set = FYPCF_DEBUG_SYSTEM },
-	};
-	unsigned int i;
+struct pathspec_arg {
+	const char *arg;
+	size_t argsz;
+	struct fy_document *fyd;
+	bool is_numeric;
+	int number;
+	void *user;
+};
 
-	if (!what || !flagsp)
+struct pathspec {
+	const char *func;
+	size_t funcsz;
+	unsigned int argc;
+	struct pathspec_arg arg[10];
+	void *user;
+};
+
+struct path {
+	bool absolute;		/* starts at root */
+	bool trailing_slash;
+	unsigned int count;
+	unsigned int alloc;
+	struct pathspec *ps;
+	struct pathspec ps_local[10];
+};
+
+int setup_path(struct path *path)
+{
+	if (!path)
 		return -1;
 
-	for (i = 0; i < sizeof(mf)/sizeof(mf[0]); i++) {
-		if (!strcmp(what, mf[i].name)) {
-			*flagsp |=  mf[i].set;
-			*flagsp &= ~mf[i].clr;
-			return 0;
+	memset(path, 0, sizeof(*path));
+	path->count = 0;
+	path->alloc = sizeof(path->ps_local)/sizeof(path->ps_local[0]);
+	path->absolute = false;
+	path->trailing_slash = false;
+	path->ps = path->ps_local;
+
+	return 0;
+}
+
+void cleanup_path(struct path *path)
+{
+	struct pathspec *ps;
+	unsigned int i;
+
+	if (!path)
+		return;
+
+	while (path->count > 0) {
+		ps = &path->ps[--path->count];
+		for (i = 0; i < ps->argc; i++) {
+			if (ps->arg[i].fyd)
+				fy_document_destroy(ps->arg[i].fyd);
 		}
 	}
+	if (path->ps != path->ps_local)
+		free(path->ps);
+	path->ps = path->ps_local;
+	path->count = 0;
+	path->alloc = sizeof(path->ps_local)/sizeof(path->ps_local[0]);
+	path->absolute = false;
+	path->trailing_slash = false;
+	path->ps = path->ps_local;
+}
 
+size_t parse_pathspec(const char *str, size_t len, struct pathspec *ps)
+{
+	const char *s, *e, *ss, *ee;
+	unsigned int maxargs;
+	bool is_func;
+	size_t adv;
+	struct fy_document *fyd;
+	struct pathspec_arg *psa;
+
+	s = str;
+	e = s + len;
+
+	ps->func = NULL;
+	ps->funcsz = 0;
+	ps->argc = 0;
+
+	maxargs = sizeof(ps->arg)/sizeof(ps->arg[0]);
+
+	if (s >= e)
+		return 0;
+
+	is_func = false;
+
+	/* either . .. or .func( */
+	if (*s == '.') {
+		/* . */
+		if (s + 1 >= e || s[1] == '/') {
+			ps->func = s;
+			ps->funcsz = 1;
+			s++;
+			goto out;
+		}
+		/* .. */
+		if (s[1] == '.') {
+			if (s + 2 >= e || s[2] == '/') {
+				ps->func = s;
+				ps->funcsz = 2;
+				s += 2;
+				goto out;
+			}
+
+			/* error; stop */
+			goto err_out;
+		}
+		/* skip over . */
+		ss = ++s;
+		while (s < e && *s != '(')
+			s++;
+
+		/* error; no ( found */
+		if (s >= e)
+			goto err_out;
+
+		ps->func = ss;
+		ps->funcsz = (size_t)(s - ss);
+
+		is_func = true;
+	}
+
+	if (is_func && *s == '(')
+		s++;
+
+	for (;;) {
+		ss = s;
+
+		fyd = NULL;
+		if (fy_is_path_flow_key_start(*s)) {
+			fyd = fy_flow_document_build_from_string(NULL, s, e - s, &adv);
+			if (!fyd)
+				goto err_out;
+
+			s = ss + adv;
+		} else {
+			if (!is_func) {
+				while (s < e && *s != '/')
+					s++;
+			} else {
+				while (s < e && *s != ',' && *s != ')')
+					s++;
+			}
+		}
+		if (ps->argc >= maxargs)
+			goto err_out;
+
+		psa = &ps->arg[ps->argc++];
+
+		psa->arg = ss;
+		psa->argsz = s - ss;
+		psa->fyd = fyd;
+
+		ee = s;
+
+		/* check for numeric */
+		if (ss < ee && (fy_is_num(*ss) || *ss == '-')) {
+			bool is_neg;
+			int idx, len, digit;
+
+			if (*ss == '-') {
+				ss++;
+				is_neg = true;
+			} else
+				is_neg = false;
+
+			idx = 0;
+			len = 0;
+			while (ss < ee && fy_is_num(*ss)) {
+				digit = *ss - '0';
+				/* no 0 prefixed numbers allowed */
+				if (len > 0 && idx == 0)
+					goto not_numeric;
+
+				/* number overflow */
+				if (idx * 10 < idx)
+					goto not_numeric;
+
+				idx = idx * 10;
+				idx += digit;
+				len++;
+				ss++;
+			}
+
+			if (is_neg)
+				idx = -idx;
+			psa->is_numeric = true;
+			psa->number = idx;
+
+		} else {
+not_numeric:
+			psa->is_numeric = false;
+			psa->number = 0;
+		}
+
+		if (!is_func || s >= e || *s == ')')
+			break;
+
+		if (s < e && *s == ',')
+			s++;
+	}
+
+	if (is_func && s < e && *s == ')')
+		s++;
+out:
+	return s - str;
+
+err_out:
+	return (size_t)-1;
+}
+
+int parse_path(const char *str, size_t len, struct path *path)
+{
+	const char *s, *e;
+	unsigned int i;
+	struct pathspec *ps, *psnew;
+	size_t adv;
+
+	path->count = 0;
+	path->absolute = false;
+	path->trailing_slash = false;
+
+	if (len == (size_t)-1)
+		len = strlen(str);
+
+	s = str;
+	e = s + len;
+
+	if (s >= e)
+		return -1;
+
+	/* starts at root */
+	if (*s == '/') {
+		s++;
+		path->absolute = true;
+	}
+
+	/* check for trailing slash and remove it */
+	if (e[-1] == '/') {
+		e--;
+		path->trailing_slash = true;
+	};
+
+	while (s < e) {
+		if (path->count >= path->alloc) {
+			psnew = realloc(path->ps == path->ps_local ? NULL : path->ps,
+					path->alloc * 2 * sizeof(*psnew));
+			if (!psnew)
+				goto err_out;
+			if (path->ps == path->ps_local)
+				memcpy(psnew, path->ps, path->count * sizeof(*psnew));
+			path->ps = psnew;
+			path->alloc *= 2;
+		}
+		ps = &path->ps[path->count++];
+		adv = parse_pathspec(s, (size_t)(e - s), ps);
+		if (adv == (size_t)-1)
+			goto err_out;
+
+		if (adv == 0)
+			break;
+
+		s += adv;
+		if (s < e && *s == '/')
+			s++;
+	}
+
+	/* error */
+	if (s < e)
+		goto err_out;
+
+	return 0;
+
+err_out:
+	while (path->count > 0) {
+		ps = &path->ps[--path->count];
+		for (i = 0; i < ps->argc; i++) {
+			if (ps->arg[i].fyd)
+				fy_document_destroy(ps->arg[i].fyd);
+		}
+	}
 	return -1;
 }
 
-static int modify_debug_diag_flags(const char *what, unsigned int *flagsp)
+int do_pathspec(int argc, char *argv[])
 {
-	static const struct {
-		const char *name;
-		unsigned int set;
-		unsigned int clr;
-	} df[] = {
-		{ .name = "all",	.set = FYPCF_DEBUG_DIAG_ALL, },
-		{ .name = "none",	.clr = FYPCF_DEBUG_DIAG_ALL, },
-		{ .name = "default",	.set = FYPCF_DEBUG_DIAG_DEFAULT, .clr = ~FYPCF_DEBUG_DIAG_DEFAULT },
-		{ .name = "source",	.set = FYPCF_DEBUG_DIAG_SOURCE },
-		{ .name = "position",	.set = FYPCF_DEBUG_DIAG_POSITION },
-		{ .name = "type",	.set = FYPCF_DEBUG_DIAG_TYPE },
-		{ .name = "module",	.set = FYPCF_DEBUG_DIAG_MODULE },
-	};
-	unsigned int i;
+	int i;
+	const char *s, *e;
+	size_t adv;
+	struct pathspec ps;
 
-	if (!what || !flagsp)
+	assert(argc > 0);
+
+	s = argv[0];
+	e = s + strlen(s);
+
+	if (s >= e)
 		return -1;
 
-	for (i = 0; i < sizeof(df)/sizeof(df[0]); i++) {
-		if (!strcmp(what, df[i].name)) {
-			*flagsp |=  df[i].set;
-			*flagsp &= ~df[i].clr;
-			return 0;
-		}
+	/* starts at root */
+	if (*s == '/') {
+		fprintf(stderr, "starts with /\n");
+		s++;
 	}
 
-	return -1;
+	while (s < e) {
+		fprintf(stderr, "parsing: %.*s\n", (int)(e - s), s);
+		adv = parse_pathspec(s, (size_t)(e - s), &ps);
+		if (adv == 0) {
+			fprintf(stderr, "parse_pathspec() returns 0\n");
+			break;
+		}
+		fprintf(stderr, "full-ps: %.*s\n", (int)adv, s);
+		fprintf(stderr, "func: %.*s\n", (int)ps.funcsz, ps.func);
+		for (i = 0; i < (int)ps.argc; i++) {
+			fprintf(stderr, "arg[%d]: %.*s\n", i, (int)ps.arg[i].argsz, ps.arg[i].arg);
+			if (ps.arg[i].fyd)
+				fy_document_destroy(ps.arg[i].fyd);
+		}
+		fprintf(stderr, "\n");
+
+		s += adv;
+
+		if (s < e && *s == '/')
+			s++;
+	}
+
+	return 0;
 }
 
-static int modify_debug_level_flags(const char *what, unsigned int *flagsp)
+struct fy_node *
+node_find(struct fy_document *fyd, struct fy_node *fyn_start, struct path *path)
 {
-	static const struct {
-		const char *name;
-		unsigned int set;
-		unsigned int clr;
-	} lf[] = {
-		{ .name = "default",	.set = FYPCF_DEBUG_LEVEL(DEBUG_LEVEL_DEFAULT), .clr = ~FYPCF_DEBUG_LEVEL(DEBUG_LEVEL_DEFAULT) },
-		{ .name = "debug",	.set = FYPCF_DEBUG_LEVEL_DEBUG, .clr = ~FYPCF_DEBUG_LEVEL_DEBUG },
-		{ .name = "info",	.set = FYPCF_DEBUG_LEVEL_INFO, .clr = ~FYPCF_DEBUG_LEVEL_INFO },
-		{ .name = "notice",	.set = FYPCF_DEBUG_LEVEL_NOTICE, .clr = ~FYPCF_DEBUG_LEVEL_NOTICE },
-		{ .name = "warning",	.set = FYPCF_DEBUG_LEVEL_WARNING, .clr = ~FYPCF_DEBUG_LEVEL_WARNING },
-		{ .name = "error",	.set = FYPCF_DEBUG_LEVEL_ERROR, .clr = ~FYPCF_DEBUG_LEVEL_ERROR },
-	};
+	struct fy_node *fyn;
+	struct fy_anchor *fya;
+	struct pathspec *ps;
+	struct pathspec_arg *psa;
 	unsigned int i;
 
-	if (!what || !flagsp)
-		return -1;
+	if (!fyd || !fyn_start || !path)
+		return NULL;
 
-	for (i = 0; i < sizeof(lf)/sizeof(lf[0]); i++) {
-		if (!strcmp(what, lf[i].name)) {
-			*flagsp |=  lf[i].set;
-			*flagsp &= ~lf[i].clr;
-			return 0;
+	if (path->absolute)
+		fyn_start = fyd->root;
+
+	fyn = fyn_start;
+	for (i = 0; fyn && i < path->count; i++) {
+
+		ps = &path->ps[i];
+		if (ps->funcsz > 0) {
+			if (ps->funcsz == 1 && !memcmp(ps->func, ".", 1)) {
+				/* current; nop */
+			} else if (ps->funcsz == 2 && !memcmp(ps->func, "..", 2)) {
+				/* parent */
+				fyn = fy_node_get_document_parent(fyn);
+			} else if (ps->funcsz == 3 && !memcmp(ps->func, "key", 3)) {
+				if (ps->argc != 1) {
+					fprintf(stderr, "illegal number of arguments at key\n");
+					return NULL;
+				}
+
+				if (!fy_node_is_mapping(fyn)) {
+					fprintf(stderr, "key function only works on mappings\n");
+					return NULL;
+				}
+
+				psa = &ps->arg[0];
+
+				if (psa->fyd) {
+					fyn = fy_node_mapping_lookup_key_by_key(fyn, fy_document_root(psa->fyd));
+					if (!fyn) {
+						fprintf(stderr, "failed to find complex key\n");
+						return NULL;
+					}
+				} else {
+					fyn = fy_node_mapping_lookup_key_by_string(fyn, psa->arg, psa->argsz);
+					if (!fyn) {
+						fprintf(stderr, "failed to find simple key\n");
+						return NULL;
+					}
+				}
+
+			} else {
+				fprintf(stderr, "unkown function %.*s\n", (int)ps->funcsz, ps->func);
+				return NULL;
+			}
+		} else {
+			if (ps->argc != 1) {
+				fprintf(stderr, "illegal number of arguments at key\n");
+				return NULL;
+			}
+			psa = &ps->arg[0];
+
+			/* check for alias */
+			if (psa->arg[0] == '*') {
+				/* alias must be the first component and not absolute */
+				if (path->absolute) {
+					fprintf(stderr, "bad alias when absolute\n");
+					return NULL;
+				}
+				if (i > 0) {
+					fprintf(stderr, "bad alias not at start\n");
+					return NULL;
+				}
+				fya = fy_document_lookup_anchor(fyd, &psa->arg[1], psa->argsz-1);
+				if (!fya) {
+					fprintf(stderr, "bad alias unable to find anchor\n");
+					return NULL;
+				}
+				/* continue */
+				fyn = fya->fyn;
+				continue;
+			}
+
+			switch (fyn->type) {
+			case FYNT_SCALAR:
+				if (!fy_node_is_alias(fyn)) {
+					fprintf(stderr, "at scalar; this is the end\n");
+					return NULL;
+				}
+				fya = fy_document_lookup_anchor_by_token(fyd, fyn->scalar);
+				if (!fya) {
+					fprintf(stderr, "unable to lookup alias\n");
+					return NULL;
+				}
+				fyn = fya->fyn;
+				break;
+
+			case FYNT_SEQUENCE:
+				if (!psa->is_numeric) {
+					fprintf(stderr, "sequence requires numeric argument\n");
+					return NULL;
+				}
+
+				fyn = fy_node_sequence_get_by_index(fyn, psa->number);
+				if (!fyn) {
+					fprintf(stderr, "failed to find sequence idx\n");
+					return NULL;
+				}
+
+				break;
+
+			case FYNT_MAPPING:
+				if (psa->fyd) {
+					fyn = fy_node_mapping_lookup_value_by_key(fyn, fy_document_root(psa->fyd));
+					if (!fyn) {
+						fprintf(stderr, "failed to find complex key\n");
+						return NULL;
+					}
+				} else {
+					fyn = fy_node_mapping_lookup_by_string(fyn, psa->arg, psa->argsz);
+					if (!fyn) {
+						fprintf(stderr, "failed to find simple key\n");
+						return NULL;
+					}
+				}
+				break;
+			}
+		}
+
+		if (fy_node_is_alias(fyn)) {
+			struct fy_node *referred[FYPCF_GUARANTEED_MINIMUM_DEPTH_LIMIT];
+			unsigned int derefs, k;
+
+			for (derefs = 0; derefs < FYPCF_GUARANTEED_MINIMUM_DEPTH_LIMIT; derefs++) {
+				if (!fy_node_is_alias(fyn))
+					break;
+				fya = fy_document_lookup_anchor_by_token(fyd, fyn->scalar);
+				if (!fya) {
+					fprintf(stderr, "unable to deref alias\n");
+					return NULL;
+				}
+				for (k = 0; k < derefs; k++) {
+					if (fya->fyn == referred[k]) {
+						fprintf(stderr, "alias loop detected\n");
+						return NULL;
+					}
+				}
+				fyn = fya->fyn;
+				referred[derefs] = fyn;
+			}
 		}
 	}
 
-	return -1;
+	return fyn;
+}
+
+struct fy_node *
+node_find_exec(struct fy_document *fyd, struct fy_node *fyn_start, const char *path)
+{
+	struct fy_input *fyi;
+	struct fy_path_parser fypp_local, *fypp = &fypp_local;
+	struct fy_path_parse_cfg pcfg_local, *pcfg = &pcfg_local;
+	struct fy_path_exec *fypx = NULL;
+	struct fy_path_exec_cfg xcfg_local, *xcfg = &xcfg_local;
+	struct fy_emitter fye_local, *fye = &fye_local;
+	struct fy_emitter_cfg ecfg_local, *ecfg = &ecfg_local;
+	struct fy_path_expr *expr;
+	struct fy_document *fyd_pe;
+	struct fy_node *fyn;
+	void *iterp;
+	int rc;
+
+	fyi = fy_input_from_data(path, strlen(path), NULL, false);
+	assert(fyi);
+
+	memset(pcfg, 0, sizeof(*pcfg));
+	pcfg->diag = fyd->diag;
+	fy_path_parser_setup(fypp, pcfg);
+
+	memset(xcfg, 0, sizeof(*xcfg));
+	xcfg->diag = fyd->diag;
+	fypx = fy_path_exec_create(xcfg);
+	assert(fypx);
+
+	rc = fy_path_parser_open(fypp, fyi, NULL);
+	assert(!rc);
+
+	fyn = NULL;
+	expr = fy_path_parse_expression(fypp);
+	if (!expr) {
+		fprintf(stderr, "Failed to parse expression \"%s\"\n", path);
+		goto do_close;
+	}
+	fprintf(stderr, "OK; parsed expression \"%s\"\n", path);
+
+	fy_path_expr_dump(expr, fyd->diag, FYET_WARNING, 0, "expression dump");
+
+	fyd_pe = fy_path_expr_to_document(expr);
+	if (!fyd_pe) {
+		fprintf(stderr, "Failed to create YAML path expression tree for \"%s\"\n", path);
+		goto do_free;
+	}
+
+	memset(ecfg, 0, sizeof(*ecfg));
+	ecfg->diag = fyd->diag;
+	fy_emit_setup(fye, ecfg);
+
+	fy_emit_document(fye, fyd_pe);
+
+	fy_emit_cleanup(fye);
+
+	fy_document_destroy(fyd_pe);
+
+	rc = fy_path_exec_execute(fypx, expr, fyn_start);
+	if (rc) {
+		fprintf(stderr, "Failed to execute expression \"%s\"\n", path);
+		goto do_free;
+	}
+
+	iterp = NULL;
+	fyn = fy_path_exec_results_iterate(fypx, &iterp);
+
+do_free:
+	fy_path_expr_free(expr);
+
+do_close:
+	fy_path_parser_close(fypp);
+
+	fy_path_exec_unref(fypx);
+
+	fy_path_parser_cleanup(fypp);
+	fy_input_unref(fyi);
+
+	return fyn;
+}
+
+int do_bypath(struct fy_parser *fyp, const char *pathstr, const char *start)
+{
+	struct path path;
+	struct pathspec *ps;
+	struct pathspec_arg *arg;
+	struct fy_document *fyd;
+	struct fy_node *fyn;
+	int count;
+	unsigned int i, j;
+	int rc __FY_DEBUG_UNUSED__;
+
+	setup_path(&path);
+
+	rc = parse_path(pathstr, (size_t)-1, &path);
+	assert(!rc);
+
+	fprintf(stderr, "%s: pathstr=%s absolute=%s trailing_slash=%s\n", __func__,
+			pathstr,
+			path.absolute ? "true" : "false",
+			path.trailing_slash ? "true" : "false");
+	for (i = 0; i < path.count; i++) {
+		ps = &path.ps[i];
+		fprintf(stderr, "    func=%.*s argc=%u", (int)ps->funcsz, ps->func, ps->argc);
+		for (j = 0; j < ps->argc; j++) {
+			arg = &ps->arg[j];
+			fprintf(stderr, " %.*s", (int)arg->argsz, arg->arg);
+		}
+		fprintf(stderr, "\n");
+	}
+
+	count = 0;
+	while ((fyd = fy_parse_load_document(fyp)) != NULL) {
+
+		fyn = node_find_exec(fyd, fy_document_root(fyd), pathstr);
+		if (!fyn) {
+			fprintf(stderr, "exec: did not find node for %s\n", pathstr);
+		} else {
+			fprintf(stderr, "exec: path %s - return %s\n", pathstr, fy_node_get_path_a(fyn));
+		}
+
+		fyn = node_find(fyd, fy_document_root(fyd), &path);
+		if (!fyn) {
+			fprintf(stderr, "norm: did not find node for %s\n", pathstr);
+		} else {
+			fprintf(stderr, "norm: path %s - return %s\n", pathstr, fy_node_get_path_a(fyn));
+		}
+
+		fy_parse_document_destroy(fyp, fyd);
+
+		count++;
+	}
+
+	cleanup_path(&path);
+
+	return count > 0 ? 0 : -1;
+}
+
+struct test_parser {
+	struct fy_reader reader;
+	struct fy_diag *diag;
+	struct fy_input *fyi;
+};
+
+struct fy_diag *test_parser_reader_get_diag(struct fy_reader *fyr)
+{
+	struct test_parser *parser = container_of(fyr, struct test_parser, reader);
+	return parser->diag;
+}
+
+static const struct fy_reader_ops test_parser_reader_ops = {
+	.get_diag = test_parser_reader_get_diag,
+	.file_open = NULL,
+};
+
+int do_reader(struct fy_parser *fyp, int indent, int width, bool resolve, bool sort)
+{
+	const char *data = "this is a test-testing: more data";
+	struct test_parser parser;
+	struct fy_diag_cfg dcfg;
+	struct fy_diag *diag;
+	struct fy_reader *fyr;
+	struct fy_input *fyi;
+	struct fy_document *fyd;
+	char ubuf[5];
+	int c;
+	int r __FY_DEBUG_UNUSED__;
+
+	fy_diag_cfg_default(&dcfg);
+	diag = fy_diag_create(&dcfg);
+	assert(diag);
+
+	fyi = fy_input_from_data(data, FY_NT, NULL, false);
+	assert(fyi);
+
+	memset(&parser, 0, sizeof(parser));
+	fyr = &parser.reader;
+	parser.diag = diag;
+
+	fy_reader_setup(fyr, &test_parser_reader_ops);
+	fyr_notice(fyr, "Reader initialized\n");
+
+	r = fy_reader_input_open(fyr, fyi, NULL);
+	assert(!r);
+	fyr_notice(fyr, "Reader input opened\n");
+
+	while ((c = fy_reader_peek(fyr)) >= 0 && c != '{' && c != '[' && c != '"' && c != '\'' && c != '-') {
+		fy_reader_advance(fyr, c);
+		fy_utf8_put_unchecked(ubuf, c);
+		fyr_notice(fyr,  "%.*s %d\n", (int)fy_utf8_width(c), ubuf, c);
+	}
+
+	if (c > 0) {
+		fy_parser_set_reader(fyp, fyr);
+		fy_parser_set_flow_only_mode(fyp, true);
+
+		fyd = fy_parse_load_document(fyp);
+		if (fyd) {
+			fyr_notice(fyr, "parsed a yaml document\n");
+		}
+
+		(void)fy_emit_document_to_file(fyd, 0, NULL);
+
+		fy_document_destroy(fyd);
+
+		/* remaining */
+		while ((c = fy_reader_peek(fyr)) >= 0) {
+			fy_reader_advance(fyr, c);
+			fy_utf8_put_unchecked(ubuf, c);
+			fyr_notice(fyr,  "%.*s %d\n", (int)fy_utf8_width(c), ubuf, c);
+		}
+	}
+
+	fy_reader_input_done(fyr);
+	fyr_notice(fyr, "Reader input done\n");
+
+	fy_input_close(fyi);
+
+	fy_reader_cleanup(fyr);
+
+	fy_input_unref(fyi);
+	fy_diag_destroy(diag);
+
+	return 0;
+}
+
+int do_walk(struct fy_parser *fyp, const char *walkpath, const char *walkstart, int indent, int width, bool resolve, bool sort)
+{
+	struct fy_path_parse_cfg pcfg;
+	struct fy_path_parser fypp_data, *fypp = &fypp_data;
+	struct fy_path_expr *expr;
+	struct fy_walk_result_list results;
+	struct fy_walk_result *result;
+	struct fy_input *fyi;
+	struct fy_document *fyd, *fyd2;
+	struct fy_node *fyn, *fyn2;
+	struct fy_walk_result *fwr;
+	struct fy_path_exec *fypx = NULL;
+	struct fy_path_exec_cfg xcfg_local, *xcfg = &xcfg_local;
+	char *path;
+	unsigned int flags;
+	int rc, count;
+
+	flags = 0;
+	if (sort)
+		flags |= FYECF_SORT_KEYS;
+	flags |= FYECF_INDENT(indent) | FYECF_WIDTH(width);
+
+	fy_notice(fyp->diag, "setting up path parser for \"%s\"\n", walkpath);
+
+	memset(&pcfg, 0, sizeof(pcfg));
+	pcfg.diag = fyp->diag;
+	fy_path_parser_setup(fypp, &pcfg);
+
+	fyi = fy_input_from_data(walkpath, FY_NT, NULL, false);
+	assert(fyi);
+
+	rc = fy_path_parser_open(fypp, fyi, NULL);
+	assert(!rc);
+
+	fy_notice(fyp->diag, "path parser input set for \"%s\"\n", walkpath);
+
+	/* while ((fyt = fy_path_scan(fypp)) != NULL) {
+		dump_token(fyt);
+		fy_token_unref(fyt);
+	} */
+	expr = fy_path_parse_expression(fypp);
+	if (!expr) {
+		fy_error(fyp->diag, "failed to parse expression\n");
+	} else
+		fy_path_expr_dump(expr, fyp->diag, FYET_NOTICE, 0, "fypp root ");
+
+	memset(xcfg, 0, sizeof(*xcfg));
+	xcfg->diag = fyp->diag;
+	fypx = fy_path_exec_create(xcfg);
+	assert(fypx);
+
+	count = 0;
+	while ((fyd = fy_parse_load_document(fyp)) != NULL) {
+
+		if (resolve) {
+			rc = fy_document_resolve(fyd);
+			if (rc)
+				return -1;
+		}
+
+		fyn = fy_node_by_path(fy_document_root(fyd), walkstart, FY_NT, FYNWF_DONT_FOLLOW);
+		if (!fyn) {
+			printf("could not find walkstart node %s\n", walkstart);
+			continue;
+		}
+
+		fy_emit_document_to_file(fyd, flags, NULL);
+
+		path = fy_node_get_path(fyn);
+		assert(path);
+		printf("# walking starting at %s\n", path);
+		free(path);
+
+		fy_walk_result_list_init(&results);
+		fwr = fy_walk_result_alloc_rl(NULL);
+		assert(fwr);
+		fwr->type = fwrt_node_ref;
+		fwr->fyn = fyn;
+		result = fy_path_expr_execute(fypx, 0, expr, fwr, fpet_none);
+
+		printf("\n");
+		if (!result) {
+			printf("# no results\n");
+			goto next;
+		}
+
+		if (result->type == fwrt_node_ref) {
+			printf("# single reference result\n");
+
+			path = fy_node_get_path(result->fyn);
+			assert(path);
+
+			printf("# %s\n", path);
+			free(path);
+
+			fyd2 = fy_document_create(&fyp->cfg);
+			assert(fyd2);
+
+			fyn2 = fy_node_copy(fyd2, result->fyn);
+			assert(fyn2);
+
+			fy_document_set_root(fyd2, fyn2);
+
+			fy_emit_document_to_file(fyd2, flags, NULL);
+
+			fy_document_destroy(fyd2);
+
+			goto next;
+		}
+
+		printf("# multiple results\n");
+		while ((fwr = fy_walk_result_list_pop(&result->refs)) != NULL) {
+
+			if (fwr->type != fwrt_node_ref) {
+				fy_walk_result_free_rl(NULL, fwr);
+				continue;
+			}
+
+			path = fy_node_get_path(fwr->fyn);
+			assert(path);
+
+			printf("# %s\n", path);
+			free(path);
+
+			fyd2 = fy_document_create(&fyp->cfg);
+			assert(fyd2);
+
+			fyn2 = fy_node_copy(fyd2, fwr->fyn);
+			assert(fyn2);
+
+			fy_document_set_root(fyd2, fyn2);
+
+			printf("---\n");
+			fy_emit_document_to_file(fyd2, flags, NULL);
+
+			fy_document_destroy(fyd2);
+
+			fy_walk_result_free_rl(NULL, fwr);
+		}
+next:
+		fy_walk_result_free_rl(NULL, result);
+
+		fy_parse_document_destroy(fyp, fyd);
+
+		count++;
+	}
+
+	fy_path_exec_unref(fypx);
+
+	fy_path_expr_free(expr);
+
+	fy_path_parser_close(fypp);
+
+	fy_input_unref(fyi);
+	fy_path_parser_cleanup(fypp);
+
+	return 0;
 }
 
 int apply_flags_option(const char *arg, unsigned int *flagsp,
@@ -2606,16 +3799,20 @@ int apply_flags_option(const char *arg, unsigned int *flagsp,
 	return 0;
 }
 
+static ssize_t callback_stdin_input(void *user, void *buf, size_t count)
+{
+	return fread(buf, 1, count, stdin);
+}
+
 int main(int argc, char *argv[])
 {
 	struct fy_parser ctx, *fyp = &ctx;
 	struct fy_parse_cfg cfg = {
 		.search_path = INCLUDE_DEFAULT,
-		.flags =
-			(QUIET_DEFAULT ? FYPCF_QUIET : 0) |
-			FYPCF_DEBUG_LEVEL(DEBUG_LEVEL_DEFAULT) |
-			FYPCF_DEBUG_DIAG_DEFAULT | FYPCF_DEBUG_DEFAULT,
+		.flags = (QUIET_DEFAULT ? FYPCF_QUIET : 0),
 	};
+	enum fy_error_type error_level = FYET_MAX;
+	int color_diag = -1;
 	struct fy_input_cfg *fyic, *fyic_array = NULL;
 	int i, j, icount, rc, exitcode = EXIT_FAILURE, opt, lidx;
 	char *tmp, *s;
@@ -2626,10 +3823,14 @@ int main(int argc, char *argv[])
 	bool sort = SORT_DEFAULT;
 	size_t chunk = CHUNK_DEFAULT;
 	const char *color = COLOR_DEFAULT;
+	const char *walkpath = "/";
+	const char *walkstart = "/";
+	bool use_callback = false;
+	bool null_output = false;
 
 	fy_valgrind_check(&argc, &argv);
 
-	while ((opt = getopt_long_only(argc, argv, "I:m:i:w:d:rsc:C:D:M:qh", lopts, &lidx)) != -1) {
+	while ((opt = getopt_long_only(argc, argv, "I:m:i:w:d:rsc:C:D:M:W:S:qh", lopts, &lidx)) != -1) {
 		switch (opt) {
 		case 'I':
 			tmp = alloca(strlen(cfg.search_path) + 1 + strlen(optarg) + 1);
@@ -2654,23 +3855,11 @@ int main(int argc, char *argv[])
 			width = atoi(optarg);
 			break;
 		case 'd':
-			cfg.flags &= ~FYPCF_DEBUG_LEVEL(FYPCF_DEBUG_LEVEL_MASK);
-
-			if (isdigit(*optarg)) {
-				i = atoi(optarg);
-				if (i <= FYET_ERROR) {
-					cfg.flags |= FYPCF_DEBUG_LEVEL(i);
-					rc = 0;
-				} else
-					rc = -1;
-			} else
-				rc = apply_flags_option(optarg, &cfg.flags, modify_debug_level_flags);
-
-			if (rc) {
+			error_level = fy_string_to_error_type(optarg);
+			if (error_level == FYET_MAX) {
 				fprintf(stderr, "bad diag option %s\n", optarg);
 				display_usage(stderr, argv[0]);
 			}
-
 			break;
 		case 'r':
 			resolve = true;
@@ -2684,36 +3873,64 @@ int main(int argc, char *argv[])
 			break;
 		case 'C':
 			color = optarg;
-			cfg.flags &= ~FYPCF_COLOR(FYPCF_COLOR_MASK);
 			if (!strcmp(color, "auto"))
-				cfg.flags |= FYPCF_COLOR_AUTO;
+				color_diag = -1;
 			else if (!strcmp(color, "yes") || !strcmp(color, "1") || !strcmp(color, "on"))
-				cfg.flags |= FYPCF_COLOR_FORCE;
+				color_diag = 1;
 			else if (!strcmp(color, "no") || !strcmp(color, "0") || !strcmp(color, "off"))
-				cfg.flags |= FYPCF_COLOR_NONE;
+				color_diag = 0;
 			else {
 				fprintf(stderr, "bad color option %s\n", optarg);
 				display_usage(stderr, argv[0]);
 			}
 			break;
 		case 'D':
-			cfg.flags &= ~FYPCF_DEBUG_DIAG_ALL;
-			rc = apply_flags_option(optarg, &cfg.flags, modify_debug_diag_flags);
-			if (rc) {
-				fprintf(stderr, "bad diag option %s\n", optarg);
-				display_usage(stderr, argv[0]);
-			}
+			/* XXX TODO if I'm ever bothered */
 			break;
 		case 'M':
-			cfg.flags &= ~FYPCF_DEBUG_DEFAULT;
-			rc = apply_flags_option(optarg, &cfg.flags, modify_module_flags);
-			if (rc) {
-				fprintf(stderr, "bad module option %s\n", optarg);
-				display_usage(stderr, argv[0]);
-			}
+			/* XXX TODO if I'm ever bothered */
+			break;
+		case 'W':
+			walkpath = optarg;
+			break;
+		case 'S':
+			walkstart = optarg;
 			break;
 		case OPT_DISABLE_MMAP:
 			cfg.flags |= FYPCF_DISABLE_MMAP_OPT;
+			break;
+		case OPT_DISABLE_ACCEL:
+			cfg.flags |= FYPCF_DISABLE_ACCELERATORS;
+			break;
+		case OPT_DISABLE_BUFFERING:
+			cfg.flags |= FYPCF_DISABLE_BUFFERING;
+			break;
+		case OPT_DISABLE_DEPTH_LIMIT:
+			cfg.flags |= FYPCF_DISABLE_DEPTH_LIMIT;
+			break;
+		case OPT_USE_CALLBACK:
+			use_callback = true;
+			break;
+		case OPT_NULL_OUTPUT:
+			null_output = true;
+			break;
+		case OPT_YAML_1_1:
+			cfg.flags &= ~(FYPCF_DEFAULT_VERSION_MASK << FYPCF_DEFAULT_VERSION_SHIFT);
+			cfg.flags |= FYPCF_DEFAULT_VERSION_1_1;
+			break;
+		case OPT_YAML_1_2:
+			cfg.flags &= ~(FYPCF_DEFAULT_VERSION_MASK << FYPCF_DEFAULT_VERSION_SHIFT);
+			cfg.flags |= FYPCF_DEFAULT_VERSION_1_2;
+			break;
+		case OPT_YAML_1_3:
+			cfg.flags &= ~(FYPCF_DEFAULT_VERSION_MASK << FYPCF_DEFAULT_VERSION_SHIFT);
+			cfg.flags |= FYPCF_DEFAULT_VERSION_1_3;
+			break;
+		case OPT_SLOPPY_FLOW_INDENTATION:
+			cfg.flags |= FYPCF_SLOPPY_FLOW_INDENTATION;
+			break;
+		case OPT_YPATH_ALIASES:
+			cfg.flags |= FYPCF_YPATH_ALIASES;
 			break;
 		case 'q':
 			cfg.flags |= FYPCF_QUIET;
@@ -2733,12 +3950,21 @@ int main(int argc, char *argv[])
 	    strcmp(mode, "copy") &&
 	    strcmp(mode, "testsuite") &&
 	    strcmp(mode, "dump") &&
-	    strcmp(mode, "build")
+	    strcmp(mode, "dump2") &&
+	    strcmp(mode, "build") &&
+	    strcmp(mode, "walk") &&
+	    strcmp(mode, "reader") &&
+	    strcmp(mode, "compose") &&
+	    strcmp(mode, "iterate") &&
+	    strcmp(mode, "comment") &&
+	    strcmp(mode, "pathspec") &&
+	    strcmp(mode, "bypath")
 #if defined(HAVE_LIBYAML) && HAVE_LIBYAML
 	    && strcmp(mode, "libyaml-scan")
 	    && strcmp(mode, "libyaml-parse")
 	    && strcmp(mode, "libyaml-testsuite")
 	    && strcmp(mode, "libyaml-dump")
+	    && strcmp(mode, "libyaml-diff")
 #endif
 
 	    ) {
@@ -2788,13 +4014,13 @@ int main(int argc, char *argv[])
 				fprintf(stderr, "  problem='%s' context='%s'\n", parser.problem, parser.context);
 			}
 		} else if (!strcmp(mode, "libyaml-testsuite")) {
-			rc = do_libyaml_testsuite(&parser);
+			rc = do_libyaml_testsuite(stdout, &parser, null_output);
 			if (rc < 0) {
 				fprintf(stderr, "do_libyaml_testsuite() error %d\n", rc);
 				fprintf(stderr, "  problem='%s' context='%s'\n", parser.problem, parser.context);
 			}
 		} else if (!strcmp(mode, "libyaml-dump")) {
-			rc = do_libyaml_dump(&parser, &emitter);
+			rc = do_libyaml_dump(&parser, &emitter, null_output);
 			if (rc < 0) {
 				fprintf(stderr, "do_libyaml_dump() error %d\n", rc);
 				if (parser.problem)
@@ -2812,19 +4038,39 @@ int main(int argc, char *argv[])
 	}
 #endif
 
-	/* set default parser configuration for diagnostics without a parser */
-	fy_set_default_parser_cfg_flags(cfg.flags);
+#if defined(HAVE_LIBYAML) && HAVE_LIBYAML
+	/* set yaml 1.1 mode with sloppy indentation to match libyaml */
+	if (!strcmp(mode, "libyaml-diff")) {
+		cfg.flags &= ~(FYPCF_DEFAULT_VERSION_MASK << FYPCF_DEFAULT_VERSION_SHIFT);
+		cfg.flags |= FYPCF_DEFAULT_VERSION_1_1;
+		cfg.flags |= FYPCF_SLOPPY_FLOW_INDENTATION;
+	}
+#endif
 
 	if (!strcmp(mode, "build")) {
 		rc = do_build(&cfg, argc - optind, argv + optind);
 		return !rc ? EXIT_SUCCESS : EXIT_FAILURE;
 	}
 
+	if (!strcmp(mode, "pathspec")) {
+		rc = do_pathspec(argc - optind, argv + optind);
+		return !rc ? EXIT_SUCCESS : EXIT_FAILURE;
+	}
+
+	/* turn on comment parsing for comment mode */
+	if (!strcmp(mode, "comment"))
+		cfg.flags |= FYPCF_PARSE_COMMENTS;
+
 	rc = fy_parse_setup(fyp, &cfg);
 	if (rc) {
 		fprintf(stderr, "fy_parse_setup() failed\n");
 		goto cleanup;
 	}
+
+	if (error_level != FYET_MAX)
+		fy_diag_set_level(fy_parser_get_diag(fyp), error_level);
+	if (color_diag != -1)
+		fy_diag_set_colorize(fy_parser_get_diag(fyp), !!color_diag);
 
 	icount = argc - optind;
 	if (!icount)
@@ -2837,10 +4083,16 @@ int main(int argc, char *argv[])
 	for (i = optind; i < argc; i++) {
 		fyic = &fyic_array[i - optind];
 		if (!strcmp(argv[i], "-")) {
-			fyic->type = fyit_stream;
-			fyic->stream.name = "stdin";
-			fyic->stream.fp = stdin;
-			fyic->stream.chunk = chunk;
+			if (!use_callback) {
+				fyic->type = fyit_stream;
+				fyic->stream.name = "stdin";
+				fyic->stream.fp = stdin;
+				fyic->stream.chunk = chunk;
+			} else {
+				fyic->type = fyit_callback;
+				fyic->userdata = stdin;
+				fyic->callback.input = callback_stdin_input;
+			}
 		} else {
 			fyic->type = fyit_file;
 			fyic->file.filename = argv[i];
@@ -2857,10 +4109,16 @@ int main(int argc, char *argv[])
 	if (!j) {
 		fyic = &fyic_array[0];
 
-		fyic->type = fyit_stream;
-		fyic->stream.name = "stdin";
-		fyic->stream.fp = stdin;
-		fyic->stream.chunk = chunk;
+		if (!use_callback) {
+			fyic->type = fyit_stream;
+			fyic->stream.name = "stdin";
+			fyic->stream.fp = stdin;
+			fyic->stream.chunk = chunk;
+		} else {
+			fyic->type = fyit_callback;
+			fyic->userdata = stdin;
+			fyic->callback.input = callback_stdin_input;
+		}
 
 		rc = fy_parse_input_append(fyp, fyic);
 		if (rc) {
@@ -2888,18 +4146,105 @@ int main(int argc, char *argv[])
 			goto cleanup;
 		}
 	} else if (!strcmp(mode, "testsuite")) {
-		rc = do_testsuite(fyp);
+		rc = do_testsuite(stdout, fyp, null_output);
 		if (rc < 0) {
 			/* fprintf(stderr, "do_testsuite() error %d\n", rc); */
 			goto cleanup;
 		}
 	} else if (!strcmp(mode, "dump")) {
-		rc = do_dump(fyp, indent, width, resolve, sort);
+		rc = do_dump(fyp, indent, width, resolve, sort, null_output);
 		if (rc < 0) {
 			/* fprintf(stderr, "do_dump() error %d\n", rc); */
 			goto cleanup;
 		}
+	} else if (!strcmp(mode, "dump2")) {
+		rc = do_dump2(fyp, indent, width, resolve, sort, null_output);
+		if (rc < 0) {
+			/* fprintf(stderr, "do_dump() error %d\n", rc); */
+			goto cleanup;
+		}
+	} else if (!strcmp(mode, "walk")) {
+		rc = do_walk(fyp, walkpath, walkstart, indent, width, resolve, sort);
+		if (rc < 0) {
+			/* fprintf(stderr, "do_walk() error %d\n", rc); */
+			goto cleanup;
+		}
+	} else if (!strcmp(mode, "reader")) {
+		rc = do_reader(fyp, indent, width, resolve, sort);
+		if (rc < 0) {
+			/* fprintf(stderr, "do_reader() error %d\n", rc); */
+			goto cleanup;
+		}
+	} else if (!strcmp(mode, "compose")) {
+		rc = do_compose(fyp, indent, width, resolve, sort, null_output);
+		if (rc < 0) {
+			/* fprintf(stderr, "do_compose() error %d\n", rc); */
+			goto cleanup;
+		}
+	} else if (!strcmp(mode, "iterate")) {
+		rc = do_iterate(fyp);
+		if (rc < 0) {
+			/* fprintf(stderr, "do_iterate() error %d\n", rc); */
+			goto cleanup;
+		}
+	} else if (!strcmp(mode, "comment")) {
+		rc = do_comment(fyp);
+		if (rc < 0) {
+			/* fprintf(stderr, "do_comment() error %d\n", rc); */
+			goto cleanup;
+		}
+	} else if (!strcmp(mode, "bypath")) {
+		rc = do_bypath(fyp, walkpath, walkstart);
+		if (rc < 0) {
+			/* fprintf(stderr, "do_bypath() error %d\n", rc); */
+			goto cleanup;
+		}
 	}
+#if defined(HAVE_LIBYAML) && HAVE_LIBYAML
+	if (!strcmp(mode, "libyaml-diff")) {
+		FILE *fp;
+		// FILE *t1fp, *t2fp;
+
+		yaml_parser_t parser;
+
+		if (optind >= argc) {
+			fprintf(stderr, "Missing file argument\n");
+			goto cleanup;
+		}
+
+		fp = fopen(argv[optind], "rb");
+		if (!fp) {
+			fprintf(stderr, "Failed to open file %s\n", argv[optind]);
+			goto cleanup;
+		}
+
+		rc = yaml_parser_initialize(&parser);
+		assert(rc);
+
+		yaml_parser_set_input_file(&parser, fp);
+
+		fprintf(stdout, "LIBYAML:\n");
+		rc = do_libyaml_testsuite(stdout, &parser, false);
+		if (rc < 0) {
+			fprintf(stderr, "do_libyaml_testsuite() failed\n");
+			goto cleanup;
+		}
+
+		fprintf(stdout, "LIBFYAML:\n");
+		rc = do_testsuite(stdout, fyp, false);
+		if (rc < 0) {
+			fprintf(stderr, "do_libyaml_testsuite() failed\n");
+			goto cleanup;
+		}
+
+		yaml_parser_delete(&parser);
+
+		fclose(fp);
+
+		if (rc < 0)
+			goto cleanup;
+	}
+#endif
 
 	exitcode = EXIT_SUCCESS;
 

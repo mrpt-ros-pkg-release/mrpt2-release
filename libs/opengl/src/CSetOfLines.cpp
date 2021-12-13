@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
-#include "opengl-precomp.h"  // Precompiled header
-
+#include "opengl-precomp.h"	 // Precompiled header
+//
 #include <mrpt/math/CVectorDynamic.h>
 #include <mrpt/opengl/CSetOfLines.h>
 #include <mrpt/serialization/CArchive.h>
@@ -121,7 +121,7 @@ void CSetOfLines::serializeTo(mrpt::serialization::CArchive& out) const
 {
 	writeToStreamRender(out);
 	out << m_Segments << m_lineWidth;
-	out << m_antiAliasing;  // Added in v3
+	out << m_antiAliasing;	// Added in v3
 	CRenderizableShaderPoints::params_serialize(out);  // v4
 }
 
@@ -136,8 +136,7 @@ void CSetOfLines::serializeFrom(
 			readFromStreamRender(in);
 			CVectorFloat x0, y0, z0, x1, y1, z1;
 			in >> x0 >> y0 >> z0 >> x1 >> y1 >> z1;
-			if (version >= 1)
-				in >> m_lineWidth;
+			if (version >= 1) in >> m_lineWidth;
 			else
 				m_lineWidth = 1;
 			size_t N = x0.size();
@@ -160,29 +159,27 @@ void CSetOfLines::serializeFrom(
 			readFromStreamRender(in);
 			in >> m_Segments;
 			in >> m_lineWidth;
-			if (version >= 3)
-				in >> m_antiAliasing;
+			if (version >= 3) in >> m_antiAliasing;
 			else
 				m_antiAliasing = true;
-			if (version >= 4)
-				CRenderizableShaderPoints::params_deserialize(in);
+			if (version >= 4) CRenderizableShaderPoints::params_deserialize(in);
 			else
 				m_pointSize = .0f;
 		}
 		break;
-		default:
-			MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
 	};
 	CRenderizable::notifyChange();
 }
 
-void CSetOfLines::getBoundingBox(
-	mrpt::math::TPoint3D& bb_min, mrpt::math::TPoint3D& bb_max) const
+auto CSetOfLines::getBoundingBox() const -> mrpt::math::TBoundingBox
 {
-	bb_min = mrpt::math::TPoint3D(
+	mrpt::math::TBoundingBox bb;
+
+	bb.min = mrpt::math::TPoint3D(
 		std::numeric_limits<double>::max(), std::numeric_limits<double>::max(),
 		std::numeric_limits<double>::max());
-	bb_max = mrpt::math::TPoint3D(
+	bb.max = mrpt::math::TPoint3D(
 		-std::numeric_limits<double>::max(),
 		-std::numeric_limits<double>::max(),
 		-std::numeric_limits<double>::max());
@@ -194,15 +191,14 @@ void CSetOfLines::getBoundingBox(
 			const TPoint3D& pt = s[p];
 			for (size_t j = 0; j < 3; j++)
 			{
-				keep_min(bb_min[j], pt[j]);
-				keep_max(bb_max[j], pt[j]);
+				keep_min(bb.min[j], pt[j]);
+				keep_max(bb.max[j], pt[j]);
 			}
 		}
 	}
 
 	// Convert to coordinates of my parent:
-	m_pose.composePoint(bb_min, bb_min);
-	m_pose.composePoint(bb_max, bb_max);
+	return bb.compose(m_pose);
 }
 
 void CSetOfLines::getLineByIndex(

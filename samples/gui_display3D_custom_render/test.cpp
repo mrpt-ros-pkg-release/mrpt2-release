@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -18,6 +18,7 @@
 #include <mrpt/system/CObserver.h>
 #include <mrpt/system/CTicTac.h>
 #include <mrpt/system/os.h>
+
 #include <iostream>
 
 using namespace std;
@@ -29,7 +30,7 @@ using namespace mrpt::system;
 // This is my custom class to handle the pre/post render events:
 struct TMyExtraRenderingStuff : public mrpt::system::CObserver
 {
-	opengl::CSphere::Ptr ball_obj;  // The ball moving in the scene
+	opengl::CSphere::Ptr ball_obj;	// The ball moving in the scene
 
 	TMyExtraRenderingStuff() {}
 	void OnEvent(const mrptEvent& e) override
@@ -154,9 +155,9 @@ void TestDisplay3D()
 			if (key == 'h' || key == 'H')
 			{
 				std::cout << "These are the supported commands:\n"
-							 " - 'h': Toogle help view\n"
+							 " - 'h': Toggle help view\n"
 							 " - '<-' and '->': Rotate camera\n"
-							 " - 'Alt+Enter': Toogle fullscreen\n"
+							 " - 'Alt+Enter': Toggle fullscreen\n"
 							 " - 'ESC': Quit"
 							 "\n";
 			}
