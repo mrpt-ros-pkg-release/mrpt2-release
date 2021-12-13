@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -11,15 +11,18 @@
 #include <mrpt/core/exceptions.h>
 #include <mrpt/serialization/serialization_frwds.h>
 #include <mrpt/typemeta/TTypeName.h>  // Used in all derived classes
+
 #include <iosfwd>  // std::ostream
 #include <stdexcept>
 #include <type_traits>
 
 namespace mrpt::math
 {
+/** \addtogroup  geometry_grp
+ * @{ */
+
 /** Base type of all TPoseXX and TPointXX classes in mrpt::math.
  * Useful for type traits. No virtual methods at all.
- * \ingroup geometry_grp
  */
 struct TPoseOrPoint
 {
@@ -73,8 +76,9 @@ struct ProvideStaticResize
 
 /** Text streaming function */
 template <
-	class PoseOrPoint, typename = std::enable_if_t<std::is_base_of_v<
-						   mrpt::math::TPoseOrPoint, PoseOrPoint>>>
+	class PoseOrPoint,
+	typename = std::enable_if_t<
+		std::is_base_of_v<mrpt::math::TPoseOrPoint, PoseOrPoint>>>
 std::ostream& operator<<(std::ostream& o, const PoseOrPoint& p)
 {
 	o << p.asString();
@@ -83,23 +87,27 @@ std::ostream& operator<<(std::ostream& o, const PoseOrPoint& p)
 
 /** Binary streaming function */
 template <
-	class PoseOrPoint, typename = std::enable_if_t<std::is_base_of_v<
-						   mrpt::math::TPoseOrPoint, PoseOrPoint>>>
+	class PoseOrPoint,
+	typename = std::enable_if_t<
+		std::is_base_of_v<mrpt::math::TPoseOrPoint, PoseOrPoint>>>
 mrpt::serialization::CArchive& operator>>(
 	mrpt::serialization::CArchive& in, PoseOrPoint& o)
 {
-	for (int i = 0; i < o.static_size; i++) in >> o[i];
+	for (int i = 0; i < o.static_size; i++)
+		in >> o[i];
 	return in;
 }
 
 /** Binary streaming function */
 template <
-	class PoseOrPoint, typename = std::enable_if_t<std::is_base_of_v<
-						   mrpt::math::TPoseOrPoint, PoseOrPoint>>>
+	class PoseOrPoint,
+	typename = std::enable_if_t<
+		std::is_base_of_v<mrpt::math::TPoseOrPoint, PoseOrPoint>>>
 mrpt::serialization::CArchive& operator<<(
 	mrpt::serialization::CArchive& out, const PoseOrPoint& o)
 {
-	for (int i = 0; i < o.static_size; i++) out << o[i];
+	for (int i = 0; i < o.static_size; i++)
+		out << o[i];
 	return out;
 }
 
@@ -133,5 +141,6 @@ static constexpr unsigned char GEOMETRIC_TYPE_PLANE = 4;
  * \sa TObject2D,TObject3D
  */
 static constexpr unsigned char GEOMETRIC_TYPE_UNDEFINED = 255;
+/** @} */
 
 }  // namespace mrpt::math

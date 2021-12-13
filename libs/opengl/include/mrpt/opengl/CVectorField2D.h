@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -19,16 +19,10 @@ namespace mrpt::opengl
 {
 /** A 2D vector field representation, consisting of points and arrows drawn on a
  * plane (invisible grid).
- *  \sa opengl::COpenGLScene
  *
- *  <div align="center">
- *  <table border="0" cellspan="4" cellspacing="4" style="border-width: 1px;
- * border-style: solid;">
- *   <tr> <td> mrpt::opengl::CVectorField2D </td> <td> \image html
- * preview_CVectorField2D.png </td> </tr>
- *  </table>
- *  </div>
+ * ![mrpt::opengl::CVectorField2D](preview_CVectorField2D.png)
  *
+ * \sa opengl::COpenGLScene
  * \ingroup mrpt_opengl_grp
  */
 
@@ -63,8 +57,9 @@ class CVectorField2D : public CRenderizableShaderPoints,
 
 	virtual shader_list_t requiredShaders() const override
 	{
-		return {DefaultShaderID::WIREFRAME, DefaultShaderID::TRIANGLES,
-				DefaultShaderID::POINTS};
+		return {
+			DefaultShaderID::WIREFRAME, DefaultShaderID::TRIANGLES,
+			DefaultShaderID::POINTS};
 	}
 	void onUpdateBuffers_Wireframe() override;
 	void onUpdateBuffers_Triangles() override;
@@ -224,9 +219,7 @@ class CVectorField2D : public CRenderizableShaderPoints,
 	 */
 	inline size_t rows() const { return xcomp.rows(); }
 
-	void getBoundingBox(
-		mrpt::math::TPoint3D& bb_min,
-		mrpt::math::TPoint3D& bb_max) const override;
+	mrpt::math::TBoundingBox getBoundingBox() const override;
 
 	void enableAntiAliasing(bool enable = true)
 	{

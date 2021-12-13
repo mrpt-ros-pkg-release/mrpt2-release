@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -10,6 +10,7 @@
 
 #include <mrpt/math/CMatrixDynamic.h>
 #include <mrpt/system/COutputLogger.h>
+
 #include <functional>
 #include <set>
 
@@ -90,7 +91,7 @@ class RANSAC_Template : public mrpt::system::COutputLogger
 		const double prob_good_sample = 0.999,
 		const size_t maxIter = 2000) const;
 
-};  // end class
+};	// end class
 
 /** The default instance of RANSAC, for double type */
 using RANSAC = RANSAC_Template<double>;

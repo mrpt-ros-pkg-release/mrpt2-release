@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -63,7 +63,11 @@ static bool expect_identical(
 TEST(CImage, CtorDefault)
 {
 	mrpt::img::CImage img;
+	EXPECT_TRUE(img.isEmpty());
 	EXPECT_THROW(img.isColor(), std::exception);
+	EXPECT_THROW(img.getWidth(), std::exception);
+	EXPECT_THROW(img.getHeight(), std::exception);
+	EXPECT_THROW(img.getPixelDepth(), std::exception);
 }
 
 #if MRPT_HAS_OPENCV
@@ -354,6 +358,14 @@ TEST(CImage, ScaleImage)
 	EXPECT_TRUE(load_ok);
 
 	{
+		CImage b(600, 400);
+		a.scaleImage(b, 600, 400);
+		EXPECT_EQ(b.getWidth(), 600U);
+		EXPECT_EQ(b.getHeight(), 400U);
+		EXPECT_EQ(a.getWidth(), 320U);
+		EXPECT_EQ(a.getHeight(), 240U);
+	}
+	{
 		CImage b;
 		a.scaleImage(b, 600, 400);
 		EXPECT_EQ(b.getWidth(), 600U);
@@ -365,8 +377,7 @@ TEST(CImage, ScaleImage)
 	for (int pass = 0; pass < 2; pass++)
 	{
 		CImage c;
-		if (pass == 0)
-			c = a.makeDeepCopy();
+		if (pass == 0) c = a.makeDeepCopy();
 		else
 			a.scaleImage(c, 311, 211);
 		const auto cw = c.getWidth(), ch = c.getHeight();
@@ -568,4 +579,4 @@ TEST(CImage, DifferentAccessMethodsGray)
 	}
 }
 
-#endif  // MRPT_HAS_OPENCV
+#endif	// MRPT_HAS_OPENCV

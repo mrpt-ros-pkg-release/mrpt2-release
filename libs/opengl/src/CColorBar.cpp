@@ -2,15 +2,16 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
-#include "opengl-precomp.h"  // Precompiled header
-
+#include "opengl-precomp.h"	 // Precompiled header
+//
 #include <mrpt/opengl/CColorBar.h>
 #include <mrpt/serialization/CArchive.h>
+
 #include "gltext.h"
 
 using namespace mrpt;
@@ -188,13 +189,14 @@ void CColorBar::onUpdateBuffers_Triangles()
 	// Already done in onUpdateBuffers_all()
 }
 
-uint8_t CColorBar::serializeGetVersion() const { return 1; }
+uint8_t CColorBar::serializeGetVersion() const { return 2; }
 void CColorBar::serializeTo(mrpt::serialization::CArchive& out) const
 {
 	writeToStreamRender(out);
 	// version 0
 	out << uint32_t(m_colormap) << m_min_col << m_max_col << m_min_value
 		<< m_max_value << m_label_format << m_label_font_size;
+	CRenderizableShaderTriangles::params_serialize(out);  // v2
 }
 void CColorBar::serializeFrom(
 	mrpt::serialization::CArchive& in, uint8_t version)
@@ -203,6 +205,7 @@ void CColorBar::serializeFrom(
 	{
 		case 0:
 		case 1:
+		case 2:
 			readFromStreamRender(in);
 
 			in.ReadAsAndCastTo<uint32_t, mrpt::img::TColormap>(m_colormap);
@@ -213,25 +216,17 @@ void CColorBar::serializeFrom(
 				bool old_disable_depth_test;
 				in >> old_disable_depth_test;
 			}
+			if (version >= 2)
+				CRenderizableShaderTriangles::params_deserialize(in);
+
 			break;
-		default:
-			MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
 	};
 	CRenderizable::notifyChange();
 }
 
-void CColorBar::getBoundingBox(
-	mrpt::math::TPoint3D& bb_min, mrpt::math::TPoint3D& bb_max) const
+auto CColorBar::getBoundingBox() const -> mrpt::math::TBoundingBox
 {
-	bb_min.x = 0;
-	bb_min.y = 0;
-	bb_min.z = 0;
-
-	bb_max.x = m_width;
-	bb_max.y = m_height;
-	bb_max.z = 0;
-
-	// Convert to coordinates of my parent:
-	m_pose.composePoint(bb_min, bb_min);
-	m_pose.composePoint(bb_max, bb_max);
+	return mrpt::math::TBoundingBox({0, 0, 0}, {m_width, m_height, .0})
+		.compose(m_pose);
 }

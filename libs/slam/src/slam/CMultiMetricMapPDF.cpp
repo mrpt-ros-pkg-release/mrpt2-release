@@ -2,18 +2,14 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "slam-precomp.h"  // Precompiled headers
-
+//
 #include <mrpt/io/CFileStream.h>
-#include <mrpt/random.h>
-#include <mrpt/system/CTicTac.h>
-#include <mrpt/system/os.h>
-
 #include <mrpt/maps/CLandmarksMap.h>
 #include <mrpt/maps/CMultiMetricMapPDF.h>
 #include <mrpt/maps/COccupancyGridMap2D.h>
@@ -24,9 +20,11 @@
 #include <mrpt/obs/CObservationBeaconRanges.h>
 #include <mrpt/poses/CPosePDFGaussian.h>
 #include <mrpt/poses/CPosePDFGrid.h>
+#include <mrpt/random.h>
 #include <mrpt/serialization/CArchive.h>
-
 #include <mrpt/slam/PF_aux_structs.h>
+#include <mrpt/system/CTicTac.h>
+#include <mrpt/system/os.h>
 
 using namespace mrpt;
 using namespace mrpt::math;
@@ -117,9 +115,7 @@ void CMultiMetricMapPDF::clear(
 		p.d->robotPath.resize(nOldKeyframes);
 		for (size_t i = 0; i < nOldKeyframes; i++)
 		{
-			CPose3DPDF::Ptr keyframe_pose;
-			CSensoryFrame::Ptr sfkeyframe_sf;
-			prevMap.get(i, keyframe_pose, sfkeyframe_sf);
+			const auto [keyframe_pose, sfkeyframe_sf] = prevMap.get(i);
 
 			// as pose, use: if the PDF is also a PF with the same number of
 			// samples, use those particles;
@@ -138,22 +134,18 @@ void CMultiMetricMapPDF::clear(
 					kf_pose_set = true;
 				}
 			}
-			if (!kf_pose_set)
-			{
-				kf_pose = keyframe_pose->getMeanVal();
-			}
+			if (!kf_pose_set) { kf_pose = keyframe_pose->getMeanVal(); }
 			p.d->robotPath[i] = kf_pose.asTPose();
 			for (const auto& obs : *sfkeyframe_sf)
-			{
-				p.d->mapTillNow.insertObservation(*obs, &kf_pose);
-			}
+				p.d->mapTillNow.insertObservation(*obs, kf_pose);
 		}
 	}
 
-	SFs = prevMap;  // copy
+	SFs = prevMap;	// copy
 	SF2robotPath.clear();
 	SF2robotPath.reserve(nOldKeyframes);
-	for (size_t i = 0; i < nOldKeyframes; i++) SF2robotPath.push_back(i);
+	for (size_t i = 0; i < nOldKeyframes; i++)
+		SF2robotPath.push_back(i);
 
 	averageMapIsUpdated = false;
 }
@@ -214,7 +206,8 @@ void CMultiMetricMapPDF::serializeTo(mrpt::serialization::CArchive& out) const
 		out << part.log_w;
 		out << part.d->mapTillNow;
 		out.WriteAs<uint32_t>(part.d->robotPath.size());
-		for (const auto& p : part.d->robotPath) out << p;
+		for (const auto& p : part.d->robotPath)
+			out << p;
 	}
 	out << SFs << SF2robotPath;
 }
@@ -250,14 +243,14 @@ void CMultiMetricMapPDF::serializeFrom(
 
 				in >> m;
 				m_particles[i].d->robotPath.resize(m);
-				for (j = 0; j < m; j++) in >> m_particles[i].d->robotPath[j];
+				for (j = 0; j < m; j++)
+					in >> m_particles[i].d->robotPath[j];
 			}
 
 			in >> SFs >> SF2robotPath;
 		}
 		break;
-		default:
-			MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
 	};
 }
 
@@ -331,7 +324,8 @@ void CMultiMetricMapPDF::rebuildAverageMap()
 
 	// Compute the sum of weights:
 	double sumLinearWeights = 0;
-	for (auto& p : m_particles) sumLinearWeights += exp(p.log_w);
+	for (auto& p : m_particles)
+		sumLinearWeights += exp(p.log_w);
 
 	// CHECK:
 	for (auto& p : m_particles)
@@ -354,7 +348,8 @@ void CMultiMetricMapPDF::rebuildAverageMap()
 
 		// For each particle in the RBPF:
 		double sumW = 0;
-		for (auto& p : m_particles) sumW += exp(p.log_w);
+		for (auto& p : m_particles)
+			sumW += exp(p.log_w);
 
 		if (sumW == 0) sumW = 1;
 
@@ -418,8 +413,8 @@ bool CMultiMetricMapPDF::insertObservation(CSensoryFrame& sf)
 		bool pose_is_valid;
 		const CPose3D robotPose = CPose3D(getLastPose(i, pose_is_valid));
 		// ASSERT_(pose_is_valid); // if not, use the default (0,0,0)
-		const bool map_modified = sf.insertObservationsInto(
-			&m_particles[i].d->mapTillNow, &robotPose);
+		const bool map_modified =
+			sf.insertObservationsInto(m_particles[i].d->mapTillNow, robotPose);
 		anymap = anymap || map_modified;
 	}
 
@@ -444,7 +439,7 @@ double CMultiMetricMapPDF::getCurrentEntropyOfPaths()
 {
 	size_t i;
 	size_t N =
-		m_particles[0].d->robotPath.size();  // The poses count along the paths
+		m_particles[0].d->robotPath.size();	 // The poses count along the paths
 
 	// Compute paths entropy:
 	// ---------------------------
@@ -501,7 +496,8 @@ double CMultiMetricMapPDF::getCurrentJointEntropy()
 
 	// Sum of linear weights:
 	double sumLinearWeights = 0;
-	for (auto& p : m_particles) sumLinearWeights += exp(p.log_w);
+	for (auto& p : m_particles)
+		sumLinearWeights += exp(p.log_w);
 
 	// Compute weighted maps entropy:
 	// --------------------------------

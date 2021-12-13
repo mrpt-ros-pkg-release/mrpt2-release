@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -12,6 +12,7 @@
 #include <mrpt/core/exceptions.h>
 #include <mrpt/graphs/TNodeID.h>
 #include <mrpt/typemeta/TTypeName.h>
+
 #include <fstream>
 #include <map>
 #include <set>
@@ -80,8 +81,8 @@ class CDirectedGraph
 		{
 			using namespace mrpt::typemeta;
 			return literal("edge_t<") + TTypeName<TYPE_EDGES>::get() +
-				   literal(",") + TTypeName<EDGE_ANNOTATIONS>::get() +
-				   literal(">");
+				literal(",") + TTypeName<EDGE_ANNOTATIONS>::get() +
+				literal(">");
 		}
 	};
 	/** Underlying type for edge_t = TYPE_EDGES + annotations */
@@ -144,7 +145,7 @@ class CDirectedGraph
 	inline bool edgeExists(TNodeID from_nodeID, TNodeID to_nodeID) const
 	{
 		return edges.find(std::make_pair(from_nodeID, to_nodeID)) !=
-			   edges.end();
+			edges.end();
 	}
 
 	/** Return a reference to the content of a given edge.
@@ -253,8 +254,7 @@ class CDirectedGraph
 		for (typename edges_map_t::const_iterator it = edges.begin();
 			 it != edges.end(); ++it)
 		{
-			if (it->first.first == nodeID)
-				neighborIDs.insert(it->first.second);
+			if (it->first.first == nodeID) neighborIDs.insert(it->first.second);
 			else if (it->first.second == nodeID)
 				neighborIDs.insert(it->first.first);
 		}
@@ -367,7 +367,7 @@ class CDirectedGraph
 	}
 	/** @} */
 
-};  // end class CDirectedGraph
+};	// end class CDirectedGraph
 
 /** @} */
 }  // namespace graphs

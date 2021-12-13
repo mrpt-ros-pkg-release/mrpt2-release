@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -20,11 +20,17 @@ TEST(WorkerThreadsPool, runTasks)
 	{
 		mrpt::WorkerThreadsPool pool(1);
 
-		pool.enqueue(f, 1);
-		pool.enqueue(f, 2);
-		pool.enqueue(f, 3);
+		auto fut1 = pool.enqueue(f, 1);
+		auto fut2 = pool.enqueue(f, 2);
+		auto fut3 = pool.enqueue(f, 3);
 
-		std::this_thread::sleep_for(std::chrono::milliseconds(200));
+		const auto n = pool.pendingTasks();
+		EXPECT_GE(n, 0);
+		EXPECT_LE(n, 3);
+
+		fut1.wait();
+		fut2.wait();
+		fut3.wait();
 	}
 	EXPECT_EQ(accum, 6);
 }

@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -81,19 +81,19 @@ double graphs_dijkstra(int nNodes, int _N)
 		double edge_node_ratio = 2.0;
 		for (unsigned int i = 0; i < (unsigned int)nNodes; i++)
 		{
-			size_t nEdges =
-				1 + (mrpt::random::getRandomGenerator().drawUniform32bit() %
-					 int(edge_node_ratio - 1));
+			size_t nEdges = 1 +
+				(mrpt::random::getRandomGenerator().drawUniform32bit() %
+				 int(edge_node_ratio - 1));
 			for (TNodeID k = 0; k < nEdges; k++)
 			{
 				TNodeID dest;
 				dest = i + 1;
 				if (k > 0)
 				{
-					while (dest == i && dest != i + 1)  // Avoid self-loops!
+					while (dest == i && dest != i + 1)	// Avoid self-loops!
 						dest = mrpt::random::getRandomGenerator()
 								   .drawUniform32bit() %
-							   nNodes;
+							nNodes;
 				}
 				gs.insertEdge(i, dest, EDGE_TYPE());
 			}

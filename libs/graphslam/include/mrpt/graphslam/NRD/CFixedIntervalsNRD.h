@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -11,11 +11,10 @@
 
 #include <mrpt/config/CConfigFileBase.h>
 #include <mrpt/config/CLoadableOptions.h>
+#include <mrpt/graphslam/interfaces/CNodeRegistrationDecider.h>
 #include <mrpt/obs/CActionCollection.h>
 #include <mrpt/obs/CObservationOdometry.h>
 #include <mrpt/obs/CSensoryFrame.h>
-
-#include <mrpt/graphslam/interfaces/CNodeRegistrationDecider.h>
 
 namespace mrpt::graphslam::deciders
 {

@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -13,6 +13,7 @@
 #include <map>
 #include <memory>
 #include <string>
+
 #include "mrpt-expr_export.h"
 
 namespace exprtk
@@ -112,7 +113,7 @@ class MRPT_EXPR_EXPORT CRuntimeCompiledExpression
 	mrpt::pimpl<Impl> m_impl;
 	struct ExprVerbose;
 	friend struct ExprVerbose;
-};  // End of class def.
+};	// End of class def.
 
 }  // namespace expr
 

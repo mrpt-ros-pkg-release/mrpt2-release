@@ -2,17 +2,20 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
-#include "system-precomp.h"  // Precompiled headers
-
+#include "system-precomp.h"	 // Precompiled headers
+//
 #include <mrpt/core/exceptions.h>
+#include <mrpt/core/lock_helper.h>
 #include <mrpt/system/COutputLogger.h>
 #include <mrpt/system/datetime.h>
-#include <cstdarg>  // for logFmt
+#include <mrpt/system/filesystem.h>
+
+#include <cstdarg>	// for logFmt
 #include <cstdio>
 #include <fstream>
 #include <iostream>
@@ -35,15 +38,16 @@ using namespace std;
 // COutputLogger
 // ////////////////////////////////////////////////////////////
 
-static std::array<mrpt::system::TConsoleColor, NUMBER_OF_VERBOSITY_LEVELS>
+static std::array<
+	mrpt::system::ConsoleForegroundColor, NUMBER_OF_VERBOSITY_LEVELS>
 	logging_levels_to_colors = {
-		CONCOL_BLUE,  // LVL_DEBUG
-		CONCOL_NORMAL,  // LVL_INFO
-		CONCOL_GREEN,  // LVL_WARN
-		CONCOL_RED  // LVL_ERROR
+		ConsoleForegroundColor::BLUE,  // LVL_DEBUG
+		ConsoleForegroundColor::DEFAULT,  // LVL_INFO
+		ConsoleForegroundColor::GREEN,	// LVL_WARN
+		ConsoleForegroundColor::RED	 // LVL_ERROR
 };
 
-std::array<mrpt::system::TConsoleColor, NUMBER_OF_VERBOSITY_LEVELS>&
+std::array<mrpt::system::ConsoleForegroundColor, NUMBER_OF_VERBOSITY_LEVELS>&
 	COutputLogger::logging_levels_to_colors()
 {
 	return ::logging_levels_to_colors;
@@ -54,7 +58,7 @@ static std::array<std::string, NUMBER_OF_VERBOSITY_LEVELS>
 		"DEBUG",  // LVL_DEBUG
 		"INFO ",  // LVL_INFO
 		"WARN ",  // LVL_WARN
-		"ERROR"  // LVL_ERROR
+		"ERROR"	 // LVL_ERROR
 };
 std::array<std::string, NUMBER_OF_VERBOSITY_LEVELS>&
 	COutputLogger::logging_levels_to_names()
@@ -62,30 +66,27 @@ std::array<std::string, NUMBER_OF_VERBOSITY_LEVELS>&
 	return ::logging_levels_to_names;
 }
 
-COutputLogger::COutputLogger(std::string_view name)
-{
-	this->loggerReset();
-	m_logger_name = name;
-}
-COutputLogger::COutputLogger() { this->loggerReset(); }
 COutputLogger::~COutputLogger() = default;
+
 void COutputLogger::logStr(
 	const VerbosityLevel level, std::string_view msg_str) const
 {
-	if (level < m_min_verbosity_level) return;
-
 	// initialize a TMsg object
 	TMsg msg(level, msg_str, *this);
-	if (logging_enable_keep_record) m_history.push_back(msg);
-
-	if (logging_enable_console_output)
+	if (logging_enable_keep_record)
 	{
-		msg.dumpToConsole();
+		auto lck = mrpt::lockHelper(*m_historyMtx);
+		m_history.push_back(msg);
 	}
 
-	// User callbacks:
-	for (const auto& c : m_listCallbacks)
-		c(msg.body, msg.level, msg.name, msg.timestamp);
+	if (level >= m_min_verbosity_level && logging_enable_console_output)
+	{
+		msg.dumpToConsole();
+
+		// User callbacks:
+		for (const auto& c : m_listCallbacks)
+			c(msg.body, msg.level, msg.name, msg.timestamp);
+	}
 }
 
 void COutputLogger::logFmt(
@@ -151,7 +152,9 @@ void COutputLogger::setVerbosityLevel(const VerbosityLevel level)
 void COutputLogger::getLogAsString(std::string& fname) const
 {
 	fname.clear();
-	for (const auto& h : m_history) fname += h.getAsString();
+	auto lck = mrpt::lockHelper(*m_historyMtx);
+	for (const auto& h : m_history)
+		fname += h.getAsString();
 }
 std::string COutputLogger::getLogAsString() const
 {
@@ -159,24 +162,21 @@ std::string COutputLogger::getLogAsString() const
 	this->getLogAsString(str);
 	return str;
 }
-void COutputLogger::writeLogToFile(
-	const std::string* fname_in /* = nullptr */) const
+void COutputLogger::writeLogToFile(const std::optional<string> fname_in) const
 {
+	using namespace std::string_literals;
+
 	// determine the filename - open it
-	std::string fname;
-	if (fname_in)
-	{
-		fname = *fname_in;
-	}
-	else
-	{
-		fname = m_logger_name + ".log";
-	}
+	std::string fname = fname_in.has_value()
+		? fname_in.value()
+		: mrpt::system::fileNameStripInvalidChars(m_logger_name) + ".log"s;
+
 	std::ofstream f(fname);
 	ASSERTMSG_(
-		f.is_open(), mrpt::format(
-						 "[%s:] Could not open external file: %s",
-						 m_logger_name.c_str(), fname.c_str()));
+		f.is_open(),
+		mrpt::format(
+			"[%s] Could not open external file: %s", m_logger_name.c_str(),
+			fname.c_str()));
 
 	std::string hist_str;
 	this->getLogAsString(hist_str);
@@ -186,11 +186,14 @@ void COutputLogger::writeLogToFile(
 
 void COutputLogger::dumpLogToConsole() const
 {
-	for (const auto& h : m_history) h.dumpToConsole();
+	auto lck = mrpt::lockHelper(*m_historyMtx);
+	for (const auto& h : m_history)
+		h.dumpToConsole();
 }
 
 std::string COutputLogger::getLoggerLastMsg() const
 {
+	auto lck = mrpt::lockHelper(*m_historyMtx);
 	TMsg last_msg = m_history.back();
 	return last_msg.getAsString();
 }
@@ -200,18 +203,7 @@ void COutputLogger::getLoggerLastMsg(std::string& msg_str) const
 	msg_str = this->getLoggerLastMsg();
 }
 
-void COutputLogger::loggerReset()
-{
-	m_logger_name = "log";  // just the default name
-
-	m_history.clear();
-	logging_enable_console_output = true;
-	logging_enable_keep_record = false;
-
-	// set the minimum logging level allowed for printing. By default its
-	// LVL_INFO
-	m_min_verbosity_level = LVL_INFO;
-}
+void COutputLogger::loggerReset() { *this = COutputLogger(); }
 
 // TMsg Struct
 // ////////////////////////////////////////////////////////////
@@ -254,18 +246,22 @@ void COutputLogger::TMsg::dumpToConsole() const
 {
 	const std::string str = getAsString();
 
-	const bool dump_to_cerr = (level == LVL_ERROR);  // LVL_ERROR alternatively
+	const bool dump_to_cerr = (level == LVL_ERROR);	 // LVL_ERROR alternatively
 	// dumped to stderr instead
 	// of stdout
 
 	// Set console color:
-	const TConsoleColor concol =
+	const ConsoleForegroundColor concol =
 		COutputLogger::logging_levels_to_colors()[level];
-	mrpt::system::setConsoleColor(concol, dump_to_cerr);
+	mrpt::system::consoleColorAndStyle(
+		concol, ConsoleBackgroundColor::DEFAULT, ConsoleTextStyle::REGULAR,
+		dump_to_cerr);
 	// Output msg:
 	(dump_to_cerr ? std::cerr : std::cout) << str;
 	// Switch back to normal color:
-	mrpt::system::setConsoleColor(CONCOL_NORMAL);
+	mrpt::system::consoleColorAndStyle(
+		ConsoleForegroundColor::DEFAULT, ConsoleBackgroundColor::DEFAULT,
+		ConsoleTextStyle::REGULAR, dump_to_cerr);
 #ifdef _MSC_VER
 	OutputDebugStringA(
 		str.c_str());  // call benchmarked: avrg 90 us (50-200 us)

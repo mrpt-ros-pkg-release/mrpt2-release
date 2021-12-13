@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -10,9 +10,9 @@
 #ifndef MYARTPROVIDER_H
 #define MYARTPROVIDER_H
 
-#include "CDlgLog.h"
-
 #include <wx/artprov.h>
+
+#include "CDlgLog.h"
 
 class CMyArtProvider : public wxArtProvider
 {
@@ -22,4 +22,4 @@ class CMyArtProvider : public wxArtProvider
 		const wxSize& size) override;
 };
 
-#endif  // MYARTPROVIDER_H
+#endif	// MYARTPROVIDER_H

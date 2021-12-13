@@ -2,22 +2,22 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
-#include "system-precomp.h"  // Precompiled headers
+#include "system-precomp.h"	 // Precompiled headers
 //
-
 #include <mrpt/core/exceptions.h>
 #include <mrpt/core/format.h>
+#include <mrpt/core/winerror2str.h>
 #include <mrpt/system/filesystem.h>
 #include <mrpt/system/os.h>
 #include <mrpt/system/string_utils.h>
 
 #ifndef HAVE_TIMEGM
-#endif  // HAVE_TIMEGM
+#endif	// HAVE_TIMEGM
 
 #include <algorithm>
 #include <cctype>
@@ -29,6 +29,7 @@
 #include <mutex>
 
 #ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 //
 #include <conio.h>
@@ -149,7 +150,7 @@ time_t mrpt::system::os::timegm(struct tm* tm)
 }
 
 #endif
-#endif  // HAVE_TIMEGM
+#endif	// HAVE_TIMEGM
 
 /*---------------------------------------------------------------
 					mrpt::system::MRPT_getCompilationDate
@@ -270,8 +271,7 @@ FILE* os::fopen(const char* fileName, const char* mode) noexcept
 #if defined(_MSC_VER) && (_MSC_VER >= 1400)
 	// Use a secure version in Visual Studio 2005:
 	FILE* f;
-	if (0 != ::fopen_s(&f, fileName, mode))
-		return NULL;
+	if (0 != ::fopen_s(&f, fileName, mode)) return NULL;
 	else
 		return f;
 #else
@@ -485,15 +485,34 @@ uint64_t mrpt::system::os::_strtoull(const char* nptr, char** endptr, int base)
 
 void mrpt::system::setConsoleColor(TConsoleColor color, bool changeStdErr)
 {
-	static const int TS_NORMAL = 0;
-	static const int TS_BLUE = 1;
-	static const int TS_GREEN = 2;
-	static const int TS_RED = 4;
-#ifdef _WIN32
+	ConsoleForegroundColor fgCol;
+
+	switch (color)
+	{
+		case CONCOL_BLUE: fgCol = ConsoleForegroundColor::BLUE; break;
+		case CONCOL_RED: fgCol = ConsoleForegroundColor::RED; break;
+		case CONCOL_GREEN: fgCol = ConsoleForegroundColor::GREEN; break;
+
+		case CONCOL_NORMAL:
+		default:  //
+			fgCol = ConsoleForegroundColor::DEFAULT;
+			break;
+	};
+
+	consoleColorAndStyle(
+		fgCol, ConsoleBackgroundColor::DEFAULT, ConsoleTextStyle::REGULAR,
+		changeStdErr);
+}
+
+void mrpt::system::consoleColorAndStyle(
+	ConsoleForegroundColor fg, ConsoleBackgroundColor bg,
+	ConsoleTextStyle style, bool applyToStdErr)
+{
+#if defined(_WIN32)
 	static int normal_attributes = -1;
 	HANDLE hstdout =
-		GetStdHandle(changeStdErr ? STD_ERROR_HANDLE : STD_OUTPUT_HANDLE);
-	fflush(changeStdErr ? stderr : stdout);
+		GetStdHandle(applyToStdErr ? STD_ERROR_HANDLE : STD_OUTPUT_HANDLE);
+	fflush(applyToStdErr ? stderr : stdout);
 
 	if (normal_attributes < 0)
 	{
@@ -505,29 +524,50 @@ void mrpt::system::setConsoleColor(TConsoleColor color, bool changeStdErr)
 	SetConsoleTextAttribute(
 		hstdout,
 		(WORD)(
-			color == TS_NORMAL ? normal_attributes
-							   : ((color & TS_BLUE ? FOREGROUND_BLUE : 0) |
-								  (color & TS_GREEN ? FOREGROUND_GREEN : 0) |
-								  (color & TS_RED ? FOREGROUND_RED : 0) |
-								  FOREGROUND_INTENSITY)));
+			fg == ConsoleForegroundColor::DEFAULT
+				? normal_attributes
+				: ((fg == ConsoleForegroundColor::BLUE ? FOREGROUND_BLUE : 0) |
+				   (fg == ConsoleForegroundColor::GREEN ? FOREGROUND_GREEN
+														: 0) |	//
+				   (fg == ConsoleForegroundColor::RED ? FOREGROUND_RED : 0) |
+				   FOREGROUND_INTENSITY)));
 #else
+	static std::mutex mtx;
+	std::lock_guard<std::mutex> lck(mtx);
+
+	static ConsoleForegroundColor last_fg = ConsoleForegroundColor::DEFAULT;
+	static ConsoleBackgroundColor last_bg = ConsoleBackgroundColor::DEFAULT;
+	static ConsoleTextStyle last_style = ConsoleTextStyle::REGULAR;
+
+	if (fg == last_fg && bg == last_bg && style == last_style) return;
+	last_fg = fg;
+	last_bg = bg;
+	last_style = style;
+
 	// *nix:
-	FILE* f = changeStdErr ? stdout : stderr;
-	const int fd = changeStdErr ? STDOUT_FILENO : STDERR_FILENO;
+	FILE* f = applyToStdErr ? stdout : stderr;
+	const int fd = applyToStdErr ? STDOUT_FILENO : STDERR_FILENO;
 
 	// No color support if it is not a real console:
 	if (!isatty(fd)) return;
 
-	static TConsoleColor last_color = mrpt::system::CONCOL_NORMAL;
-	if (color == last_color) return;
-	last_color = color;
-
-	static const uint8_t ansi_tab[] = {30, 34, 32, 36, 31, 35, 33, 37};
-	int code = 0;
 	fflush(f);
-	if (color != TS_NORMAL)
-		code = ansi_tab[color & (TS_BLUE | TS_GREEN | TS_RED)];
-	fprintf(f, "\x1b[%dm", code);
+
+	std::vector<int> codes;
+	if (int c = static_cast<int>(fg); c != 0) codes.push_back(c);
+	if (int c = static_cast<int>(bg); c != 0) codes.push_back(c);
+	if (int c = static_cast<int>(style); c != 0) codes.push_back(c);
+	if (codes.empty()) codes.push_back(0);
+
+	std::string sFormat;
+	for (size_t i = 0; i < codes.size(); i++)
+	{
+		sFormat.append(std::to_string(codes[i]));
+		if (i + 1 == codes.size()) continue;
+		sFormat.append(";");
+	}
+
+	fprintf(f, "\033[%sm", sFormat.c_str());
 #endif
 }
 
@@ -569,21 +609,6 @@ const std::string& mrpt::system::getMRPTLicense()
 	}
 	return sLicenseText;
 }
-
-#ifdef _WIN32
-std::string winerror2str(const char* errorPlaceName)
-{
-	char str[700];
-	DWORD e = GetLastError();
-	FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM, 0, e, 0, str, sizeof(str), NULL);
-	std::string s;
-	s = "[";
-	s += errorPlaceName;
-	s += "] Error: ";
-	s += str;
-	return s;
-}
-#endif
 
 /*---------------------------------------------------------------
 launchProcess
@@ -634,11 +659,11 @@ std::string mrpt::system::find_mrpt_shared_dir()
 			{
 				case 0:
 					dir = string(MRPT_SOURCE_BASE_DIRECTORY) +
-						  string("/share/mrpt/");
+						string("/share/mrpt/");
 					break;
 				case 1:
 					dir = string(MRPT_INSTALL_PREFIX_DIRECTORY) +
-						  string("/share/mrpt/");
+						string("/share/mrpt/");
 					break;
 #ifdef _WIN32
 				case 2:
@@ -648,14 +673,12 @@ std::string mrpt::system::find_mrpt_shared_dir()
 
 					dir = mrpt::system::extractFileDirectory(
 							  std::string(curExe)) +
-						  "/../share/mrpt/";
+						"/../share/mrpt/";
 				}
 				break;
 #endif
 
-				default:
-					found_mrpt_shared_dir = ".";
-					break;
+				default: found_mrpt_shared_dir = "."; break;
 			};
 			if (!dir.empty() && mrpt::system::directoryExists(dir))
 				found_mrpt_shared_dir = dir;
@@ -757,11 +780,11 @@ int mrpt::system::executeCommand(
 		// Create the child process.
 		bSuccess = CreateProcessA(
 			NULL,
-			(LPSTR)command.c_str(),  // command line
+			(LPSTR)command.c_str(),	 // command line
 			NULL,  // process security attributes
 			NULL,  // primary thread security attributes
 			TRUE,  // handles are inherited
-			0,  // creation flags
+			0,	// creation flags
 			NULL,  // use parent's environment
 			NULL,  // use parent's current directory
 			&siStartInfo,  // STARTUPINFO pointer
@@ -813,10 +836,7 @@ int mrpt::system::executeCommand(
 	}
 #endif
 	// set output - if valid pointer given
-	if (output)
-	{
-		*output = sout.str();
-	}
+	if (output) { *output = sout.str(); }
 
 	// Return exit code
 	return exit_code;
@@ -851,7 +871,8 @@ struct ModulesRegistry
 			auto lstCopy = loadedModules;
 			loadedModules_mtx.unlock();
 
-			for (auto& ent : lstCopy) unloadPluginModule(ent.first);
+			for (auto& ent : lstCopy)
+				unloadPluginModule(ent.first);
 		}
 		catch (const std::exception& e)
 		{
@@ -899,8 +920,7 @@ bool mrpt::system::loadPluginModule(
 		GetLastError());
 #endif
 
-	if (outErrorMsgs)
-		outErrorMsgs.value().get() += sError;
+	if (outErrorMsgs) outErrorMsgs.value().get() += sError;
 	else
 		std::cerr << sError;
 	return false;
@@ -919,7 +939,7 @@ bool mrpt::system::unloadPluginModule(
 	if (it == md.loadedModules.end())
 	{
 		sError = "Module filename '" + moduleFileName +
-				 "' not found in previous calls to loadPluginModule().";
+			"' not found in previous calls to loadPluginModule().";
 	}
 	else
 	{
@@ -942,8 +962,7 @@ bool mrpt::system::unloadPluginModule(
 
 	if (!sError.empty())
 	{
-		if (outErrorMsgs)
-			outErrorMsgs.value().get() += sError;
+		if (outErrorMsgs) outErrorMsgs.value().get() += sError;
 		else
 			std::cerr << sError;
 		return false;

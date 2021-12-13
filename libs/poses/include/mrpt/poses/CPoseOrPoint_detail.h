@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -62,7 +62,7 @@ struct T3DTypeHelper<CPose3DQuat>
 };
 
 template <class DERIVEDCLASS, int IS3D>
-struct pose_point_impl;  // generic template, specialized below:
+struct pose_point_impl;	 // generic template, specialized below:
 
 // Extra members for 3D implementation:
 template <class DERIVEDCLASS>

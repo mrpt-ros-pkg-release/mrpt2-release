@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
-#include "opengl-precomp.h"  // Precompiled header
-
+#include "opengl-precomp.h"	 // Precompiled header
+//
 #include <mrpt/math/TLine3D.h>
 #include <mrpt/math/geometry.h>
 #include <mrpt/opengl/CCylinder.h>
@@ -92,7 +92,8 @@ void CCylinder::onUpdateBuffers_Triangles()
 	}
 
 	// All faces, same color:
-	for (auto& t : tris) t.setColor(m_color);
+	for (auto& t : tris)
+		t.setColor(m_color);
 }
 
 void CCylinder::serializeTo(mrpt::serialization::CSchemeArchiveBase& out) const
@@ -121,17 +122,17 @@ void CCylinder::serializeFrom(mrpt::serialization::CSchemeArchiveBase& in)
 			m_hasTopBase = static_cast<bool>(in["hasTopBase"]);
 		}
 		break;
-		default:
-			MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
 	}
 }
-uint8_t CCylinder::serializeGetVersion() const { return 1; }
+uint8_t CCylinder::serializeGetVersion() const { return 2; }
 void CCylinder::serializeTo(mrpt::serialization::CArchive& out) const
 {
 	writeToStreamRender(out);
 	// version 0
 	out << m_baseRadius << m_topRadius << m_height << m_slices
 		<< m_hasBottomBase << m_hasTopBase;
+	CRenderizableShaderTriangles::params_serialize(out);  // v2
 }
 void CCylinder::serializeFrom(
 	mrpt::serialization::CArchive& in, uint8_t version)
@@ -140,6 +141,7 @@ void CCylinder::serializeFrom(
 	{
 		case 0:
 		case 1:
+		case 2:
 			readFromStreamRender(in);
 			in >> m_baseRadius >> m_topRadius >> m_height >> m_slices;
 
@@ -150,9 +152,11 @@ void CCylinder::serializeFrom(
 			}
 
 			in >> m_hasBottomBase >> m_hasTopBase;
+
+			if (version >= 2)
+				CRenderizableShaderTriangles::params_deserialize(in);
 			break;
-		default:
-			MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
 	};
 	CRenderizable::notifyChange();
 }
@@ -169,8 +173,7 @@ bool solveEqn(double a, double b, double c, double& t)
 	if (a >= mrpt::math::getEpsilon())
 	{
 		double delta = square(b) - a * c;
-		if (delta == 0)
-			return (t = -b / a) >= 0;
+		if (delta == 0) return (t = -b / a) >= 0;
 		else if (delta >= 0)
 		{
 			delta = sqrt(delta);
@@ -208,13 +211,11 @@ bool CCylinder::traceRay(const mrpt::poses::CPose3D& o, double& dist) const
 		if (!reachesHeight(zz)) return false;
 		float r;
 		return getRadius(zz, r)
-				   ? solveEqn(
-						 square(lin.director[0]) + square(lin.director[1]),
-						 lin.director[0] * lin.pBase.x +
-							 lin.director[1] * lin.pBase.y,
-						 square(lin.pBase.x) + square(lin.pBase.y) - square(r),
-						 dist)
-				   : false;
+			? solveEqn(
+				  square(lin.director[0]) + square(lin.director[1]),
+				  lin.director[0] * lin.pBase.x + lin.director[1] * lin.pBase.y,
+				  square(lin.pBase.x) + square(lin.pBase.y) - square(r), dist)
+			: false;
 	}
 	bool fnd = false;
 	double nDist, tZ0;
@@ -281,18 +282,9 @@ bool CCylinder::traceRay(const mrpt::poses::CPose3D& o, double& dist) const
 	return fnd;
 }
 
-void CCylinder::getBoundingBox(
-	mrpt::math::TPoint3D& bb_min, mrpt::math::TPoint3D& bb_max) const
+auto CCylinder::getBoundingBox() const -> mrpt::math::TBoundingBox
 {
-	bb_min.x = -std::max(m_baseRadius, m_topRadius);
-	bb_min.y = bb_min.x;
-	bb_min.z = 0;
-
-	bb_max.x = std::max(m_baseRadius, m_topRadius);
-	bb_max.y = bb_max.x;
-	bb_max.z = m_height;
-
-	// Convert to coordinates of my parent:
-	m_pose.composePoint(bb_min, bb_min);
-	m_pose.composePoint(bb_max, bb_max);
+	const double R = std::max(m_baseRadius, m_topRadius);
+	return mrpt::math::TBoundingBox({-R, -R, 0}, {R, R, m_height})
+		.compose(m_pose);
 }

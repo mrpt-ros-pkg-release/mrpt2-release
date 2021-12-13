@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "maps-precomp.h"  // Precomp header
-
+//
 #include <mrpt/maps/COccupancyGridMap3D.h>
 #include <mrpt/maps/CSimplePointsMap.h>
 #include <mrpt/obs/CObservation2DRangeScan.h>
@@ -21,12 +21,13 @@ using namespace mrpt::maps;
 static constexpr unsigned FRBITS = 9;
 
 bool COccupancyGridMap3D::internal_insertObservation(
-	const mrpt::obs::CObservation& obs, const mrpt::poses::CPose3D* robPose)
+	const mrpt::obs::CObservation& obs,
+	const std::optional<const mrpt::poses::CPose3D>& robotPose)
 {
 	MRPT_START
 
 	const mrpt::poses::CPose3D robotPose3D =
-		(robPose != nullptr) ? *robPose : mrpt::poses::CPose3D();
+		(robotPose) ? *robotPose : mrpt::poses::CPose3D();
 
 	if (auto* o = dynamic_cast<const mrpt::obs::CObservation2DRangeScan*>(&obs);
 		o != nullptr)
@@ -61,7 +62,7 @@ void COccupancyGridMap3D::internal_insertObservationScan2D(
 	pts.insertionOptions.insertInvalidPoints = false;
 	pts.insertionOptions.minDistBetweenLaserPoints = .0;  // insert all
 
-	pts.loadFromRangeScan(o, &robotPose);
+	pts.loadFromRangeScan(o, robotPose);
 
 	const auto sensorPose3D = robotPose + o.sensorPose;
 	const auto sensorPt = mrpt::math::TPoint3D(sensorPose3D.asTPose());
@@ -163,7 +164,7 @@ void COccupancyGridMap3D::insertRay(
 	const int Acz_ = std::abs(Acz);
 
 	const int nStepsRay = mrpt::max3(Acx_, Acy_, Acz_);
-	if (!nStepsRay) return;  // May be...
+	if (!nStepsRay) return;	 // May be...
 
 	const float N_1 = 1.0f / nStepsRay;
 

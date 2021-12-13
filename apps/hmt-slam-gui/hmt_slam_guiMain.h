@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -11,6 +11,7 @@
 #define HMT_SLAM_GUIMAIN_H
 
 #include <wx/log.h>
+
 #include "CDlgLog.h"
 
 //(*Headers(hmt_slam_guiFrame)
@@ -28,6 +29,7 @@
 #include <wx/textctrl.h>
 #include <wx/things/toggle.h>
 #include <wx/treectrl.h>
+
 #include "MyGLCanvas.h"
 //*)
 
@@ -41,6 +43,7 @@
 #endif
 
 #include <mrpt/hmtslam.h>
+
 #include <memory>  // unique_ptr
 
 class CDlgLog;
@@ -246,4 +249,4 @@ class CItemData : public wxTreeItemData
 	}
 };
 
-#endif  // HMT_SLAM_GUIMAIN_H
+#endif	// HMT_SLAM_GUIMAIN_H

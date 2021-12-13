@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -12,10 +12,15 @@
 #include <mrpt/core/format.h>
 #include <mrpt/math/TPoseOrPoint.h>
 #include <mrpt/math/math_frwds.h>  // CMatrixFixed
+
 #include <cmath>  // sqrt
+#include <type_traits>
 
 namespace mrpt::math
 {
+/** \addtogroup  geometry_grp
+ * @{ */
+
 // Ensure 1-byte memory alignment, no additional stride bytes.
 #pragma pack(push, 1)
 
@@ -83,11 +88,24 @@ struct TPoint3D_ : public TPoseOrPoint,
 
 	/** Return a copy of this object using type U for coordinates */
 	template <typename U>
-	TPoint3D_<U> cast() const
+	[[nodiscard]] TPoint3D_<U> cast() const
 	{
 		return TPoint3D_<U>(
 			static_cast<U>(this->x), static_cast<U>(this->y),
 			static_cast<U>(this->z));
+	}
+
+	/** Builds from the first 3 elements of a vector-like object: [x y z]
+	 *
+	 * \tparam Vector It can be std::vector<double>, Eigen::VectorXd, etc.
+	 */
+	template <typename Vector>
+	static TPoint3D FromVector(const Vector& v)
+	{
+		TPoint3D o;
+		for (int i = 0; i < 3; i++)
+			o[i] = v[i];
+		return o;
 	}
 
 	/** Coordinate access using operator[]. Order: x,y,z */
@@ -95,14 +113,10 @@ struct TPoint3D_ : public TPoseOrPoint,
 	{
 		switch (i)
 		{
-			case 0:
-				return TPoint3D_data<T>::x;
-			case 1:
-				return TPoint3D_data<T>::y;
-			case 2:
-				return TPoint3D_data<T>::z;
-			default:
-				throw std::out_of_range("index out of range");
+			case 0: return TPoint3D_data<T>::x;
+			case 1: return TPoint3D_data<T>::y;
+			case 2: return TPoint3D_data<T>::z;
+			default: throw std::out_of_range("index out of range");
 		}
 	}
 	/** Coordinate access using operator[]. Order: x,y,z */
@@ -110,14 +124,10 @@ struct TPoint3D_ : public TPoseOrPoint,
 	{
 		switch (i)
 		{
-			case 0:
-				return TPoint3D_data<T>::x;
-			case 1:
-				return TPoint3D_data<T>::y;
-			case 2:
-				return TPoint3D_data<T>::z;
-			default:
-				throw std::out_of_range("index out of range");
+			case 0: return TPoint3D_data<T>::x;
+			case 1: return TPoint3D_data<T>::y;
+			case 2: return TPoint3D_data<T>::z;
+			default: throw std::out_of_range("index out of range");
 		}
 	}
 	/**
@@ -136,27 +146,28 @@ struct TPoint3D_ : public TPoseOrPoint,
 	T sqrDistanceTo(const TPoint3D_<T>& p) const
 	{
 		return square(p.x - TPoint3D_data<T>::x) +
-			   square(p.y - TPoint3D_data<T>::y) +
-			   square(p.z - TPoint3D_data<T>::z);
+			square(p.y - TPoint3D_data<T>::y) +
+			square(p.z - TPoint3D_data<T>::z);
 	}
-	/** Squared norm: |v|^2 = x^2+y^2+z^2 */
+	/** Squared norm: `|v|^2 = x^2+y^2+z^2` */
 	T sqrNorm() const
 	{
 		return square(TPoint3D_data<T>::x) + square(TPoint3D_data<T>::y) +
-			   square(TPoint3D_data<T>::z);
+			square(TPoint3D_data<T>::z);
 	}
 
-	/** Point norm: |v| = sqrt(x^2+y^2+z^2) */
+	/** Point norm: `|v| = sqrt(x^2+y^2+z^2)` */
 	T norm() const { return std::sqrt(sqrNorm()); }
 
 	/** Returns this vector with unit length: v/norm(v) */
-	TPoint3D_<T> unitarize() const
+	[[nodiscard]] TPoint3D_<T> unitarize() const
 	{
 		const T n = norm();
 		ASSERT_GT_(n, 0);
 		const T f = 1 / n;
-		return {TPoint3D_data<T>::x * f, TPoint3D_data<T>::y * f,
-				TPoint3D_data<T>::z * f};
+		return {
+			TPoint3D_data<T>::x * f, TPoint3D_data<T>::y * f,
+			TPoint3D_data<T>::z * f};
 	}
 
 	/** Scale point/vector */
@@ -167,17 +178,26 @@ struct TPoint3D_ : public TPoseOrPoint,
 		TPoint3D_data<T>::z *= f;
 		return *this;
 	}
-	/**
-	 * Transformation into vector.
+	/** Gets the pose as a vector of doubles.
+	 * \tparam Vector It can be std::vector<double>, Eigen::VectorXd, etc.
 	 */
-	template <class VECTORLIKE>
-	void asVector(VECTORLIKE& v) const
+	template <typename Vector>
+	void asVector(Vector& v) const
 	{
 		v.resize(3);
 		v[0] = TPoint3D_data<T>::x;
 		v[1] = TPoint3D_data<T>::y;
 		v[2] = TPoint3D_data<T>::z;
 	}
+	/// \overload
+	template <typename Vector>
+	[[nodiscard]] Vector asVector() const
+	{
+		Vector v;
+		asVector(v);
+		return v;
+	}
+
 	/**
 	 * Translation.
 	 */
@@ -201,30 +221,34 @@ struct TPoint3D_ : public TPoseOrPoint,
 	/**
 	 * Points addition.
 	 */
-	constexpr TPoint3D_<T> operator+(const TPoint3D_<T>& p) const
+	[[nodiscard]] constexpr TPoint3D_<T> operator+(const TPoint3D_<T>& p) const
 	{
-		return {TPoint3D_data<T>::x + p.x, TPoint3D_data<T>::y + p.y,
-				TPoint3D_data<T>::z + p.z};
+		return {
+			TPoint3D_data<T>::x + p.x, TPoint3D_data<T>::y + p.y,
+			TPoint3D_data<T>::z + p.z};
 	}
 	/**
 	 * Points substraction.
 	 */
-	constexpr TPoint3D_<T> operator-(const TPoint3D_<T>& p) const
+	[[nodiscard]] constexpr TPoint3D_<T> operator-(const TPoint3D_<T>& p) const
 	{
-		return {TPoint3D_data<T>::x - p.x, TPoint3D_data<T>::y - p.y,
-				TPoint3D_data<T>::z - p.z};
+		return {
+			TPoint3D_data<T>::x - p.x, TPoint3D_data<T>::y - p.y,
+			TPoint3D_data<T>::z - p.z};
 	}
 
-	constexpr TPoint3D_<T> operator*(T d) const
+	[[nodiscard]] constexpr TPoint3D_<T> operator*(T d) const
 	{
-		return {TPoint3D_data<T>::x * d, TPoint3D_data<T>::y * d,
-				TPoint3D_data<T>::z * d};
+		return {
+			TPoint3D_data<T>::x * d, TPoint3D_data<T>::y * d,
+			TPoint3D_data<T>::z * d};
 	}
 
-	constexpr TPoint3D_<T> operator/(T d) const
+	[[nodiscard]] constexpr TPoint3D_<T> operator/(T d) const
 	{
-		return {TPoint3D_data<T>::x / d, TPoint3D_data<T>::y / d,
-				TPoint3D_data<T>::z / d};
+		return {
+			TPoint3D_data<T>::x / d, TPoint3D_data<T>::y / d,
+			TPoint3D_data<T>::z / d};
 	}
 
 	bool operator<(const TPoint3D_<T>& p) const;
@@ -239,7 +263,7 @@ struct TPoint3D_ : public TPoseOrPoint,
 			"[%f %f %f]", TPoint3D_data<T>::x, TPoint3D_data<T>::y,
 			TPoint3D_data<T>::z);
 	}
-	std::string asString() const
+	[[nodiscard]] std::string asString() const
 	{
 		std::string s;
 		asString(s);
@@ -253,7 +277,7 @@ struct TPoint3D_ : public TPoseOrPoint,
 	 */
 	void fromString(const std::string& s);
 
-	static TPoint3D_<T> FromString(const std::string& s)
+	[[nodiscard]] static TPoint3D_<T> FromString(const std::string& s)
 	{
 		TPoint3D_<T> o;
 		o.fromString(s);
@@ -362,25 +386,36 @@ struct TPointXYZRGBAf
 };
 #pragma pack(pop)
 
-/** Unary minus operator for 3D points. */
+/** Unary minus operator for 3D points/vectors. */
 template <typename T>
 constexpr TPoint3D_<T> operator-(const TPoint3D_<T>& p1)
 {
 	return {-p1.x, -p1.y, -p1.z};
 }
 
+/** scalar times vector operator. */
+template <
+	typename T, typename Scalar,
+	std::enable_if_t<std::is_convertible_v<Scalar, T>>* = nullptr>
+constexpr TPoint3D_<T> operator*(const Scalar scalar, const TPoint3D_<T>& p)
+{
+	return {scalar * p.x, scalar * p.y, scalar * p.z};
+}
+
 /** Exact comparison between 3D points */
 template <typename T>
 constexpr bool operator==(const TPoint3D_<T>& p1, const TPoint3D_<T>& p2)
 {
-	return (p1.x == p2.x) && (p1.y == p2.y) && (p1.z == p2.z);  //-V550
+	return (p1.x == p2.x) && (p1.y == p2.y) && (p1.z == p2.z);	//-V550
 }
 /** Exact comparison between 3D points */
 template <typename T>
 constexpr bool operator!=(const TPoint3D_<T>& p1, const TPoint3D_<T>& p2)
 {
-	return (p1.x != p2.x) || (p1.y != p2.y) || (p1.z != p2.z);  //-V550
+	return (p1.x != p2.x) || (p1.y != p2.y) || (p1.z != p2.z);	//-V550
 }
+
+/** @} */
 
 }  // namespace mrpt::math
 

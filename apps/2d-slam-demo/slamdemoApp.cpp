@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -11,6 +11,7 @@
 
 //(*AppHeaders
 #include <wx/image.h>
+
 #include "slamdemoMain.h"
 //*)
 #include <wx/msgdlg.h>
@@ -102,7 +103,8 @@ bool slamdemoApp::doCommandLineProcess()
 	bool res_parse = cmd.parse(argc, &auxArgs[0]);
 
 	// Free aux mem:
-	for (int i = 0; i < argc; i++) delete[] auxArgs[i];
+	for (int i = 0; i < argc; i++)
+		delete[] auxArgs[i];
 
 	if (!res_parse)
 	{

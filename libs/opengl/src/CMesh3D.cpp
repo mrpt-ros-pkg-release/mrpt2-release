@@ -2,19 +2,18 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
-#include "opengl-precomp.h"  // Precompiled header
-
+#include "opengl-precomp.h"	 // Precompiled header
+//
 #include <mrpt/img/color_maps.h>
 #include <mrpt/opengl/CMesh3D.h>
+#include <mrpt/opengl/opengl_api.h>
 #include <mrpt/serialization/CArchive.h>
 #include <mrpt/serialization/stl_serialization.h>
-
-#include <mrpt/opengl/opengl_api.h>
 
 using namespace mrpt;
 using namespace mrpt::opengl;
@@ -34,8 +33,7 @@ void CMesh3D::loadMesh(
 	m_is_quad.resize(num_faces);
 	for (unsigned int i = 0; i < num_faces; i++)
 	{
-		if (verts_per_face[i] == 3)
-			m_is_quad[i] = false;
+		if (verts_per_face[i] == 3) m_is_quad[i] = false;
 		else if (verts_per_face[i] == 4)
 			m_is_quad[i] = true;
 		else
@@ -54,8 +52,7 @@ void CMesh3D::loadMesh(
 		m_face_verts[f][0] = face_verts[count++];
 		m_face_verts[f][1] = face_verts[count++];
 		m_face_verts[f][2] = face_verts[count++];
-		if (m_is_quad[f])
-			m_face_verts[f][3] = face_verts[count++];
+		if (m_is_quad[f]) m_face_verts[f][3] = face_verts[count++];
 		else
 			m_face_verts[f][3] = -1;  // Meaning it is a triangle
 	}
@@ -83,24 +80,28 @@ void CMesh3D::loadMesh(
 
 			if (m_is_quad[f])
 			{
-				const float vec1[3] = {m_vertices[v3][0] - m_vertices[v1][0],
-									   m_vertices[v3][1] - m_vertices[v1][1],
-									   m_vertices[v3][2] - m_vertices[v1][2]};
-				const float vec2[3] = {m_vertices[v4][0] - m_vertices[v2][0],
-									   m_vertices[v4][1] - m_vertices[v2][1],
-									   m_vertices[v4][2] - m_vertices[v2][2]};
+				const float vec1[3] = {
+					m_vertices[v3][0] - m_vertices[v1][0],
+					m_vertices[v3][1] - m_vertices[v1][1],
+					m_vertices[v3][2] - m_vertices[v1][2]};
+				const float vec2[3] = {
+					m_vertices[v4][0] - m_vertices[v2][0],
+					m_vertices[v4][1] - m_vertices[v2][1],
+					m_vertices[v4][2] - m_vertices[v2][2]};
 				m_normals[f][0] = vec1[1] * vec2[2] - vec1[2] * vec2[1];
 				m_normals[f][1] = vec1[2] * vec2[0] - vec1[0] * vec2[2];
 				m_normals[f][2] = vec1[0] * vec2[1] - vec1[1] * vec2[0];
 			}
 			else
 			{
-				const float vec1[3] = {m_vertices[v2][0] - m_vertices[v1][0],
-									   m_vertices[v2][1] - m_vertices[v1][1],
-									   m_vertices[v2][2] - m_vertices[v1][2]};
-				const float vec2[3] = {m_vertices[v3][0] - m_vertices[v1][0],
-									   m_vertices[v3][1] - m_vertices[v1][1],
-									   m_vertices[v3][2] - m_vertices[v1][2]};
+				const float vec1[3] = {
+					m_vertices[v2][0] - m_vertices[v1][0],
+					m_vertices[v2][1] - m_vertices[v1][1],
+					m_vertices[v2][2] - m_vertices[v1][2]};
+				const float vec2[3] = {
+					m_vertices[v3][0] - m_vertices[v1][0],
+					m_vertices[v3][1] - m_vertices[v1][1],
+					m_vertices[v3][2] - m_vertices[v1][2]};
 				m_normals[f][0] = vec1[1] * vec2[2] - vec1[2] * vec2[1];
 				m_normals[f][1] = vec1[2] * vec2[0] - vec1[0] * vec2[2];
 				m_normals[f][2] = vec1[0] * vec2[1] - vec1[1] * vec2[0];
@@ -120,7 +121,8 @@ void CMesh3D::loadMesh(
 {
 	// Fill number of vertices for each face
 	m_is_quad.resize(num_faces);
-	for (unsigned int i = 0; i < num_faces; i++) m_is_quad[i] = is_quad(i, 0);
+	for (unsigned int i = 0; i < num_faces; i++)
+		m_is_quad[i] = is_quad(i, 0);
 
 	// Fill the vertices of each face
 	m_face_verts.resize(num_faces);
@@ -129,8 +131,7 @@ void CMesh3D::loadMesh(
 		m_face_verts[f][0] = face_verts(0, f);
 		m_face_verts[f][1] = face_verts(1, f);
 		m_face_verts[f][2] = face_verts(2, f);
-		if (m_is_quad[f])
-			m_face_verts[f][3] = face_verts(3, f);
+		if (m_is_quad[f]) m_face_verts[f][3] = face_verts(3, f);
 		else
 			m_face_verts[f][3] = -1;  // Meaning it is a triangle
 	}
@@ -156,24 +157,28 @@ void CMesh3D::loadMesh(
 
 			if (m_is_quad[f])
 			{
-				const float vec1[3] = {m_vertices[v3][0] - m_vertices[v1][0],
-									   m_vertices[v3][1] - m_vertices[v1][1],
-									   m_vertices[v3][2] - m_vertices[v1][2]};
-				const float vec2[3] = {m_vertices[v4][0] - m_vertices[v2][0],
-									   m_vertices[v4][1] - m_vertices[v2][1],
-									   m_vertices[v4][2] - m_vertices[v2][2]};
+				const float vec1[3] = {
+					m_vertices[v3][0] - m_vertices[v1][0],
+					m_vertices[v3][1] - m_vertices[v1][1],
+					m_vertices[v3][2] - m_vertices[v1][2]};
+				const float vec2[3] = {
+					m_vertices[v4][0] - m_vertices[v2][0],
+					m_vertices[v4][1] - m_vertices[v2][1],
+					m_vertices[v4][2] - m_vertices[v2][2]};
 				m_normals[f][0] = vec1[1] * vec2[2] - vec1[2] * vec2[1];
 				m_normals[f][1] = vec1[2] * vec2[0] - vec1[0] * vec2[2];
 				m_normals[f][2] = vec1[0] * vec2[1] - vec1[1] * vec2[0];
 			}
 			else
 			{
-				const float vec1[3] = {m_vertices[v2][0] - m_vertices[v1][0],
-									   m_vertices[v2][1] - m_vertices[v1][1],
-									   m_vertices[v2][2] - m_vertices[v1][2]};
-				const float vec2[3] = {m_vertices[v3][0] - m_vertices[v1][0],
-									   m_vertices[v3][1] - m_vertices[v1][1],
-									   m_vertices[v3][2] - m_vertices[v1][2]};
+				const float vec1[3] = {
+					m_vertices[v2][0] - m_vertices[v1][0],
+					m_vertices[v2][1] - m_vertices[v1][1],
+					m_vertices[v2][2] - m_vertices[v1][2]};
+				const float vec2[3] = {
+					m_vertices[v3][0] - m_vertices[v1][0],
+					m_vertices[v3][1] - m_vertices[v1][1],
+					m_vertices[v3][2] - m_vertices[v1][2]};
 				m_normals[f][0] = vec1[1] * vec2[2] - vec1[2] * vec2[1];
 				m_normals[f][1] = vec1[2] * vec2[0] - vec1[0] * vec2[2];
 				m_normals[f][2] = vec1[0] * vec2[1] - vec1[1] * vec2[0];
@@ -256,7 +261,8 @@ void CMesh3D::onUpdateBuffers_Triangles()
 		}
 	}
 
-	for (auto& t : tris) t.setColor(face_color);
+	for (auto& t : tris)
+		t.setColor(face_color);
 }
 void CMesh3D::onUpdateBuffers_Points()
 {
@@ -267,7 +273,7 @@ void CMesh3D::onUpdateBuffers_Points()
 	cbd.assign(m_vertices.size(), vert_color.asTColor());
 }
 
-uint8_t CMesh3D::serializeGetVersion() const { return 0; }
+uint8_t CMesh3D::serializeGetVersion() const { return 1; }
 void CMesh3D::serializeTo(mrpt::serialization::CArchive& out) const
 {
 	writeToStreamRender(out);
@@ -278,53 +284,37 @@ void CMesh3D::serializeTo(mrpt::serialization::CArchive& out) const
 		out.WriteBufferFixEndianness<uint32_t>(
 			m_face_verts[0].data(),
 			m_face_verts.size() * m_face_verts[0].size());
+	CRenderizableShaderTriangles::params_serialize(out);  // v1
 }
 
 void CMesh3D::serializeFrom(mrpt::serialization::CArchive& in, uint8_t version)
 {
-	readFromStreamRender(in);
-	in >> m_showEdges >> m_showFaces >> m_showVertices >> m_computeNormals;
-	in >> m_is_quad >> m_vertices >> m_normals;
-	const auto N = in.ReadAs<uint32_t>();
-	m_face_verts.resize(N);
-	if (!m_face_verts.empty())
-		in.ReadBufferFixEndianness<uint32_t>(
-			m_face_verts[0].data(),
-			m_face_verts.size() * m_face_verts[0].size());
+	switch (version)
+	{
+		case 0:
+		case 1:
+		{
+			readFromStreamRender(in);
+			in >> m_showEdges >> m_showFaces >> m_showVertices >>
+				m_computeNormals;
+			in >> m_is_quad >> m_vertices >> m_normals;
+			const auto N = in.ReadAs<uint32_t>();
+			m_face_verts.resize(N);
+			if (!m_face_verts.empty())
+				in.ReadBufferFixEndianness<uint32_t>(
+					m_face_verts[0].data(),
+					m_face_verts.size() * m_face_verts[0].size());
+
+			if (version >= 1)
+				CRenderizableShaderTriangles::params_deserialize(in);
+		}
+		break;
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+	};
+	CRenderizable::notifyChange();
 }
 
-void CMesh3D::getBoundingBox(
-	mrpt::math::TPoint3D& bb_min, mrpt::math::TPoint3D& bb_max) const
+auto CMesh3D::getBoundingBox() const -> mrpt::math::TBoundingBox
 {
-	if (m_vertices.empty())
-	{
-		bb_max = TPoint3D(0, 0, 0);
-		bb_min = TPoint3D(0, 0, 0);
-	}
-	else
-	{
-		bb_min.x = std::numeric_limits<double>::max();
-		bb_min.y = std::numeric_limits<double>::max();
-		bb_min.z = std::numeric_limits<double>::max();
-		bb_max.x = -std::numeric_limits<double>::max();
-		bb_max.y = -std::numeric_limits<double>::max();
-		bb_max.z = -std::numeric_limits<double>::max();
-
-		for (size_t i = 0; i < m_vertices.size(); i++)
-		{
-			// Max
-			mrpt::keep_max(bb_max.x, m_vertices[i][0]);
-			mrpt::keep_max(bb_max.y, m_vertices[i][1]);
-			mrpt::keep_max(bb_max.z, m_vertices[i][2]);
-
-			// Min
-			mrpt::keep_min(bb_min.x, m_vertices[i][0]);
-			mrpt::keep_min(bb_min.y, m_vertices[i][1]);
-			mrpt::keep_min(bb_min.z, m_vertices[i][2]);
-		}
-	}
-
-	// Convert to coordinates of my parent:
-	m_pose.composePoint(bb_min, bb_min);
-	m_pose.composePoint(bb_max, bb_max);
+	return trianglesBoundingBox().compose(m_pose);
 }

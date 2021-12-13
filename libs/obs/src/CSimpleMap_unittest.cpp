@@ -2,7 +2,7 @@
 |                     Mobile Robot Programming Toolkit (MRPT)            |
 |                          https://www.mrpt.org/                         |
 |                                                                        |
-| Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+| Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
 | See: https://www.mrpt.org/Authors - All rights reserved.               |
 | Released under BSD License. See: https://www.mrpt.org/License          |
 +------------------------------------------------------------------------+ */
@@ -13,8 +13,7 @@
 
 TEST(CSimpleMap, ParseFileInFormat_v1_5)
 {
-	const std::string fil =
-		mrpt::UNITTEST_BASEDIR +
+	const std::string fil = mrpt::UNITTEST_BASEDIR +
 		std::string("/share/mrpt/datasets/localization_demo.simplemap.gz");
 
 	mrpt::maps::CSimpleMap sm;

@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "obs-precomp.h"  // Precompiled headers
-
+//
 #include <mrpt/obs/CActionCollection.h>
 #include <mrpt/obs/CActionRobotMovement2D.h>
 #include <mrpt/obs/CActionRobotMovement3D.h>
@@ -31,7 +31,8 @@ uint8_t CActionCollection::serializeGetVersion() const { return 0; }
 void CActionCollection::serializeTo(mrpt::serialization::CArchive& out) const
 {
 	out.WriteAs<uint32_t>(m_actions.size());
-	for (const auto& a : *this) out << *a;
+	for (const auto& a : *this)
+		out << *a;
 }
 
 void CActionCollection::serializeFrom(
@@ -49,8 +50,7 @@ void CActionCollection::serializeFrom(
 					ObjectReadFromStreamToPtrs<CAction::Ptr>(&in));
 		}
 		break;
-		default:
-			MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
 	};
 }
 
@@ -75,17 +75,17 @@ const CAction& CActionCollection::get(size_t index) const
 	return *(m_actions.at(index).get_ptr());
 }
 
-/*---------------------------------------------------------------
-						size
- ---------------------------------------------------------------*/
-size_t CActionCollection::size() { return m_actions.size(); }
-/*---------------------------------------------------------------
-						insert
- ---------------------------------------------------------------*/
-void CActionCollection::insert(CAction& action)
+size_t CActionCollection::size() const { return m_actions.size(); }
+
+void CActionCollection::insert(const CAction& action)
 {
 	m_actions.emplace_back(
 		CAction::Ptr(dynamic_cast<CAction*>(action.clone())));
+}
+
+void CActionCollection::insertPtr(const CAction::Ptr& action)
+{
+	m_actions.emplace_back(action);
 }
 
 /*---------------------------------------------------------------
@@ -107,9 +107,7 @@ CActionRobotMovement2D::Ptr CActionCollection::getBestMovementEstimation() const
 
 			if (temp->estimationMethod ==
 				CActionRobotMovement2D::emScan2DMatching)
-			{
-				return temp;
-			}
+			{ return temp; }
 
 			double det = temp->poseChange->getCovariance().det();
 

@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
-#include "hwdrivers-precomp.h"  // Precompiled headers
-
+#include "hwdrivers-precomp.h"	// Precompiled headers
+//
 #include <mrpt/hwdrivers/CIMUXSens_MT4.h>
 #include <mrpt/obs/CObservationGPS.h>
 #include <mrpt/obs/CObservationIMU.h>
@@ -232,7 +232,7 @@ class MyXSensCallback : public XsCallback
 
 				rGPS.speed_knots =
 					sqrt(vel_data[0] * vel_data[0] + vel_data[1] * vel_data[1]);
-				rGPS.direction_degrees = 0;  // Could be worked out from
+				rGPS.direction_degrees = 0;	 // Could be worked out from
 				// velocity and magnatic field
 				// perhaps.
 			}
@@ -274,8 +274,8 @@ struct CIMUXSens_MT4::Impl
 #pragma comment(lib, "SetupAPI.lib")
 #pragma comment(lib, "WinUsb.lib")
 #endif
-#endif  // _WIN32
-#endif  // MRPT_HAS_xSENS
+#endif	// _WIN32
+#endif	// MRPT_HAS_xSENS
 
 IMPLEMENTS_GENERIC_SENSOR(CIMUXSens_MT4, mrpt::hwdrivers)
 
@@ -293,7 +293,7 @@ CIMUXSens_MT4::CIMUXSens_MT4() : m_impl(mrpt::make_impl<CIMUXSens_MT4::Impl>())
 
 #else
 	THROW_EXCEPTION(
-		"MRPT has been compiled with 'BUILD_XSENS'=OFF, so this class "
+		"MRPT has been compiled with 'MRPT_WITH_XSENS'=OFF, so this class "
 		"cannot be used.");
 #endif
 }
@@ -336,7 +336,7 @@ void CIMUXSens_MT4::doProcess()
 
 #else
 	THROW_EXCEPTION(
-		"MRPT has been compiled with 'BUILD_XSENS'=OFF, so this class "
+		"MRPT has been compiled with 'MRPT_WITH_XSENS'=OFF, so this class "
 		"cannot be used.");
 #endif
 }
@@ -375,7 +375,7 @@ void CIMUXSens_MT4::initialize()
 					"CIMUXSens_MT4: No 'portname' was specified and no "
 					"compatible XSens device was found in the system (%u "
 					"devices connected)",
-					portInfoArray.size());
+					static_cast<unsigned int>(portInfoArray.size()));
 
 			if (m_verbose)
 				cout << "[CIMUXSens_MT4] Found " << portInfoArray.size()
@@ -503,7 +503,7 @@ void CIMUXSens_MT4::initialize()
 
 #else
 	THROW_EXCEPTION(
-		"MRPT has been compiled with 'BUILD_XSENS'=OFF, so this class "
+		"MRPT has been compiled with 'MRPT_WITH_XSENS'=OFF, so this class "
 		"cannot be used.");
 #endif
 }

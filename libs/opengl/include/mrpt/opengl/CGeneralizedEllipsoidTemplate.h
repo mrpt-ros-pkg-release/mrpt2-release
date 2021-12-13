@@ -2,14 +2,14 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 #pragma once
 
 #include <mrpt/math/CMatrixFixed.h>
-#include <mrpt/math/matrix_serialization.h>  // for >> ops
+#include <mrpt/math/matrix_serialization.h>	 // for >> ops
 #include <mrpt/opengl/CRenderizableShaderTriangles.h>
 #include <mrpt/opengl/CRenderizableShaderWireFrame.h>
 #include <mrpt/serialization/CArchive.h>  // for >> ops
@@ -28,6 +28,9 @@ namespace mrpt::opengl
  *
  * \tparam DIM The dimensionality of the parameter space, which must coincide
  * with that of the rendering space (2 or 3)
+ *
+ * By default, only the front faces are rendered. Use cullFaces() to change if
+ * needed.
  *
  * \ingroup mrpt_opengl_grp
  */
@@ -209,12 +212,9 @@ class CGeneralizedEllipsoidTemplate
 
 	/** Evaluates the bounding box of this object (including possible
 	 * children) in the coordinate frame of the object parent. */
-	void getBoundingBox(
-		mrpt::math::TPoint3D& bb_min,
-		mrpt::math::TPoint3D& bb_max) const override
+	mrpt::math::TBoundingBox getBoundingBox() const override
 	{
-		bb_min = m_bb_min;
-		bb_max = m_bb_max;
+		return mrpt::math::TBoundingBox(m_bb_min, m_bb_max).compose(m_pose);
 	}
 
 	/** Ray tracing  */
@@ -273,13 +273,15 @@ class CGeneralizedEllipsoidTemplate
 				m_needToRecomputeEigenVals = true;
 			}
 			break;
-			default:
-				MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+			default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
 		};
 		CRenderizable::notifyChange();
 	}
 
-	CGeneralizedEllipsoidTemplate() = default;
+	CGeneralizedEllipsoidTemplate()
+	{
+		CRenderizableShaderTriangles::cullFaces(TCullFace::FRONT);
+	}
 	virtual ~CGeneralizedEllipsoidTemplate() override = default;
 
 	// Uscaled, m_mean, params_pts, m_numSegments, m_numSegments

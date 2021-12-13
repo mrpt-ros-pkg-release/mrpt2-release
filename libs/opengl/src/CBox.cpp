@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
-#include "opengl-precomp.h"  // Precompiled header
-
+#include "opengl-precomp.h"	 // Precompiled header
+//
 #include <mrpt/math/geometry.h>
 #include <mrpt/opengl/CBox.h>
 #include <mrpt/serialization/CArchive.h>
@@ -56,8 +56,8 @@ void CBox::onUpdateBuffers_Wireframe()
 	auto& cbd = CRenderizableShaderWireFrame::m_color_buffer_data;
 	vbd.clear();
 
-	const std::array<mrpt::math::TPoint3D, 2> corner = {m_corner_min,
-														m_corner_max};
+	const std::array<mrpt::math::TPoint3D, 2> corner = {
+		m_corner_min, m_corner_max};
 
 	for (unsigned int i = 0; i < 2; i++)
 	{
@@ -127,10 +127,11 @@ void CBox::onUpdateBuffers_Triangles()
 		P3(c0.x, c1.y, c1.z), P3(c0.x, c0.y, c1.z), P3(c1.x, c1.y, c1.z));
 
 	// All faces, all vertices, same color:
-	for (auto& t : tris) t.setColor(m_color);
+	for (auto& t : tris)
+		t.setColor(m_color);
 }
 
-uint8_t CBox::serializeGetVersion() const { return 1; }
+uint8_t CBox::serializeGetVersion() const { return 2; }
 void CBox::serializeTo(mrpt::serialization::CArchive& out) const
 {
 	writeToStreamRender(out);
@@ -139,6 +140,7 @@ void CBox::serializeTo(mrpt::serialization::CArchive& out) const
 		<< m_corner_max.y << m_corner_max.z << m_wireframe << m_lineWidth;
 	// Version 1:
 	out << m_draw_border << m_solidborder_color;
+	CRenderizableShaderTriangles::params_serialize(out);  // v2
 }
 
 void CBox::serializeFrom(mrpt::serialization::CArchive& in, uint8_t version)
@@ -147,21 +149,22 @@ void CBox::serializeFrom(mrpt::serialization::CArchive& in, uint8_t version)
 	{
 		case 0:
 		case 1:
+		case 2:
 			readFromStreamRender(in);
 			in >> m_corner_min.x >> m_corner_min.y >> m_corner_min.z >>
 				m_corner_max.x >> m_corner_max.y >> m_corner_max.z >>
 				m_wireframe >> m_lineWidth;
 			// Version 1:
-			if (version >= 1)
-				in >> m_draw_border >> m_solidborder_color;
+			if (version >= 1) in >> m_draw_border >> m_solidborder_color;
 			else
 			{
 				m_draw_border = false;
 			}
+			if (version >= 2)
+				CRenderizableShaderTriangles::params_deserialize(in);
 
 			break;
-		default:
-			MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
 	};
 	CRenderizable::notifyChange();
 }
@@ -189,13 +192,7 @@ bool CBox::traceRay(
 	THROW_EXCEPTION("TO DO");
 }
 
-void CBox::getBoundingBox(
-	mrpt::math::TPoint3D& bb_min, mrpt::math::TPoint3D& bb_max) const
+auto CBox::getBoundingBox() const -> mrpt::math::TBoundingBox
 {
-	bb_min = m_corner_min;
-	bb_max = m_corner_max;
-
-	// Convert to coordinates of my parent:
-	m_pose.composePoint(bb_min, bb_min);
-	m_pose.composePoint(bb_max, bb_max);
+	return mrpt::math::TBoundingBox(m_corner_min, m_corner_max).compose(m_pose);
 }

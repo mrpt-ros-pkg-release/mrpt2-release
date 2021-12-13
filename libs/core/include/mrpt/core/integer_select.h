@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -48,6 +48,12 @@ struct int_select_by_bytecount<8>
 	using type = int64_t;
 };
 
+/** Usage: `int_select_by_bytecount_t<N> var;`.
+ * C++14 helper type for int_select_by_bytecount<> */
+template <unsigned int num_bytes>
+using int_select_by_bytecount_t =
+	typename int_select_by_bytecount<num_bytes>::type;
+
 /** Usage: `uint_select_by_bytecount<N>::type  var;` allows defining var as a
  * unsigned integer with, at least, N bytes. */
 template <unsigned int num_bytes>
@@ -77,6 +83,12 @@ struct uint_select_by_bytecount<8>
 {
 	using type = uint64_t;
 };
+
+/** Usage: `uint_select_by_bytecount_t<N> var;`.
+ * C++14 helper type for uint_select_by_bytecount<> */
+template <unsigned int num_bytes>
+using uint_select_by_bytecount_t =
+	typename uint_select_by_bytecount<num_bytes>::type;
 
 /** @} */
 }  // namespace mrpt

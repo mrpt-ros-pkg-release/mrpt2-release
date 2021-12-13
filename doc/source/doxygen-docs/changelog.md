@@ -1,5 +1,325 @@
 \page changelog Change Log
 
+# Version 2.4.0: Released Dec 12th, 2021
+- Changes in build system:
+  - Most important CMake variables now are prefixed with `MRPT_` to avoid name collisions if using MRPT as a git submodule in a larger project.
+  - `GNUInstallDirs` directories are now always honored when installing.
+- Changes in applications:
+  - ptg-configurator:
+    - Show selected PTG path output motion command.
+  - navlog-viewer:
+    - New checkbox to enforce 2D orthogonal view, which is now the default view.
+  - rawlog-edit
+    - The `--info` command now also shows the first and last timestamp in a rawlog.
+  - RawLogViewer:
+    - Show mrpt::obs::CObservationPointCloud 3D point clouds in main window and scan animation dialog.
+    - Displays timestamp as the user tracks the timeline scroll bar.
+  - rosbag2rawlog:
+    - PointCloud2 messages are now only converted to mrpt::obs::CObservationRotatingScan is this latter class is specified in the YAML file.
+- Changes in libraries:
+  - \ref mrpt_apps_grp
+    - Application rawlog-edit is now available as the C++ class mrpt::apps::RawlogEditApp
+  - \ref mrpt_containers_grp
+    - New methods mrpt::containers::bimap::erase_by_key(),mrpt::containers::bimap::erase_by_value()
+    - mrpt::containers::vector_with_small_size_optimization has new methods `at()` and `push_back()` for a smoother transition from STL containers.
+    - mrpt::containers::yaml and libfyaml updated to latest version (more memory efficient parser).
+  - \ref mrpt_core_grp
+    - New base virtual interface class mrpt::Stringifyable unifying the asString() method already offered by many MRPT classes.
+  - \ref mrpt_img_grp
+    - **[API change]** mrpt::img::TCamera methods changed to allow defining fish-eye camera models too.
+  - \ref mrpt_io_grp
+    - GZIP compressed streams now also support open and append. See new mrpt::io::CFileGZOutputStream::open() signature.
+    - New enum mrpt::io::OpenMode for clearer-to-read code.
+    - Moved lazy-load operations to mrpt::io::setLazyLoadPathBase() and companion functions, since the older names mentioned images but this setting actually affects other sensors too.
+  - \ref mrpt_math_grp
+    - New function mrpt::math::xcorr()
+    - New header `<mrpt/math/gtsam_wrappers.h>`, see \ref mrpt_gtsam_wrappers
+    - New method mrpt::math::TBoundingBox::containsPoint()
+  - \ref mrpt_maps_grp
+    - Optimization: mrpt::maps::CPointsMap::insertAnotherMap() avoids matrix multiplication if SE(3) identity is passed as insertion pose.
+    - **[API change]** mrpt::maps::CSimpleMap docs improved, API modernized and made const-correct including returned shared_ptr instances as ConstPtr where applicable.
+  - \ref mrpt_nav_grp
+    - mrpt::nav::CParameterizedTrajectoryGenerator::initTPObstacleSingle() now always initializes to the maximum free distance, instead of saturating free space when heading to a target waypoint.
+    - **[API change]** mrpt::nav::CParameterizedTrajectoryGenerator::getPathPose() had two overloaded signatures, which is not recommended being one of them a virtual method. Only the return-by-value is left.
+  - \ref mrpt_obs_grp
+    - Fix const-correctness of mrpt::obs::CObservation::unload() for consistency with load().
+    - **[API change]** Replaced all API signatures taking an optional mrpt::poses::CPose3D as pointers (with default=nullptr) with a modern `std::optional<>`.
+  - \ref mrpt_opengl_grp
+    - New method mrpt::opengl::COpenGLViewport::setClonedCameraFrom()
+    - mrpt::opengl::CFBORender changes:
+      - More consistent naming of API methods: mrpt::opengl::CFBORender::render_RGB().
+      - New method to render into a depth image mrpt::opengl::CFBORender::render_RGBD().
+    - mrpt::opengl::CCamera::setProjectiveFromPinhole() now allows defining a camera by means of a pinhole model.
+    - New class mrpt::opengl::COpenGLFramebuffer, used to refactor mrpt::opengl::CFBORender
+    - New methods to control face culling:
+      - mrpt::opengl::CRenderizableShaderTriangles::cullFaces()
+      - mrpt::opengl::CRenderizableShaderTexturedTriangles::cullFaces()
+    - Remove specular light effects in the default shaders, to fix buggy behavior.
+    - **[API change]** New mrpt::opengl::Visualizable interface replaces former getAs3DObject() in all mrpt::maps and mrpt::poses classes with an uniform API, avoiding shared_ptr if possible.
+    - mrpt::opengl::CTexturedPlane now more efficiently renders as plain triangles if no texture has been assigned.
+    - Custom user OpenGL shaders can now be defined and installed to replace MRPT defaults.
+    Refer to example: \ref opengl_custom_shaders_demo
+  - \ref mrpt_poses_grp
+    - New function mrpt::poses::sensor_poses_from_yaml()
+    - New header `<mrpt/poses/gtsam_wrappers.h>`, see \ref mrpt_gtsam_wrappers
+  - \ref mrpt_random_grp
+    - New function mrpt::random::partial_shuffle()
+    - New function mrpt::random::portable_uniform_distribution()
+  - \ref mrpt_serialization_grp
+    - Implemented serialization of mrpt::containers::bimap in the new header `#include <mrpt/serialization/bimap_serialization.h>`.
+    - Enums can now be binary-serialized too via `>>` / `<<` streaming operators into an mrpt::serialization::CArchive.
+    - mrpt::serialization::CArchive and mrpt::io::CStreams now have virtual methods to provide human-friendly self-descriptions, useful to debug which stream causes an error in serialization.
+  - \ref mrpt_system_grp
+    - Backwards-compatible change: New function mrpt::system::InvalidTimeStamp() used now inside the macro INVALID_TIMESTAMP, so the macro always returns a const reference instead of returning by value.
+    - New function mrpt::system::consoleColorAndStyle()
+    - mrpt::system::intervalFormat() now generates more human-friendly strings for time periods larger than 1 second (e.g. "1 year, 3 days, 8 hours").
+  - \ref mrpt_tfest_grp
+    - **[API change]** mrpt::tfest::TMatchingPair members are now called "local" vs "global" instead of the former, more confusing, "this" vs "other".
+  - \ref mrpt_vision_grp
+    - SIFT descriptors can now be evaluated for arbitrary keypoint coordinates.
+- BUG FIXES:
+  - Fix potential race conditions in:
+    - mrpt::rtti class registry
+    - The global mrpt::random::getRandomGenerator()
+    - mrpt::typemeta::TEnumTypeFiller
+  - Image-mode was not serialized in mrpt::opengl::COpenGLViewport
+  - nanogui: avoid potential divide by zero.
+  - mrpt::comms::CClientTCPSocket crashed if socket handle >=1024 in Linux (Closes [#1157](https://github.com/MRPT/mrpt/issues/1157))
+  - Fix error generating and parsing TUM RGBD dataset rawlog files.
+  - Fix regresion in mrpt::opengl::CFBORender::render() throwing an exception if the input image was empty.
+  - Fix incorrect handling of negative, fractional viewport sizes in mrpt::opengl::COpenGLViewport
+  - Fix: Should not scale velocity commands when in slow down, in CAbstractPTGBasedReactive::generate_vel_cmd() (Closes [#1175](https://github.com/MRPT/mrpt/issues/1175)).
+  - mrpt::system::CDirectoryExplorer did not fill in correct absolute paths if a relative path was passed as starting directory to scan.
+  - Fix mrpt::obs::CSensoryFrame::operator+=() did not perform what it was supposed to do.
+
+# Version 2.3.2: Released Jul 14, 2021
+- Changes in applications:
+  - RawLogViewer:
+    - More tree view icons.
+    - "Play video" window now also shows timestamps.
+  - SceneViewer3D:
+    - New command-line flag `--imgdir` to define the base path for lazy-load images.
+  - rawlog-edit:
+    - New operation `--export-txt` exploiting the new export-to-txt API in mrpt::obs::CObservation
+  - navlog-viewer:
+    - New UI tools to manually pick and export selected PTG selections to a training YAML file.
+- Changes in libraries:
+  - \ref mrpt_containers_grp
+    - YAML macros `MCP_LOAD_OPT()`, `MCP_LOAD_REQ()`, and `MCP_SAVE()` now also support reading and writing enums directly as YAML, transparently converting numerical values to/from their symbolic names.
+  - \ref mrpt_core_grp
+    - Added C++14 helper templates mrpt::uint_select_by_bytecount_t and mrpt::int_select_by_bytecount_t
+  - \ref mrpt_gui_grp
+    - mrpt::gui::CDisplayWindowGUI: improved API to allow multiple callback handlers, and to report exceptions in them.
+    - New 3D navigation key binding: SHIFT+scroll wheel, for fast up/down pure vertical motion of the camera point.
+  - \ref mrpt_img_grp
+    - mrpt::img::CImage::loadFromFile() now avoids memory allocations if there was already an image in memory with the same size.
+  - \ref mrpt_obs_grp
+    - mrpt::obs::CObservation now has a common API to export datasets to TXT/CSV files, see methods exportTxtSupported(), exportTxtHeader(), exportTxtDataRow(). It has been implemented in all suitable observation classes.
+    - mrpt::obs::CObservationImage::unload() defaulted to doing nothing. It now correctly unloads lazy-load images.
+  - \ref mrpt_poses_grp
+    - New methods mrpt::math::TTwist2D::rotated() and mrpt::math::TTwist3D::rotated()
+  - \ref mrpt_system_grp
+    - mrpt::system::CTimeLogger:
+      - Include custom `name` in underlying mrpt::system::COutputLogger name.
+      - Fix all valgrind/helgrind warning messages.
+    - New functions mrpt::system::firstNLines() and mrpt::system::nthOccurrence()
+- BUG FIXES:
+  - mrpt::img::CImage::isEmpty() should return false for delay-load images.
+  - Fix build error with GCC 8 in `mrpt/containers/yaml.h`.
+  - Fix exception rendering empty point clouds due to invalid bounding box.
+  - Fix broken 2D plots rendering in Ubuntu 20.04 (and probably other systems), via an update in mpWindow to properly use wxAutoBufferedPaintDC.
+  - mrpt::img::CImage::getPixelDepth() should force loading lazy load images.
+  - Fixed wrong rendering of different textures within the same opengl shader program.
+  - Fixed potential crashes inside BFD if using BFD and calling mrpt::callStackBackTrace() from several parallel threads.
+
+# Version 2.3.1: Released May 26th, 2021
+- General cmake scripts:
+  - `find_package(mrpt-xxx)` is now much faster.
+- Changes in applications:
+  - RawLogViewer:
+    - Browse scans window now has a check-box list to show/hide individual sensors.
+  - SceneViewer3D:
+    - Graceful failure when loading a corrupted 3Dscene file.
+- Changes in libraries:
+  - \ref mrpt_core_grp
+    - Removed mrpt::reverseBytesInPlace(long double) for it not being portable.
+  - \ref mrpt_containers_grp
+    - New environment variable MRPT_YAML_PARSER_VERBOSE controlling mrpt::containers::yaml
+  - \ref mrpt_hwdrivers_grp
+    - New argument to pass custom ffmpeg options to mrpt::hwdrivers::CFFMPEG_InputStream::openURL(). New default is to prefer stream over TCP for more reliable IP cameras reading.
+    - mrpt::hwdrivers::CHokuyoURG now has a parameter for between-data communications timeout (`comms_between_timeout_ms`).
+  - \ref mrpt_gui_grp
+    - mrpt::gui::CDisplayWindowGUI new methods to minimize/restore subwindows.
+  - \ref mrpt_math_grp
+    - New method mrpt::math::TLine3D::closestPointTo()
+    - New methods mrpt::math::TPose3D::translation(), mrpt::math::TPose2D::translation().
+  - \ref mrpt_obs_grp
+    - New mrpt::obs::CActionCollection::insert() overload for smart pointers.
+    - New method mrpt::obs::CObservation2DRangeScan::getScanAngle() and clarify docs on class members.
+    - New class mrpt::obs::CObservation3DScene.
+    - mrpt::obs::CObservationIMU now uses std::array instead of std::vector (faster due to less dynamic memory).
+  - \ref mrpt_opengl_grp
+    - Deprecate mrpt::opengl::COpenGLScene::dumpListOfObjects() in favor of new mrpt::opengl::COpenGLScene::asYAML()
+    - New method mrpt::opengl::CSimpleLine::setLineCoords() accepting mrpt::math::TPoint3D (older signature deprecated).
+  - \ref mrpt_system_grp
+    - New return-by-value signature for mrpt::system::CDirectoryExplorer::explore(), older version deprecated.
+    - mrpt::system::extractFileDirectory() returns `"."` instead of an empty string for filenames without any explicit full path.
+- BUG FIXES:
+  - Fix wrong formatting of empty *string* values (not *null* values) in mrpt::containers::yaml.
+  - Fix exception loading old datasets with stereo observations, via a new argument in mrpt::img::CImage::makeSureImageIsLoaded()
+  - Fix unhandled deserialization of v2 of mrpt::opengl::CPlanarLaserScan
+  - Fix build errors with MinGW.
+
+# Version 2.3.0: Released April 25th, 2021
+- General build changes:
+  - CMake >=3.8.0 is now required to ensure proper handling of dependencies compile options.
+- Changes in applications:
+  - ptg-configurator: target now also comprises a heading angle.
+  - RawLogViewer:
+    - New tab with CObservation3DRangeScan visualization options.
+    - All icons have been updated for a more modern look.
+- Changes in libraries:
+  - \ref mrpt_containers_grp
+    - add method mrpt::containers::map_as_vector::at()
+  - \ref mrpt_graphs_grp
+    - mrpt::graphs::CDijkstra:
+      - now no longer requires a field `nodes` in input graphs.
+      - add convenient return by value getTreeGraph()
+      - Deprecate mrpt::graphs::CDijkstra::Visitor virtual class API in favor of new C++11 std::function-based mrpt::graphs::CDijkstra::visitor_t
+  - \ref mrpt_math_grp
+    - Removed redundant mrpt::math::pointIntoPolygon2D()  -> mrpt::math::TPolygon2D::contains()
+    - Removed redundant mrpt::math::SegmentsIntersection() ->  mrpt::math::intersect(mrpt::math::TSegment2D,mrpt::math::TSegment2D)
+    - Removed redundant mrpt::math::distancePointToPolygon2D() -> TPolygon2D::distance()
+    - Moved mrpt::math::minDistBetweenLines() -> mrpt::math::TLine3D::distance()
+  - \ref mrpt_opengl_grp
+    - mrpt::opengl::CAssimpModel now uses a texture cache to speed up and reduce RAM usage if loading the same textures in different objects.
+  - \ref mrpt_system_grp
+    - New function mrpt::system::progress()
+- BUG FIXES:
+  - ptg-configurator: Fix failure to list existing PTGs, due to RTTI unregistered name "CParameterizedTrajectoryGenerator".
+  - mrpt::opengl::COpenGLViewport::get3DRayForPixelCoord() returned wrong pixel coordinates when in orthogonal projection mode.
+  - mrpt::opengl::CArrow: Fix wrong normal calculation (wrong rendering reflections).
+  - mrpt::opengl::CPointCloud::markAllPointsAsNew() and mrpt::opengl::CPointCloudColoured::markAllPointsAsNew() did not refresh OpenGL buffers.
+  - mrpt::nav::CPTG_DiffDrive_CollisionGridBased::getPathTwist() returned much larger velocities than the actual values.
+  - Fix broken Debian dependencies for libmrpt-vision-lgpl (Closes [Debian bug #986071](https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=986071)).
+  - `mrpt::maps::CPointsMap::load2Dor3D_from_text_stream()` for 2D maps left uninitialized values in `z`. Fixed to load zeros instead.
+  - Fixed crash in mrpt::vision::checkerBoardCameraCalibration() causing segfault in the camera-calib app.
+
+------
+# Version 2.2.0: Released March 10th, 2021
+- Changes in libraries:
+  - \ref mrpt_vision_grp
+    - Remove all obsolete `SIFTOptions.implementation` values. `OpenCV` is now the only possibility.
+  - \ref mrpt_nav_grp
+    - mrpt::nav::TWaypoint now uses std::optional instead of magic numbers in some fields.
+    - mrpt::nav::TWaypoint now has std::any fields to hold user-given extra data.
+- BUG FIXES:
+  - Fix invalid bounding box returned by octree_getBoundingBox() and mrpt::opengl point cloud classes when empty (Closes [#1145](https://github.com/MRPT/mrpt/issues/1145)).
+  - Fix potential infinite recursion in exceptions with stack trace (Closes [#1141](https://github.com/MRPT/mrpt/issues/1141)).
+  - Fix potential race conditions accessing waypoint lists in mrpt::nav::CWaypointsNavigator
+  - Fix build errors with gcc-11.
+
+------
+# Version 2.1.8: Released Feb 23rd, 2021
+- Changes in applications:
+  - RawLogViewer:
+    - "Scan animation" window: now also shows the timestamp of observations.
+  - camera-calib and kinect-stereo-calib:
+    - New option to save camera calibration results as YAML files.
+  - navlog-viewer:
+    - New option to enable orthogonal view.
+- General build changes:
+  - Fix excessive alignment in aarch64 (32->16 bytes).
+  - clang-format: enforce and upgraded to use clang-format-10.
+  - Fix building against the non-legacy GL library (Linux).
+  - nanoflann source code is no longer included as a copy: it will be used as the system library libnanoflann-dev, or as a git submodule if the former is not found.
+- Changes in libraries:
+  - \ref mrpt_containers_grp
+    - New YAML to/from matrix methods: mrpt::containers::yaml::FromMatrix(), mrpt::containers::yaml::toMatrix()
+  - \ref mrpt_core_grp
+    - New CMake build flags `MRPT_EXCEPTIONS_WITH_CALL_STACK` to optionally disable reporting call stacks upon exceptions and `MRPT_EXCEPTIONS_CALL_STACK_MAX_DEPTH` to set their maximum depth.
+  - \ref mrpt_hwdrivers_grp
+    - mrpt::hwdrivers::CHokuyoURG now has a parameter for communications timeout (`comms_timeout_ms`).
+  - \ref mrpt_math_grp
+    - New class mrpt::math::TBoundingBox
+  - \ref mrpt_maps_grp
+      - Const correctness fixed in all mrpt::maps::CMetricMap classes.
+  - \ref mrpt_opengl_grp
+    - mrpt::opengl::CFrustum() new constructor from mrpt::img::TCamera()
+  - \ref mrpt_poses_grp
+    - mrpt::poses::CPose3D: Add more syntactic sugger static constructors.
+  - \ref mrpt_slam_grp
+    - mrpt::slam::TMonteCarloLocalizationParams map parameters are now shared pointers instead of plain pointers for safer code.
+- BUG FIXES:
+  - Log `*_THROTTLE_*` macros (e.g. MRPT_LOG_THROTTLE_DEBUG) did not report the message the first time they were called, which seems a safer behavior.
+  - Reverted changed behavior: mrpt::config::CConfigFile did not throw if a non-existing file was passed to its constructor, but it throws in MRPT 2.1.{0-7}.
+  - Fix build against opencv 2.4.x (version in Ubuntu Xenial 16.04).
+  - Fixed: CHokuyoURG::initialize() won't report sensor status as ssError if it fails to communicate with the sensor, incorrectly leaving it as ssInitializing instead.
+  - Fixed: mrpt::opengl::CTexturedPlane::setPlaneCorners() did not check for incorrect null width or height.
+  - Fixed: mrpt::opengl textured objects leaking memory (Closes [#1136](https://github.com/MRPT/mrpt/issues/1136)).
+  - Fix bug in parsing CARMEN logs: mrpt::obs::carmen_log_parse_line() returned all scan ranges marked as "invalid".
+
+------
+# Version 2.1.7: Released Jan 2nd, 2021
+- BUG FIXES:
+  - Fix bash syntax error in PPA release scripts.
+  - Fix [Debian bug #978209](https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=978209): FTBFS: mainwindow.h:218:2: error: reference to Tracker is ambiguous
+
+------
+# Version 2.1.6: Released Dec 14th, 2020
+- Changes in libraries:
+  - \ref mrpt_core_grp
+    - Disable the use of BFD for symbols in stack traces by default in Debian builds. It is still used if found in the system and in Ubuntu PPAs.
+- BUG FIXES:
+  - Fix [Debian bug #976803](https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=976803): mrpt uses private binutils shared library.
+  - Fix [Debian bug #977247](https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=977247]): fail to link pymrpt against opencv.
+
+------
+# Version 2.1.5: Released Dec 6th, 2020
+- Changes in libraries:
+  - \ref mrpt_containers_grp
+    - Both mrpt::containers::CDynamicGrid and mrpt::containers::CDynamicGrid3D are now compatible with range-based for loops, and also have a data() method.
+  - \ref mrpt_core_grp
+    - Added mrpt::LockHelper::unlock()
+    - Added mrpt::Clock::nowDouble()
+    - New method mrpt::WorkerThreadsPool::name()
+    - Function mrpt::system::callStackBackTrace() moved to mrpt::callStackBackTrace()
+    - mrpt::callStackBackTrace() now uses BFD to find out line numbers if debug info (at least -g1) is available.
+    - Stacked exceptions changes:
+      - Line numbers will be now shown if built with debug info (>= -g1).
+      - Exceptions in STL or any other 3rd-party library will be also reported with exact call point line number, as long as MRPT_START/MRPT_END is used in the user function.
+      - No further need to call mrpt::exception_to_str(), just calling what() will return a detailed stack backtrace.
+      - New function mrpt::winerror2str()
+  - \ref mrpt_gui_grp
+    - New method mrpt::gui::CGlCanvasBase::CamaraParams::FromCamera()
+  - \ref mrpt_math_grp
+    - Added missing method for consistent API across pose classes: mrpt::math::TPose3D::operator+()
+  - \ref mrpt_system_grp
+    - mrpt::system::COutputLogger::writeLogToFile() will now save *all* messages despite the runtime log verbosity level.
+- BUG FIXES:
+  - Fix error rendering an opengl scene with mrpt::opengl::CCamera objects in it.
+  - rawlog-edit silently ignored when more than one operation was requested.
+  - Fix FTBFS against libjsoncpp 1.9.4 (Closes [#1118](https://github.com/MRPT/mrpt/issues/1118))
+  - Fix AppStream errors and warnings in Debian Tracker.
+
+------
+# Version 2.1.4: Released Nov 8th, 2020
+- Changes in libraries:
+  - \ref mrpt_core_grp
+    - mrpt::format() is no longer a template but a function, to use GCC automated printf-format warnings.
+  - \ref mrpt_containers_grp
+    - mrpt::containers::yaml avoids throwing internal exceptions as part of regular valid conversions, and better support and report of out-of-range integers.
+  - \ref mrpt_math_grp
+    - mrpt::math::linspace() added overload returning by value.
+  - \ref mrpt_random_grp
+    - mrpt::random::CRandomGenerator::permuteVector() added overload returning by value.
+  - \ref mrpt_tfest_grp
+    - mrpt::tfest::TMatchingPairListTempl<T>::saveAsMATLABScript() now draws 3D correspondences too.
+    - RANSAC method mrpt::tfest::se3_l2_ransac() now uses more correct SO(3) metric for angular distance threshold instead of independent yaw/pitch/roll angles.
+- BUG FIXES:
+  - Fix wrong Debian dependencies of libmrpt-dev
+
+------
 # Version 2.1.3: Released Oct 21st, 2020
 - Changes in libraries:
   - \ref mrpt_config_grp
@@ -356,7 +676,7 @@ CObservation3DRangeScan::convertTo2DScan()
 <h2>Version 1.5.3: Released 13/AUG/2017  </h2></a>
 - <b>Detailed list of changes:</b>
   - CMake >=3.1 is now required for use of ExternalProjects.
-  - Scripts `scripts/prepare_{debian,release}.sh` have been refactored and
+  - Scripts `packaging/prepare_{debian,release}.sh` have been refactored and
 simplified.
   - Removed embedded source code versions of Eigen, assimp and octomap.
 Downloaded and built as ExternalProjects if not present in the system.

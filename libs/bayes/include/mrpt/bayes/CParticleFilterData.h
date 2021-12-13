@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -97,8 +97,7 @@ struct CParticleFilterDataImpl : public CParticleFilterCapable
 			 it != derived().m_particles.end(); ++it)
 			cum += mrpt::square(std::exp(it->log_w) / sumLinearWeights);
 
-		if (cum == 0)
-			return 0;
+		if (cum == 0) return 0;
 		else
 			return 1.0 / (derived().m_particles.size() * cum);
 		MRPT_END
@@ -163,7 +162,7 @@ struct CParticleFilterDataImpl : public CParticleFilterCapable
 		MRPT_END
 	}
 
-};  // end CParticleFilterDataImpl<>
+};	// end CParticleFilterDataImpl<>
 
 /** This template class declares the array of particles and its internal data,
  * managing some memory-related issues and providing an easy implementation of
@@ -280,6 +279,6 @@ class CParticleFilterData
 		MRPT_END
 	}
 
-};  // End of class def.
+};	// End of class def.
 
 }  // namespace mrpt::bayes

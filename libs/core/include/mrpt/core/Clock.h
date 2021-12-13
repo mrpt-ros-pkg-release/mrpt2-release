@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -30,8 +30,15 @@ class Clock
 	static constexpr bool is_steady = std::chrono::system_clock::is_steady;
 
 	/** Returns the current time using the currently selected Clock source.
-	 * \sa setActiveClock(), mrpt::Clock::Source  */
+	 * \sa setActiveClock(), mrpt::Clock::Source, nowDouble()  */
 	static time_point now() noexcept;
+
+	/** Equivalent to `Clock::toDouble(Clock::now())`
+	 * \sa setActiveClock(), mrpt::Clock::Source, now()
+	 * \note (New in MRPT 2.1.5)
+	 */
+	inline static double nowDouble() noexcept { return toDouble(now()); }
+
 	/** Create a timestamp from its double representation. \sa toDouble */
 	static time_point fromDouble(const double t) noexcept;
 	/** Converts a timestamp to a UNIX time_t-like number, with fractional part

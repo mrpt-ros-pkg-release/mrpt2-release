@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
-#include "poses-precomp.h"  // Precompiled headers
-
+#include "poses-precomp.h"	// Precompiled headers
+//
 #include <mrpt/math/distributions.h>
 #include <mrpt/math/wrap2pi.h>
 #include <mrpt/poses/CPosePDFGaussian.h>
@@ -17,6 +17,7 @@
 #include <mrpt/random.h>
 #include <mrpt/serialization/CArchive.h>
 #include <mrpt/system/os.h>
+
 #include <fstream>
 
 using namespace mrpt;
@@ -48,7 +49,7 @@ void CPosePDFParticles::copyFrom(const CPosePDF& o)
 	CParticleList::iterator itDest;
 	CParticleList::const_iterator itSrc;
 
-	if (this == &o) return;  // It may be used sometimes
+	if (this == &o) return;	 // It may be used sometimes
 
 	if (o.GetRuntimeClass() == CLASS_ID(CPosePDFParticles))
 	{
@@ -121,7 +122,8 @@ std::tuple<CMatrixDouble33, CPose2D> CPosePDFParticles::getCovarianceAndMean()
 
 	double lin_w_sum = 0;
 
-	for (i = 0; i < n; i++) lin_w_sum += exp(m_particles[i].log_w);
+	for (i = 0; i < n; i++)
+		lin_w_sum += exp(m_particles[i].log_w);
 	if (lin_w_sum == 0) lin_w_sum = 1;
 
 	for (i = 0; i < n; i++)
@@ -189,8 +191,7 @@ void CPosePDFParticles::serializeFrom(
 			readParticlesFromStream(in);
 		}
 		break;
-		default:
-			MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
 	};
 }
 
@@ -281,7 +282,8 @@ void CPosePDFParticles::changeCoordinatesReference(
 	const CPose3D& newReferenceBase_)
 {
 	const TPose2D newReferenceBase = CPose2D(newReferenceBase_).asTPose();
-	for (auto& p : m_particles) p.d = newReferenceBase + p.d;
+	for (auto& p : m_particles)
+		p.d = newReferenceBase + p.d;
 }
 
 void CPosePDFParticles::drawSingleSample(CPose2D& outPart) const
@@ -305,12 +307,14 @@ void CPosePDFParticles::drawSingleSample(CPose2D& outPart) const
 
 void CPosePDFParticles::operator+=(const TPose2D& Ap)
 {
-	for (auto& p : m_particles) p.d = p.d + Ap;
+	for (auto& p : m_particles)
+		p.d = p.d + Ap;
 }
 
 void CPosePDFParticles::append(CPosePDFParticles& o)
 {
-	for (auto& p : o.m_particles) m_particles.emplace_back(p);
+	for (auto& p : o.m_particles)
+		m_particles.emplace_back(p);
 	normalizeWeights();
 }
 
@@ -323,7 +327,8 @@ void CPosePDFParticles::inverse(CPosePDF& o) const
 	out->copyFrom(*this);
 	TPose2D nullPose(0, 0, 0);
 
-	for (auto& p : out->m_particles) p.d = nullPose - p.d;
+	for (auto& p : out->m_particles)
+		p.d = nullPose - p.d;
 
 	MRPT_END
 }
@@ -359,9 +364,9 @@ double CPosePDFParticles::evaluatePDF_parzen(
 	{
 		double difPhi = math::wrapToPi(phi - p.d.phi);
 		ret += exp(p.log_w) *
-			   math::normalPDF(
+			math::normalPDF(
 				   std::sqrt(square(p.d.x - x) + square(p.d.y - y)), 0, stdXY) *
-			   math::normalPDF(std::abs(difPhi), 0, stdPhi);
+			math::normalPDF(std::abs(difPhi), 0, stdPhi);
 	}
 	return ret;
 }
@@ -382,4 +387,14 @@ void CPosePDFParticles::saveParzenPDFToTextFile(
 	std::ofstream f(fileName);
 	if (!f.is_open()) return;
 	f << buf;
+}
+
+std::string CPosePDFParticles::asString() const
+{
+	std::stringstream ss;
+	const auto [c, m] = getCovarianceAndMean();
+	ss << "mrpt::poses::CPosePDFParticles object with " << size()
+	   << " particles, mean=" << m.asString() << " cov=" << c.inMatlabFormat()
+	   << " ESS=" << ESS();
+	return ss.str();
 }

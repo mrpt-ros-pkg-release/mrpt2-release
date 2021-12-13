@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -48,7 +48,7 @@ class CPointsMapXYZI : public CPointsMap
 	@{ */
 
 	void reserve(size_t newLength) override;  // See base class docs
-	void resize(size_t newLength) override;  // See base class docs
+	void resize(size_t newLength) override;	 // See base class docs
 	void setSize(size_t newLength) override;  // See base class docs
 
 	/** The virtual method for \a insertPoint() *without* calling
@@ -96,11 +96,13 @@ class CPointsMapXYZI : public CPointsMap
 	/** See CPointsMap::loadFromRangeScan() */
 	void loadFromRangeScan(
 		const mrpt::obs::CObservation2DRangeScan& rangeScan,
-		const mrpt::poses::CPose3D* robotPose = nullptr) override;
+		const std::optional<const mrpt::poses::CPose3D>& robotPose =
+			std::nullopt) override;
 	/** See CPointsMap::loadFromRangeScan() */
 	void loadFromRangeScan(
 		const mrpt::obs::CObservation3DRangeScan& rangeScan,
-		const mrpt::poses::CPose3D* robotPose = nullptr) override;
+		const std::optional<const mrpt::poses::CPose3D>& robotPose =
+			std::nullopt) override;
 
    protected:
 	// See base class
@@ -172,7 +174,8 @@ class CPointsMapXYZI : public CPointsMap
 	/** Override of the default 3D scene builder to account for the individual
 	 * points' color.
 	 */
-	void getAs3DObject(mrpt::opengl::CSetOfObjects::Ptr& outObj) const override;
+	void getVisualizationInto(
+		mrpt::opengl::CSetOfObjects& outObj) const override;
 
 	/** @name PCL library support
 		@{ */
@@ -238,7 +241,7 @@ class CPointsMapXYZI : public CPointsMap
 	void getPCLPointCloudXYZI(POINTCLOUD& cloud) const
 	{
 		const size_t nThis = this->size();
-		this->getPCLPointCloud(cloud);  // 1st: xyz data
+		this->getPCLPointCloud(cloud);	// 1st: xyz data
 		// 2nd: I data
 		for (size_t i = 0; i < nThis; ++i)
 			cloud.points[i].intensity = m_intensity[i];
@@ -273,7 +276,7 @@ class CPointsMapXYZI : public CPointsMap
 	mrpt::maps::CPointsMap::TLikelihoodOptions likelihoodOpts;
 	MAP_DEFINITION_END(CPointsMapXYZI)
 
-};  // End of class def.
+};	// End of class def.
 
 }  // namespace maps
 
@@ -281,8 +284,8 @@ class CPointsMapXYZI : public CPointsMap
 namespace opengl
 {
 /** Specialization
- * mrpt::opengl::PointCloudAdapter<mrpt::maps::CPointsMapXYZI> \ingroup
- * mrpt_adapters_grp */
+ * mrpt::opengl::PointCloudAdapter<mrpt::maps::CPointsMapXYZI>
+ * \ingroup mrpt_adapters_grp */
 template <>
 class PointCloudAdapter<mrpt::maps::CPointsMapXYZI>
 {
@@ -386,6 +389,6 @@ class PointCloudAdapter<mrpt::maps::CPointsMapXYZI>
 		m_obj.setPointColor_fast(idx, r / 255.f, g / 255.f, b / 255.f);
 	}
 
-};  // end of PointCloudAdapter<mrpt::maps::CPointsMapXYZI>
+};	// end of PointCloudAdapter<mrpt::maps::CPointsMapXYZI>
 }  // namespace opengl
 }  // namespace mrpt

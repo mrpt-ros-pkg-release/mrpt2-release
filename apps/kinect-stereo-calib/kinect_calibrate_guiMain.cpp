@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -32,6 +32,7 @@
 //*)
 
 #include <mrpt/config/CConfigFile.h>
+#include <mrpt/containers/yaml.h>
 #include <mrpt/gui/WxUtils.h>
 #include <mrpt/hwdrivers/CKinect.h>
 #include <mrpt/io/CMemoryStream.h>
@@ -270,8 +271,7 @@ kinect_calibrate_guiDialog::kinect_calibrate_guiDialog(
 		Panel8, ID_STATICTEXT27, _("What do you want to do\?"),
 		wxDefaultPosition, wxDefaultSize, 0, _T("ID_STATICTEXT27"));
 	wxFont StaticText26Font(
-		16, wxDEFAULT, wxFONTSTYLE_NORMAL, wxNORMAL, false, wxEmptyString,
-		wxFONTENCODING_DEFAULT);
+		16, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxNORMAL);
 	StaticText26->SetFont(StaticText26Font);
 	FlexGridSizer38->Add(
 		StaticText26, 1,
@@ -321,8 +321,7 @@ kinect_calibrate_guiDialog::kinect_calibrate_guiDialog(
 		Panel9, ID_STATICTEXT28, _("Prepare to calibrate your Kinect sensor"),
 		wxDefaultPosition, wxDefaultSize, 0, _T("ID_STATICTEXT28"));
 	wxFont StaticText27Font(
-		15, wxDEFAULT, wxFONTSTYLE_NORMAL, wxNORMAL, false, wxEmptyString,
-		wxFONTENCODING_DEFAULT);
+		15, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxNORMAL);
 	StaticText27->SetFont(StaticText27Font);
 	FlexGridSizer41->Add(
 		StaticText27, 1,
@@ -558,9 +557,7 @@ kinect_calibrate_guiDialog::kinect_calibrate_guiDialog(
 	btnCapture = new wxButton(
 		Panel7, ID_BUTTON6, _("CAPTURE NOW"), wxDefaultPosition, wxDefaultSize,
 		0, wxDefaultValidator, _T("ID_BUTTON6"));
-	wxFont btnCaptureFont(
-		10, wxSWISS, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD, false,
-		wxEmptyString, wxFONTENCODING_DEFAULT);
+	wxFont btnCaptureFont(10, wxSWISS, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
 	btnCapture->SetFont(btnCaptureFont);
 	FlexGridSizer8->Add(
 		btnCapture, 1, wxALL | wxEXPAND | wxALIGN_LEFT | wxALIGN_TOP, 5);
@@ -573,9 +570,7 @@ kinect_calibrate_guiDialog::kinect_calibrate_guiDialog(
 		Panel7, ID_BUTTON7, _("OK, go to calibrate >>"), wxDefaultPosition,
 		wxDefaultSize, 0, wxDefaultValidator, _T("ID_BUTTON7"));
 	btnNextCalib->Disable();
-	wxFont btnNextCalibFont(
-		10, wxSWISS, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD, false,
-		wxEmptyString, wxFONTENCODING_DEFAULT);
+	wxFont btnNextCalibFont(10, wxSWISS, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
 	btnNextCalib->SetFont(btnNextCalibFont);
 	FlexGridSizer8->Add(
 		btnNextCalib, 1, wxALL | wxEXPAND | wxALIGN_LEFT | wxALIGN_TOP, 5);
@@ -609,8 +604,7 @@ kinect_calibrate_guiDialog::kinect_calibrate_guiDialog(
 		Panel6, ID_STATICTEXT23, _("List of stereo images:"), wxDefaultPosition,
 		wxDefaultSize, wxALIGN_CENTRE, _T("ID_STATICTEXT23"));
 	wxFont StaticText22Font(
-		wxDEFAULT, wxDEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD, false,
-		wxEmptyString, wxFONTENCODING_DEFAULT);
+		-1, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
 	StaticText22->SetFont(StaticText22Font);
 	FlexGridSizer22->Add(
 		StaticText22, 1,
@@ -627,8 +621,7 @@ kinect_calibrate_guiDialog::kinect_calibrate_guiDialog(
 		Panel6, ID_BUTTON9, _("Remove selected"), wxDefaultPosition,
 		wxDefaultSize, 0, wxDefaultValidator, _T("ID_BUTTON9"));
 	wxFont btnListRemoveSelectedFont(
-		8, wxDEFAULT, wxFONTSTYLE_NORMAL, wxNORMAL, false, wxEmptyString,
-		wxFONTENCODING_DEFAULT);
+		8, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxNORMAL);
 	btnListRemoveSelected->SetFont(btnListRemoveSelectedFont);
 	FlexGridSizer26->Add(
 		btnListRemoveSelected, 1, wxALL | wxEXPAND | wxALIGN_LEFT | wxALIGN_TOP,
@@ -637,8 +630,7 @@ kinect_calibrate_guiDialog::kinect_calibrate_guiDialog(
 		Panel6, ID_BUTTON10, _("Load image pair..."), wxDefaultPosition,
 		wxDefaultSize, 0, wxDefaultValidator, _T("ID_BUTTON10"));
 	wxFont btnListLoadFont(
-		8, wxDEFAULT, wxFONTSTYLE_NORMAL, wxNORMAL, false, wxEmptyString,
-		wxFONTENCODING_DEFAULT);
+		8, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxNORMAL);
 	btnListLoad->SetFont(btnListLoadFont);
 	FlexGridSizer26->Add(
 		btnListLoad, 1, wxALL | wxEXPAND | wxALIGN_LEFT | wxALIGN_TOP, 5);
@@ -646,8 +638,7 @@ kinect_calibrate_guiDialog::kinect_calibrate_guiDialog(
 		Panel6, ID_BUTTON11, _("Load list of images..."), wxDefaultPosition,
 		wxDefaultSize, 0, wxDefaultValidator, _T("ID_BUTTON11"));
 	wxFont btnLoadImageListFont(
-		8, wxDEFAULT, wxFONTSTYLE_NORMAL, wxNORMAL, false, wxEmptyString,
-		wxFONTENCODING_DEFAULT);
+		8, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxNORMAL);
 	btnLoadImageList->SetFont(btnLoadImageListFont);
 	FlexGridSizer26->Add(
 		btnLoadImageList, 1, wxALL | wxEXPAND | wxALIGN_LEFT | wxALIGN_TOP, 5);
@@ -655,8 +646,7 @@ kinect_calibrate_guiDialog::kinect_calibrate_guiDialog(
 		Panel6, ID_BUTTON12, _("Save all images..."), wxDefaultPosition,
 		wxDefaultSize, 0, wxDefaultValidator, _T("ID_BUTTON12"));
 	wxFont btnListSaveFont(
-		8, wxDEFAULT, wxFONTSTYLE_NORMAL, wxNORMAL, false, wxEmptyString,
-		wxFONTENCODING_DEFAULT);
+		8, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxNORMAL);
 	btnListSave->SetFont(btnListSaveFont);
 	FlexGridSizer26->Add(
 		btnListSave, 1, wxALL | wxEXPAND | wxALIGN_LEFT | wxALIGN_TOP, 5);
@@ -675,8 +665,7 @@ kinect_calibrate_guiDialog::kinect_calibrate_guiDialog(
 		__wxRadioBoxChoices_2, 1, 0, wxDefaultValidator, _T("ID_RADIOBOX2"));
 	rbShowImages->SetSelection(0);
 	wxFont rbShowImagesFont(
-		8, wxDEFAULT, wxFONTSTYLE_NORMAL, wxNORMAL, false, wxEmptyString,
-		wxFONTENCODING_DEFAULT);
+		8, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxNORMAL);
 	rbShowImages->SetFont(rbShowImagesFont);
 	FlexGridSizer32->Add(
 		rbShowImages, 1,
@@ -735,8 +724,7 @@ kinect_calibrate_guiDialog::kinect_calibrate_guiDialog(
 		Panel6, ID_STATICTEXT25, _("Calibration options"), wxDefaultPosition,
 		wxDefaultSize, 0, _T("ID_STATICTEXT25"));
 	wxFont StaticText24Font(
-		wxDEFAULT, wxDEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD, false,
-		wxEmptyString, wxFONTENCODING_DEFAULT);
+		-1, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
 	StaticText24->SetFont(StaticText24Font);
 	FlexGridSizer30->Add(
 		StaticText24, 1,
@@ -909,8 +897,7 @@ kinect_calibrate_guiDialog::kinect_calibrate_guiDialog(
 		Panel6, ID_BUTTON14, _("Run optimizer..."), wxDefaultPosition,
 		wxDefaultSize, 0, wxDefaultValidator, _T("ID_BUTTON14"));
 	wxFont btnRunCalibFont(
-		wxDEFAULT, wxDEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD, false,
-		wxEmptyString, wxFONTENCODING_DEFAULT);
+		-1, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
 	btnRunCalib->SetFont(btnRunCalibFont);
 	FlexGridSizer31->Add(
 		btnRunCalib, 1, wxALL | wxEXPAND | wxALIGN_LEFT | wxALIGN_TOP, 5);
@@ -927,8 +914,7 @@ kinect_calibrate_guiDialog::kinect_calibrate_guiDialog(
 		Panel6, ID_STATICTEXT24, _("Calibration results:"), wxDefaultPosition,
 		wxDefaultSize, 0, _T("ID_STATICTEXT24"));
 	wxFont StaticText23Font(
-		wxDEFAULT, wxDEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD, false,
-		wxEmptyString, wxFONTENCODING_DEFAULT);
+		-1, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
 	StaticText23->SetFont(StaticText23Font);
 	FlexGridSizer28->Add(
 		StaticText23, 1,
@@ -955,8 +941,7 @@ kinect_calibrate_guiDialog::kinect_calibrate_guiDialog(
 		wxTE_MULTILINE | wxTE_READONLY | wxTE_DONTWRAP, wxDefaultValidator,
 		_T("ID_TEXTCTRL8"));
 	wxFont edLogCalibResultFont(
-		8, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, wxNORMAL, false,
-		wxEmptyString, wxFONTENCODING_DEFAULT);
+		8, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, wxNORMAL);
 	edLogCalibResult->SetFont(edLogCalibResultFont);
 	FlexGridSizer19->Add(
 		edLogCalibResult, 1, wxALL | wxEXPAND | wxALIGN_LEFT | wxALIGN_TOP, 0);
@@ -1034,8 +1019,7 @@ kinect_calibrate_guiDialog::kinect_calibrate_guiDialog(
 		Panel5, ID_BUTTON19, _("Load calib..."), wxDefaultPosition,
 		wxDefaultSize, 0, wxDefaultValidator, _T("ID_BUTTON19"));
 	wxFont btnLoadCalibFont(
-		8, wxDEFAULT, wxFONTSTYLE_NORMAL, wxNORMAL, false, wxEmptyString,
-		wxFONTENCODING_DEFAULT);
+		8, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxNORMAL);
 	btnLoadCalib->SetFont(btnLoadCalibFont);
 	FlexGridSizer18->Add(
 		btnLoadCalib, 1,
@@ -1044,8 +1028,7 @@ kinect_calibrate_guiDialog::kinect_calibrate_guiDialog(
 		Panel5, ID_BUTTON21, _("Save calib..."), wxDefaultPosition,
 		wxDefaultSize, 0, wxDefaultValidator, _T("ID_BUTTON21"));
 	wxFont btnSaveCalibLiveFont(
-		8, wxDEFAULT, wxFONTSTYLE_NORMAL, wxNORMAL, false, wxEmptyString,
-		wxFONTENCODING_DEFAULT);
+		8, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxNORMAL);
 	btnSaveCalibLive->SetFont(btnSaveCalibLiveFont);
 	FlexGridSizer18->Add(
 		btnSaveCalibLive, 1,
@@ -1068,16 +1051,14 @@ kinect_calibrate_guiDialog::kinect_calibrate_guiDialog(
 		wxVSCROLL | wxHSCROLL, _T("ID_GRID1"));
 	m_grid_live_calib->CreateGrid(3, 1);
 	wxFont m_grid_live_calibFont(
-		8, wxDEFAULT, wxFONTSTYLE_NORMAL, wxNORMAL, false, wxEmptyString,
-		wxFONTENCODING_DEFAULT);
+		8, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxNORMAL);
 	m_grid_live_calib->SetFont(m_grid_live_calibFont);
 	m_grid_live_calib->EnableEditing(true);
 	m_grid_live_calib->EnableGridLines(true);
 	m_grid_live_calib->SetRowLabelSize(90);
 	m_grid_live_calib->SetDefaultColSize(100, true);
 	wxFont GridLabelFont_1(
-		8, wxDEFAULT, wxFONTSTYLE_NORMAL, wxNORMAL, false, wxEmptyString,
-		wxFONTENCODING_DEFAULT);
+		8, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxNORMAL);
 	m_grid_live_calib->SetLabelFont(GridLabelFont_1);
 	m_grid_live_calib->SetDefaultCellFont(m_grid_live_calib->GetFont());
 	m_grid_live_calib->SetDefaultCellTextColour(
@@ -1116,8 +1097,7 @@ kinect_calibrate_guiDialog::kinect_calibrate_guiDialog(
 		wxTE_MULTILINE | wxTE_READONLY | wxHSCROLL | wxVSCROLL,
 		wxDefaultValidator, _T("ID_TEXTCTRL4"));
 	wxFont edLogTestFont(
-		8, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, wxNORMAL, false,
-		wxEmptyString, wxFONTENCODING_DEFAULT);
+		8, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, wxNORMAL);
 	edLogTest->SetFont(edLogTestFont);
 	FlexGridSizer13->Add(
 		edLogTest, 1, wxALL | wxEXPAND | wxALIGN_LEFT | wxALIGN_TOP, 5);
@@ -1219,8 +1199,8 @@ kinect_calibrate_guiDialog::kinect_calibrate_guiDialog(
 	// Set std::cout/cerr out:
 	m_my_redirector = std::make_unique<CMyRedirector>(
 		edLogTest,
-		false,  // yieldApplication
-		0,  // bufferSize
+		false,	// yieldApplication
+		0,	// bufferSize
 		true,  // also_cerr
 		true,  // threadSafe -> we must call dumpNow()
 		true  // also_to_cout_cerr
@@ -1302,10 +1282,11 @@ void kinect_calibrate_guiDialog::OnNotebook1PageChanging(wxNotebookEvent& event)
 		}
 		else
 		{
-			if (wxYES == ::wxMessageBox(
-							 _("Your unsaved data will be lost, are you sure "
-							   "you want to leave this page?"),
-							 _("Confirm"), wxYES_NO, this))
+			if (wxYES ==
+				::wxMessageBox(
+					_("Your unsaved data will be lost, are you sure "
+					  "you want to leave this page?"),
+					_("Confirm"), wxYES_NO, this))
 				event.Skip();  // Permit change
 			else
 				event.Veto();  // Veto change
@@ -1354,7 +1335,7 @@ void kinect_calibrate_guiDialog::OnbtnConnectClick(wxCommandEvent& event)
 
 	m_cap_thread_data.quit = false;
 	m_cap_thread_data.flag_grab_depth =
-		false;  // we don't need depth data for image registration.
+		false;	// we don't need depth data for image registration.
 	m_findcorners_thread_data.quit = false;
 
 	// Launch thread:
@@ -1384,7 +1365,7 @@ void kinect_calibrate_guiDialog::thread_grabbing()
 		CKinect kinect;
 
 		// We only have to grab the intensity channel:
-		kinect.enableGrabRGB(true);  // RGB / IR channels:
+		kinect.enableGrabRGB(true);	 // RGB / IR channels:
 		kinect.enableGrabDepth(p.flag_grab_depth);
 		kinect.enableGrab3DPoints(false);
 		kinect.enableGrabAccelerometers(false);
@@ -1416,9 +1397,7 @@ void kinect_calibrate_guiDialog::thread_grabbing()
 			kinect.getNextObservation(*obs, there_is_obs, hard_error);
 
 			if (!hard_error && there_is_obs)
-			{
-				std::atomic_store(&p.new_obs, obs);
-			}
+			{ std::atomic_store(&p.new_obs, obs); }
 
 			if (old_tilt_ang_deg != p.tilt_ang_deg)
 			{
@@ -1448,7 +1427,7 @@ void kinect_calibrate_guiDialog::thread_grabbing()
 	{
 		cout << "[Kinect thread] Exception: " << mrpt::exception_to_str(e)
 			 << endl;
-		p.quit = true;  // Exit for some error
+		p.quit = true;	// Exit for some error
 	}
 	p.terminated = true;
 }
@@ -1525,8 +1504,7 @@ void kinect_calibrate_guiDialog::ProcessNewGrabbedObs()
 {
 	switch (Notebook1->GetSelection())
 	{
-		default:
-			break;
+		default: break;
 
 		// ------------------------------------------
 		//   Tab 1: Testing
@@ -1561,9 +1539,7 @@ void kinect_calibrate_guiDialog::ProcessNewGrabbedObs()
 
 			switch (m_grabstate)
 			{
-				case gsIdle:
-					cnt_skip_frames = 0;
-					break;
+				case gsIdle: cnt_skip_frames = 0; break;
 
 				case gsSwitchingRGB:
 					center_messages.emplace_back(
@@ -1660,7 +1636,7 @@ void kinect_calibrate_guiDialog::ProcessNewGrabbedObs()
 						m_findcorners_thread_data.detected_corners;
 				}
 				m_findcorners_thread_data.detected_corners_done =
-					false;  // Signal that we've read the data.
+					false;	// Signal that we've read the data.
 			}
 
 			// Makes an RGB color even if it was grayscale so we can draw color
@@ -1931,9 +1907,8 @@ void kinect_calibrate_guiDialog::ProcessNewSelectedImageListBox()
 			const mrpt::img::TImageSize szL = il.getSize();
 			const mrpt::img::TImageSize szR = ir.getSize();
 
-			const double lRatio =
-				static_cast<double>(szL.x) /
-				szL.y;  // Don't assume both images have equal size
+			const double lRatio = static_cast<double>(szL.x) /
+				szL.y;	// Don't assume both images have equal size
 			const double rRatio = static_cast<double>(szR.x) / szR.y;
 
 			mrpt::img::TImageSize trg_sz_l, trg_sz_r;
@@ -1999,18 +1974,12 @@ void myCalibCallback(
 				"Detecting corners: %u images done out of %u", d.nImgsProcessed,
 				d.nImgsToProcess);
 			break;
-		case 0:
-			s = "Round #1: Calibration without distortion";
-			break;
-		case 1:
-			s = "Round #2: Full calibration";
-			break;
+		case 0: s = "Round #1: Calibration without distortion"; break;
+		case 1: s = "Round #2: Full calibration"; break;
 	};
 
 	if (d.calibRound == 0 || d.calibRound == 1)
-	{
-		s += mrpt::format(" (RMSE=%.05f px)", d.current_rmse);
-	}
+	{ s += mrpt::format(" (RMSE=%.05f px)", d.current_rmse); }
 
 	dat->pd->Update(d.current_iter, s.c_str());
 	dat->pd->SetSize(500, 100);
@@ -2028,8 +1997,8 @@ void kinect_calibrate_guiDialog::OnbtnRunCalibClick(wxCommandEvent& event)
 		m_calib_params.check_size_y = edCalibCheckY->GetValue();
 
 		double sx, sy;
-		edCalibSizeX->GetValue().ToDouble(&sx);
-		edCalibSizeY->GetValue().ToDouble(&sy);
+		edCalibSizeX->GetValue().ToCDouble(&sx);
+		edCalibSizeY->GetValue().ToCDouble(&sy);
 
 		m_calib_params.check_squares_length_X_meters = 1e-3 * sx;
 		m_calib_params.check_squares_length_Y_meters = 1e-3 * sy;
@@ -2206,8 +2175,35 @@ void kinect_calibrate_guiDialog::OnbtnSaveCalibClick(wxCommandEvent& event)
 	wxString startPath;
 	m_config.Read(_("last_path"), &startPath);
 
+	wxFileDialog dialog2(
+		this, _("Save calibration file (YAML format)"), startPath,
+		_("calib.yml"),
+		_("Configuration files (*.yml)|*.yml|All files (*.*)|*.*"),
+		wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
+	if (dialog2.ShowModal() == wxID_OK)
+	{
+		std::ofstream f(dialog2.GetPath().mbc_str());
+		ASSERT_(f.is_open());
+
+		mrpt::containers::yaml c = mrpt::containers::yaml::Map();
+
+		c["right"] = m_calib_result.cam_params.rightCamera.asYAML();
+		c["left"] = m_calib_result.cam_params.leftCamera.asYAML();
+
+		c["right_camera_pose"] =
+			m_calib_result.cam_params.rightCameraPose.asString();
+
+		auto& r = c["calibration_results"] = mrpt::containers::yaml::Map();
+		r["iters"] = m_calib_result.final_iters;
+		r["good_image_pairs"] = m_calib_result.final_number_good_image_pairs;
+		r["final_rmse"] = m_calib_result.final_rmse;
+
+		c.printAsYAML(f);
+	}
+
 	wxFileDialog dialog(
-		this, _("Save calibration file"), startPath, _("calib.ini"),
+		this, _("Save calibration file (INI format)"), startPath,
+		_("calib.ini"),
 		_("Configuration files (*.ini,*.cfg)|*.ini;*.cfg|All files (*.*)|*.*"),
 		wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
 	if (dialog.ShowModal() == wxID_OK)
@@ -2636,8 +2632,9 @@ void kinect_calibrate_guiDialog::fillGridLine(
 	int r, const char* label_prefix, const char* label, const std::string& val)
 {
 	m_grid_live_calib->SetRowLabelValue(
-		r, (std::string(label_prefix) + std::string(".") + std::string(label))
-			   .c_str());
+		r,
+		(std::string(label_prefix) + std::string(".") + std::string(label))
+			.c_str());
 	m_grid_live_calib->SetCellValue(r, 0, val.c_str());
 }
 
@@ -2653,7 +2650,7 @@ void kinect_calibrate_guiDialog::LiveCalibGridInitialize()
 	// Build cells & labels:
 	m_grid_live_calib->AppendCols(1, false);
 	m_grid_live_calib->AppendRows(24, false);
-	m_grid_live_calib->SetColLabelSize(0);  // Hide
+	m_grid_live_calib->SetColLabelSize(0);	// Hide
 
 	m_grid_live_calib->EndBatch();
 }
@@ -2701,7 +2698,7 @@ double kinect_calibrate_guiDialog::parseGridLine(int r)
 	double R;
 	const wxString s = m_grid_live_calib->GetCellValue(r, 0);
 
-	if (!s.ToDouble(&R))
+	if (!s.ToCDouble(&R))
 		throw std::runtime_error(mrpt::format(
 									 "Error parsing double string: '%s'",
 									 (const char*)s.mb_str(wxConvUTF8))
@@ -2782,8 +2779,8 @@ void kinect_calibrate_guiDialog::CalibUpdate3DViewCameras()
 	const unsigned int check_size_y = edCalibCheckY->GetValue();
 
 	double check_squares_length_X_meters, check_squares_length_Y_meters;
-	edCalibSizeX->GetValue().ToDouble(&check_squares_length_X_meters);
-	edCalibSizeY->GetValue().ToDouble(&check_squares_length_Y_meters);
+	edCalibSizeX->GetValue().ToCDouble(&check_squares_length_X_meters);
+	edCalibSizeY->GetValue().ToCDouble(&check_squares_length_Y_meters);
 
 	check_squares_length_X_meters *= 1e-3;
 	check_squares_length_Y_meters *= 1e-3;

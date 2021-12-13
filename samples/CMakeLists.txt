@@ -2,8 +2,8 @@ project(ALL_EXAMPLES)
 
 add_custom_target(examples ALL)
 
-set(BUILD_EXAMPLES OFF CACHE BOOL "Build examples?")
-if(BUILD_EXAMPLES)
+set(MRPT_BUILD_EXAMPLES OFF CACHE BOOL "Build examples?")
+if(MRPT_BUILD_EXAMPLES)
 	set(CMAKE_MRPT_EXAMPLES_BASE_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
 
 	# Generate examples_config.h
@@ -49,6 +49,7 @@ if(BUILD_EXAMPLES)
 	# === Depending on: core ===
 	set(LIST_EXAMPLES_IN_THIS_DIR
 		core_exceptions_example
+		core_backtrace_example
 		)
 	set(CMAKE_EXAMPLE_DEPS mrpt::core)
 	GENERATE_CMAKE_FILES_SAMPLES_DIRECTORY()
@@ -96,8 +97,8 @@ if(BUILD_EXAMPLES)
 		system_datetime_example
 		system_directory_explorer_example
 		system_file_system_watcher
-		system_backtrace_example
 		system_dirs_files_manipulation
+		system_progress_bar
 		)
 	set(CMAKE_EXAMPLE_DEPS mrpt::system mrpt::poses mrpt::io)
 	GENERATE_CMAKE_FILES_SAMPLES_DIRECTORY()
@@ -163,6 +164,7 @@ if(BUILD_EXAMPLES)
 		opengl_offscreen_render_example
 		opengl_octree_render_huge_pointcloud
 		opengl_texture_sizes_test
+		opengl_custom_shaders_demo
 		# -------
 		img_basic_example
 		img_convolution_fft

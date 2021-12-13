@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -27,26 +27,27 @@
 #include <wx/textctrl.h>
 #include <wx/things/toggle.h>
 #include <wx/timer.h>
+
 #include "CRawlogTreeView.h"
 #include "MyGLCanvas.h"
 //*)
-
 #include <wx/artprov.h>
 #include <wx/bitmap.h>
 #include <wx/combobox.h>
+#include <wx/docview.h>
 #include <wx/image.h>
 
-#include <wx/docview.h>
 #include <map>
 #include <string>
+
+#include "ViewOptions3DPoints.h"
 
 // General global variables:
 #include <mrpt/config/CConfigFile.h>
 #include <mrpt/gui/CDisplayWindow3D.h>
 #include <mrpt/gui/CDisplayWindowPlots.h>
-#include <mrpt/serialization/CSerializable.h>
-
 #include <mrpt/gui/WxUtils.h>
+#include <mrpt/serialization/CSerializable.h>
 
 // JLBC: Unix X headers have these funny things...
 #ifdef Button1
@@ -121,7 +122,7 @@ class MyArtProvider : public wxArtProvider
 struct TAlogRecord
 {
 	std::string label;
-	char type;  // 0: odo, 1: 2d laser, 2:3d laser, 3: image
+	int8_t type;  // 0: odo, 1: 2d laser, 2:3d laser, 3: image
 	std::vector<float> data;
 	std::string imgFile;
 	double startElev, endElev;
@@ -153,6 +154,8 @@ class xRawLogViewerFrame : public wxFrame
 		const std::string& target_filename,
 		const std::map<double, TAlogRecord>& theAlog,
 		const std::string& dir_for_images);
+
+	ViewOptions3DPoints* getViewOptions() { return pnViewOptions; }
 
    private:
 	/** Loads the given file in memory, in the varibale "rawlog"
@@ -246,10 +249,10 @@ class xRawLogViewerFrame : public wxFrame
 	void OnmnuCreateAVISelected(wxCommandEvent& event);
 	void OnMenuRegenerateOdometryTimes(wxCommandEvent& event);
 	void OnMenuItem3DObsRecoverParams(wxCommandEvent& event);
-	void Onslid3DcamConfCmdScrollChanged(wxCommandEvent&);
 	void OnMenuItemImportBremenDLRLog(wxCommandEvent& event);
 	void OnMenuRenameSingleObs(wxCommandEvent& event);
 	//*)
+	void OnMenuRenameBySFIndex(wxCommandEvent& event);
 
 	//(*Identifiers(xRawLogViewerFrame)
 	static const long ID_BUTTON2;
@@ -315,7 +318,8 @@ class xRawLogViewerFrame : public wxFrame
 	static const long ID_PANEL22;
 	static const long ID_STATICBITMAP6;
 	static const long ID_PANEL23;
-	static const long ID_NOTEBOOK4;
+	static const long ID_PANEL_VIEW_3D_POINT_OPTIONS;
+	static const long ID_NOTEBOOK_3DOBS;
 	static const long ID_PANEL19;
 	static const long ID_NOTEBOOK1;
 	static const long ID_PANEL5;
@@ -419,6 +423,7 @@ class xRawLogViewerFrame : public wxFrame
 	static const long ID_MENUITEM48;
 	static const long ID_TIMER1;
 	//*)
+	static const long ID_MENUITEM_RENAME_BY_SF_IDX;
 
 	//(*Declarations(xRawLogViewerFrame)
 	wxMenu* MenuItem51;
@@ -430,6 +435,7 @@ class xRawLogViewerFrame : public wxFrame
 	wxMenuItem* MenuItem57;
 	wxStaticBitmapPopup* bmpObsImage;
 	wxPanel* pn3Dobs_Conf;
+	ViewOptions3DPoints* pnViewOptions;
 	wxMenuItem* MenuItem59;
 	wxPanel* pn_CSensorialFrame;
 	wxPanel* Panel5;
@@ -495,7 +501,6 @@ class xRawLogViewerFrame : public wxFrame
 	wxMenuItem* MenuItem32;
 	wxBoxSizer* BoxSizer2;
 	wxTimer timAutoLoad;
-	wxStaticText* StaticText3;
 	wxMenuItem* MenuItem13;
 	wxMenu* MenuItem8;
 	mpWindow* plotAct2D_XY;
@@ -545,7 +550,6 @@ class xRawLogViewerFrame : public wxFrame
 	wxPanel* pn3Dobs_Int;
 	wxTextCtrl* memStats;
 	wxPanel* pn_CObservationStereoImage;
-	wxSlider* slid3DcamConf;
 	wxPanel* Panel2;
 	wxMenu* MenuItem5;
 	wxMenuItem* MenuItem21;
@@ -573,8 +577,11 @@ class xRawLogViewerFrame : public wxFrame
 	wxButton* btnEditComments;
 	wxMenuItem* MenuItem85;
 	//*)
+	wxFlexGridSizer* FlexGridSizerImg = nullptr;
+	wxScrolledWindow* ScrolledWindow2 = nullptr;
 
 	void OnComboImageDirsChange(wxCommandEvent& event);
+	void On3DObsPagesChange(wxBookCtrlEvent& event);
 
 	// void OntreeViewItemRightClick(wxTreeEvent& event);
 
@@ -610,4 +617,4 @@ extern std::unique_ptr<mrpt::config::CConfigFile> iniFile;
 extern std::string loadedFileName;
 extern mrpt::obs::CRawlog rawlog;
 
-#endif  // XRAWLOGVIEWERMAIN_H
+#endif	// XRAWLOGVIEWERMAIN_H

@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -16,34 +16,28 @@
 
 #include "place_recognition.h"
 
+using namespace mrpt::vision;
+using namespace std;
 using mrpt::system::CTicTac;
 
 /************************************************************************************************
  *								Place Recognition Constructor *
  ************************************************************************************************/
 PlaceRecognition::PlaceRecognition(
-	vector<string> training_paths, vector<string> testing_paths,
-	TDescriptorType desc_to_compute, int descriptor_selected, int numFeats)
+	std::vector<std::string> TrainingPaths,
+	std::vector<std::string> TestingPaths,
+	mrpt::vision::TDescriptorType DescToCompute, int DescriptorSelected,
+	int NumFeats)
+	: training_paths(TrainingPaths),
+	  testing_paths(TestingPaths),
+	  numFeats(NumFeats),
+	  desc_to_compute(DescToCompute),
+	  descriptor_selected(DescriptorSelected),
+	  len_training(training_paths.size()),
+	  len_testing(testing_paths.size())
 {
-	this->testing_paths = testing_paths;
-	this->training_paths = training_paths;
-	// this->fext = fext ;
-	this->desc_to_compute = desc_to_compute;
-	this->numFeats = numFeats;
-	this->descriptor_selected = descriptor_selected;
-
-	current_index_test_image = 0;
-	trained_flag = false;
-	training_file_written_flag = false;
-
-	len_training = training_paths.size();
-	len_testing = testing_paths.size();
-
-	correct = 0;
-	incorrect = 0;
-
-	feats_training = new CFeatureList[len_training];
-	feats_testing = new CFeatureList[len_testing];
+	feats_training = new mrpt::vision::CFeatureList[len_training];
+	feats_testing = new mrpt::vision::CFeatureList[len_testing];
 
 	training = new CImage[len_training];
 	testing = new CImage[len_testing];
@@ -53,11 +47,12 @@ PlaceRecognition::PlaceRecognition(
  *								Compute Labels function *
  ************************************************************************************************/
 void PlaceRecognition::computeLabels(
-	vector<string> file_paths, int counts[NUM_CLASSES],
+	std::vector<std::string> file_paths, int counts[NUM_CLASSES],
 	std::vector<int>& labels)
 {
 	// initialize all labels to zero.
-	for (int i = 0; i < NUM_CLASSES; i++) counts[i] = 0;
+	for (int i = 0; i < NUM_CLASSES; i++)
+		counts[i] = 0;
 
 	/// assign labels based on the label/place name that appears in the file
 	/// name
@@ -95,7 +90,7 @@ void PlaceRecognition::computeLabels(
  *								Predict Label2 function *
  ************************************************************************************************/
 int PlaceRecognition::predictLabel2(
-	CFeatureList* feats_testingAll, vector<uint8_t>* training_words,
+	CFeatureList* feats_testingAll, std::vector<uint8_t>* training_words,
 	std::vector<int>& training_word_labels, int total_vocab_size,
 	int current_image)
 {
@@ -105,7 +100,8 @@ int PlaceRecognition::predictLabel2(
 	/// PUT A CONDITION IF feats_size =0 OUTPUT A RANDOM CLASS INSTEAD OF GOING
 	/// THROUGH BLANK STUFF, actually kinda doing that only currently
 	std::vector<int> labels(feats_size);
-	for (int i = 0; i < feats_size; i++) labels[i] = 0;
+	for (int i = 0; i < feats_size; i++)
+		labels[i] = 0;
 
 	/// following for loop iterates over all key-points in the given
 	/// feats_testingAll CFeatureList and assigns a place label
@@ -134,8 +130,7 @@ int PlaceRecognition::predictLabel2(
 			{
 				for (int k = 0; k < descriptor_size; k++)
 				{
-					temp_sum =
-						temp_sum +
+					temp_sum = temp_sum +
 						pow((temp_feat.at(k) - (int)training_words[j].at(k)),
 							2);
 				}
@@ -152,7 +147,8 @@ int PlaceRecognition::predictLabel2(
 
 	}  // end of outter loop iterates over each key-point
 
-	for (int i = 0; i < feats_size; i++) cout << labels[i] << " ";
+	for (int i = 0; i < feats_size; i++)
+		cout << labels[i] << " ";
 	int predicted_label = findMax(labels);
 	return predicted_label;
 }
@@ -161,7 +157,7 @@ int PlaceRecognition::predictLabel2(
  *								Predict Label function *
  ************************************************************************************************/
 int PlaceRecognition::predictLabel(
-	CFeatureList* feats_testingAll, vector<float>* training_words,
+	CFeatureList* feats_testingAll, std::vector<float>* training_words,
 	std::vector<int>& training_word_labels, int total_vocab_size,
 	int current_image)
 {
@@ -171,7 +167,8 @@ int PlaceRecognition::predictLabel(
 	/// PUT A CONDITION IF feats_size =0 OUTPUT A RANDOM CLASS INSTEAD OF GOING
 	/// THROUGH BLANK STUFF, actually kinda doing that only currently
 	std::vector<int> labels(feats_size);
-	for (int i = 0; i < feats_size; i++) labels[i] = 0;
+	for (int i = 0; i < feats_size; i++)
+		labels[i] = 0;
 
 	for (int i = 0; i < feats_size;
 		 i++)  // feat_size is the number of key-points
@@ -197,8 +194,7 @@ int PlaceRecognition::predictLabel(
 					/// Use abs if better results
 					// temp_sum = temp_sum + abs((temp_feat.at(k) -
 					// training_words[j].at(k)));
-					temp_sum =
-						temp_sum +
+					temp_sum = temp_sum +
 						pow((temp_feat.at(k) - training_words[j].at(k)), 2);
 				}
 
@@ -213,7 +209,8 @@ int PlaceRecognition::predictLabel(
 		}  // iterates over each key-point in the training images / dataset
 	}  // end of outter loop iterates over each key-point
 
-	for (int i = 0; i < feats_size; i++) cout << labels[i] << " ";
+	for (int i = 0; i < feats_size; i++)
+		cout << labels[i] << " ";
 
 	int predicted_label = findMax(labels);
 	return predicted_label;
@@ -226,9 +223,11 @@ int PlaceRecognition::findMax(const std::vector<int>& labels)
 {
 	const auto feats_size = labels.size();
 	int temp_labels[NUM_CLASSES];
-	for (int i = 0; i < NUM_CLASSES; i++) temp_labels[i] = 0;
+	for (int i = 0; i < NUM_CLASSES; i++)
+		temp_labels[i] = 0;
 
-	for (unsigned int i = 0; i < feats_size; i++) temp_labels[labels[i] - 1]++;
+	for (unsigned int i = 0; i < feats_size; i++)
+		temp_labels[labels[i] - 1]++;
 
 	/// find out maximum out of the temp_labels array
 	int max = 0, pos = 0;
@@ -472,8 +471,7 @@ string PlaceRecognition::startPlaceRecognition(CFeatureExtraction fext)
  ************************************************************************************************/
 string PlaceRecognition::findPlaceName(int type)
 {
-	if (type == 1)
-		return "PRINTING AREA";
+	if (type == 1) return "PRINTING AREA";
 	else if (type == 2)
 		return "CORRIDOR";
 	else if (type == 3)

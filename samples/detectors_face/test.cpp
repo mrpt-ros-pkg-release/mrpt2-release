@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -19,6 +19,7 @@
 #include <mrpt/opengl/CGridPlaneXY.h>
 #include <mrpt/opengl/CPointCloudColoured.h>
 #include <mrpt/opengl/stock_objects.h>
+
 #include <iostream>
 
 using namespace mrpt;
@@ -40,7 +41,7 @@ string myInitFile(
 
 CFaceDetection faceDetector;  // Face detector object
 
-bool showEachDetectedFace;  // If using a 3D face detection (actually with
+bool showEachDetectedFace;	// If using a 3D face detection (actually with
 // swissrange) and we want stop every a face is
 // detected for analize it.
 bool batchMode;
@@ -277,7 +278,7 @@ void TestCameraFaceDetection()
 		{
 			obs = cam->getNextFrame();
 		}
-		catch (CExceptionEOF&)  // Check if eof, f.i. for RawLog files
+		catch (CExceptionEOF&)	// Check if eof, f.i. for RawLog files
 		{
 			break;
 		}
@@ -519,12 +520,10 @@ int main(int argc, char* argv[])
 
 		TestPrepareDetector();
 
-		if (batchMode)
-			BatchMode();
+		if (batchMode) BatchMode();
 		else
 		{
-			if (argc > 1)
-				TestImagesFaceDetection(argc, argv);
+			if (argc > 1) TestImagesFaceDetection(argc, argv);
 			else
 				TestCameraFaceDetection();
 		}

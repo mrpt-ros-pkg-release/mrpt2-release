@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -20,6 +20,7 @@
 #include <mrpt/poses/CPose3DPDF.h>
 #include <mrpt/poses/CPosePDF.h>
 #include <mrpt/slam/CICP.h>
+
 #include <Eigen/Dense>
 
 using namespace mrpt;
@@ -178,17 +179,11 @@ TEST_F(ICPTests, RayTracingICP3D)
 	M2_noisy = M2;
 	M2_noisy.changeCoordinatesReference(SCAN2_POSE_ERROR);
 
-	CSetOfObjects::Ptr PTNS1 = std::make_shared<CSetOfObjects>();
-	CSetOfObjects::Ptr PTNS2 = std::make_shared<CSetOfObjects>();
-
 	M1.renderOptions.color = mrpt::img::TColorf(1, 0, 0);
-	M1.getAs3DObject(PTNS1);
-
 	M2_noisy.renderOptions.color = mrpt::img::TColorf(0, 0, 1);
-	M2_noisy.getAs3DObject(PTNS2);
 
-	scene2->insert(PTNS1);
-	scene2->insert(PTNS2);
+	scene2->insert(M1.getVisualization());
+	scene2->insert(M2_noisy.getVisualization());
 
 	// --------------------------------------
 	// Do the ICP-3D
@@ -200,9 +195,9 @@ TEST_F(ICPTests, RayTracingICP3D)
 	icp.options.thresholdAng = 0;
 
 	CPose3DPDF::Ptr pdf = icp.Align3D(
-		&M2_noisy,  // Map to align
+		&M2_noisy,	// Map to align
 		&M1,  // Reference map
-		CPose3D(),  // Initial gross estimate
+		CPose3D(),	// Initial gross estimate
 		icp_info);
 
 	CPose3D mean = pdf->getMeanVal();

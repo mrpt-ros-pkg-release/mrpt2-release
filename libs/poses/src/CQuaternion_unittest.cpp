@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -13,6 +13,7 @@
 #include <mrpt/math/CVectorDynamic.h>
 #include <mrpt/poses/CPose3D.h>
 #include <mrpt/poses/CPose3DQuat.h>
+
 #include <Eigen/Dense>
 
 using namespace mrpt;
@@ -165,9 +166,9 @@ TEST_F(QuaternionTests, ToYPRAndBack)
 TEST_F(QuaternionTests, LnAndExpMatches)
 {
 	const double list_test_YPR_angles_degrees[][3] = {
-		{0, 0, 0},   {-1, 0, 0},	{1, 0, 0},		{0, -1, 0},
-		{0, 1, 0},   {0, 0, -1},	{0, 0, 1},		{40, 0, 0},
-		{0, 40, 0},  {0, 0, 40},	{-40, 0, 0},	{0, -40, 0},
+		{0, 0, 0},	 {-1, 0, 0},	{1, 0, 0},		{0, -1, 0},
+		{0, 1, 0},	 {0, 0, -1},	{0, 0, 1},		{40, 0, 0},
+		{0, 40, 0},	 {0, 0, 40},	{-40, 0, 0},	{0, -40, 0},
 		{0, 0, -40}, {-30, 20, 50}, {-30, 20, -50}, {30, -20, -50}};
 
 	for (const auto& list_test_YPR_angles_degree : list_test_YPR_angles_degrees)
@@ -182,11 +183,12 @@ TEST_F(QuaternionTests, ExpAndLnMatches)
 	const double list_test_XYZ[][3] = {
 		{0, 0, 0},			{-1, 0, 0},		   {1, 0, 0},
 		{0, -1, 0},			{0, 1, 0},		   {0, 0, -1},
-		{0, 0, 1},			{1e-3, 0, 0},	  {0, 1e-3, 0},
-		{0, 0, 1e-3},		{-1e-3, 0, 0},	 {0, -1e-3, 0},
+		{0, 0, 1},			{1e-3, 0, 0},	   {0, 1e-3, 0},
+		{0, 0, 1e-3},		{-1e-3, 0, 0},	   {0, -1e-3, 0},
 		{0, 0, -1e-3},		{-0.1, 0.2, 0.3},  {-0.1, -0.2, 0.3},
 		{-0.1, -0.2, -0.3}, {-0.1, 0.2, -0.3}, {0.1, 0.2, -0.3},
 		{0.1, 0.2, 0.3}};
 
-	for (const auto& i : list_test_XYZ) test_ExpAndLnMatches(i[0], i[1], i[2]);
+	for (const auto& i : list_test_XYZ)
+		test_ExpAndLnMatches(i[0], i[1], i[2]);
 }

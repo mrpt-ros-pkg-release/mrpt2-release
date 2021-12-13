@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -70,7 +70,7 @@ class CPosePDFParticlesExtended
 		 * is supplied for each particle: There must be the same maps here as
 		 * pose particles.
 		 */
-		mrpt::maps::TMetricMapList metricMaps;
+		std::deque<mrpt::maps::CMetricMap*> metricMaps;
 
 		/** Parameters for the KLD adaptive sample size algorithm (see Dieter
 		 * Fox's papers), which is used only if the CParticleFilter is created
@@ -300,7 +300,7 @@ class CPosePDFParticlesExtended
 		const bayes::CParticleFilterCapable* obj, size_t index,
 		const void* action, const void* observation);
 
-};  // End of class def.
+};	// End of class def.
 
 /** Auxiliary structure
  */

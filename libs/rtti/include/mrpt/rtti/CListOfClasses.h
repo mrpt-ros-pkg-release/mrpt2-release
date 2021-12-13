@@ -2,14 +2,15 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 #pragma once
 
+#include <mrpt/core/Stringifyable.h>
 #include <mrpt/rtti/CObject.h>
-//#include <mrpt/system/string_utils.h>
+
 #include <set>
 
 namespace mrpt::rtti
@@ -19,7 +20,7 @@ namespace mrpt::rtti
  * for the actual content, or use any of the helper methods in this class.
  * \ingroup mrpt_rtti_grp
  */
-class CListOfClasses
+class CListOfClasses : public mrpt::Stringifyable
 {
    public:
 	using TSet = std::set<const mrpt::rtti::TRuntimeClassId*>;
@@ -47,7 +48,7 @@ class CListOfClasses
 	/** Return a string representation of the list, for example: "CPose2D,
 	 * CObservation, CPose3D".
 	 */
-	std::string toString() const;
+	std::string asString() const override;
 
 	/** Builds from a string representation of the list, for example: "CPose2D,
 	 * CObservation, CPose3D".
@@ -55,6 +56,6 @@ class CListOfClasses
 	 */
 	void fromString(const std::string& s);
 
-};  // end of class
+};	// end of class
 
 }  // namespace mrpt::rtti

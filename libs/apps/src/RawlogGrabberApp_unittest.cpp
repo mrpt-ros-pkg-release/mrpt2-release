@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -34,8 +34,7 @@ TEST(RawlogGrabberApp, DISABLED_CGenericCamera_AVI)
 
 	using namespace std::string_literals;
 
-	const std::string ini_fil =
-		mrpt::UNITTEST_BASEDIR +
+	const std::string ini_fil = mrpt::UNITTEST_BASEDIR +
 		"/share/mrpt/config_files/rawlog-grabber/camera_ffmpeg_video_file.ini"s;
 	EXPECT_TRUE(mrpt::system::fileExists(ini_fil));
 
@@ -85,7 +84,7 @@ TEST(RawlogGrabberApp, DISABLED_CGenericCamera_AVI)
 				if (numSavedObjs >= REQUIRED_GRAB_OBS)
 				{
 					auto lk = mrpt::lockHelper(app.params_mtx);
-					app.run_for_seconds = 1.0;  // make it exit
+					app.run_for_seconds = 1.0;	// make it exit
 					break;
 				}
 				std::this_thread::sleep_for(std::chrono::milliseconds(500));

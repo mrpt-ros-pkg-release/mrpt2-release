@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -48,27 +48,62 @@ static size_t findClosingBracket(
 }
 
 /** Recursive implementation for mrpt::exception_to_str() */
-void impl_excep_to_str(const std::exception& e, std::string& ret, int lvl = 0)
+void impl_excep_to_str(
+	const std::exception& e, std::string& ret, [[maybe_unused]] int lvl = 0)
 {
+#if defined(MRPT_EXCEPTIONS_WITH_CALL_STACK)
 	using namespace std::string_literals;
-	std::string err{e.what()};
-	if (!err.empty() && *err.rbegin() != '\n') err += "\n"s;
-	ret = "["s + std::to_string(lvl) + "] "s + err + ret;
 	try
 	{
 		std::rethrow_if_nested(e);
 		// We traversed the entire call stack,
 		// show just the original error message: "file:line: [func] MSG"
-		if (const auto idx = findClosingBracket(']', '[', err);
-			idx != std::string::npos)
-			err = "Exception message:"s + err.substr(idx + 1);
-		ret = err + std::string("==== MRPT exception backtrace ====\n") + ret;
+
+		if (const auto* ecb =
+				dynamic_cast<const ExceptionWithCallBackBase*>(&e);
+			ecb != nullptr)
+		{
+			std::string err = ecb->originalWhat;
+			if (!err.empty() && *err.rbegin() != '\n') err += "\n"s;
+
+			if (const auto idx = findClosingBracket(']', '[', err);
+				idx != std::string::npos)
+			{
+				err = "Message: "s + err.substr(idx + 1) + "Location: "s +
+					err.substr(0, idx) + "\n"s;
+			}
+
+			ret += "==== MRPT exception ====\n";
+			ret += err;
+			ret += "Call stack backtrace:\n";
+			ret += ecb->callStack.asString();
+		}
+		else
+		{
+			ret = "==== non-MRPT exception ====\n";
+			ret += e.what();
+			ret += "\n";
+		}
 	}
 	catch (const std::exception& er)
 	{
 		// It's nested: recursive call
-		impl_excep_to_str(er, ret, lvl + 1);
+		if (lvl < MRPT_EXCEPTIONS_CALL_STACK_MAX_DEPTH)
+			impl_excep_to_str(er, ret, lvl + 1);
+		else
+		{
+			ret += " (... max depth reached ...)\n";
+		}
 	}
+#else
+	// Basic version:
+	const auto* ecb = dynamic_cast<const ExceptionWithCallBackBase*>(&e);
+	if (ecb) { ret = ecb->originalWhat; }
+	else
+	{
+		ret = e.what();
+	}
+#endif
 }
 }  // namespace mrpt::internal
 
@@ -77,4 +112,9 @@ std::string mrpt::exception_to_str(const std::exception& e)
 	std::string descr;
 	mrpt::internal::impl_excep_to_str(e, descr);
 	return descr;
+}
+
+int mrpt::internal::MAX_BACKTRACE_DEPTH()
+{
+	return MRPT_EXCEPTIONS_CALL_STACK_MAX_DEPTH;
 }

@@ -25,28 +25,26 @@
 #include "fy-parse.h"
 #include "fy-doc.h"
 
-void fy_fill_atom_start(struct fy_parser *fyp, struct fy_atom *handle)
+void fy_reader_fill_atom_start(struct fy_reader *fyr, struct fy_atom *handle)
 {
 	memset(handle, 0, sizeof(*handle));
 
 	/* start mark */
-	fy_get_mark(fyp, &handle->start_mark);
+	fy_reader_get_mark(fyr, &handle->start_mark);
 	handle->end_mark = handle->start_mark;
-	handle->fyi = fyp->current_input;
+	handle->fyi = fy_reader_current_input(fyr);
+	handle->fyi_generation = fy_reader_current_input_generation(fyr);
 
-	assert(fyp->current_input);
 	/* note that handle->data may be zero for empty input */
 }
 
-void fy_fill_atom_end_at(struct fy_parser *fyp, struct fy_atom *handle,
-			 struct fy_mark *end_mark)
+void fy_reader_fill_atom_end_at(struct fy_reader *fyr, struct fy_atom *handle,
+				struct fy_mark *end_mark)
 {
-	assert(!fyp->current_input || handle->fyi == fyp->current_input);
-
 	if (end_mark)
 		handle->end_mark = *end_mark;
 	else
-		fy_get_mark(fyp, &handle->end_mark);
+		fy_reader_get_mark(fyr, &handle->end_mark);
 
 	/* default is plain, modify at return */
 	handle->style = FYAS_PLAIN;
@@ -54,45 +52,50 @@ void fy_fill_atom_end_at(struct fy_parser *fyp, struct fy_atom *handle,
 	/* by default we don't do storage hints, it's the job of the caller */
 	handle->storage_hint = 0;
 	handle->storage_hint_valid = false;
+	handle->tabsize = fy_reader_tabsize(fyr);
+	handle->json_mode = fy_reader_json_mode(fyr);
+	handle->lb_mode = fy_reader_lb_mode(fyr);
+	handle->fws_mode = fy_reader_flow_ws_mode(fyr);
 }
 
-void fy_fill_atom_end(struct fy_parser *fyp, struct fy_atom *handle)
+void fy_reader_fill_atom_end(struct fy_reader *fyr, struct fy_atom *handle)
 {
-	fy_fill_atom_end_at(fyp, handle, NULL);
+	fy_reader_fill_atom_end_at(fyr, handle, NULL);
 }
 
-struct fy_atom *fy_fill_atom(struct fy_parser *fyp, int advance, struct fy_atom *handle)
+struct fy_atom *fy_reader_fill_atom(struct fy_reader *fyr, int advance, struct fy_atom *handle)
 {
 	/* start mark */
-	fy_fill_atom_start(fyp, handle);
+	fy_reader_fill_atom_start(fyr, handle);
 
 	/* advance the given number of characters */
 	if (advance > 0)
-		fy_advance_by(fyp, advance);
+		fy_reader_advance_by(fyr, advance);
 
-	fy_fill_atom_end(fyp, handle);
+	fy_reader_fill_atom_end(fyr, handle);
 
 	return handle;
 }
 
-int fy_advance_mark(struct fy_parser *fyp, int advance, struct fy_mark *m)
+int fy_reader_advance_mark(struct fy_reader *fyr, int advance, struct fy_mark *m)
 {
-	int i, c;
+	int i, c, tabsize;
 	bool is_line_break;
 
+	tabsize = fy_reader_tabsize(fyr);
 	i = 0;
 	while (advance-- > 0) {
-		c = fy_parse_peek_at(fyp, i++);
+		c = fy_reader_peek_at(fyr, i++);
 		if (c == -1)
 			return -1;
 		m->input_pos += fy_utf8_width(c);
 
 		/* first check for CR/LF */
-		if (c == '\r' && fy_parse_peek_at(fyp, i) == '\n') {
+		if (c == '\r' && fy_reader_peek_at(fyr, i) == '\n') {
 			m->input_pos++;
 			i++;
 			is_line_break = true;
-		} else if (fyp_is_lb(fyp, c))
+		} else if (fy_reader_is_lb(fyr, c))
 			is_line_break = true;
 		else
 			is_line_break = false;
@@ -100,8 +103,8 @@ int fy_advance_mark(struct fy_parser *fyp, int advance, struct fy_mark *m)
 		if (is_line_break) {
 			m->column = 0;
 			m->line++;
-		} else if (fyp->tabsize && fy_is_tab(c))
-			m->column += (fyp->tabsize - (fyp->column % fyp->tabsize));
+		} else if (tabsize > 0 && fy_is_tab(c))
+			m->column += (tabsize - (fy_reader_column(fyr) % tabsize));
 		else
 			m->column++;
 	}
@@ -109,19 +112,20 @@ int fy_advance_mark(struct fy_parser *fyp, int advance, struct fy_mark *m)
 	return 0;
 }
 
-struct fy_atom *fy_fill_atom_mark(struct fy_input *fyi,
-		const struct fy_mark *start_mark,
-		const struct fy_mark *end_mark,
-		struct fy_atom *handle)
+struct fy_atom *fy_reader_fill_atom_mark(struct fy_reader *fyr,
+					 const struct fy_mark *start_mark,
+					 const struct fy_mark *end_mark,
+					 struct fy_atom *handle)
 {
-	if (!fyi || !start_mark || !end_mark || !handle)
+	if (!fyr || !start_mark || !end_mark || !handle)
 		return NULL;
 
 	memset(handle, 0, sizeof(*handle));
 
 	handle->start_mark = *start_mark;
 	handle->end_mark = *end_mark;
-	handle->fyi = fyi;
+	handle->fyi = fy_reader_current_input(fyr);
+	handle->fyi_generation = fy_reader_current_input_generation(fyr);
 
 	/* default is plain, modify at return */
 	handle->style = FYAS_PLAIN;
@@ -133,27 +137,27 @@ struct fy_atom *fy_fill_atom_mark(struct fy_input *fyi,
 	return handle;
 }
 
-struct fy_atom *fy_fill_atom_at(struct fy_parser *fyp, int advance, int count, struct fy_atom *handle)
+struct fy_atom *fy_reader_fill_atom_at(struct fy_reader *fyr, int advance, int count, struct fy_atom *handle)
 {
 	struct fy_mark start_mark, end_mark;
 	int rc;
 
-	if (!fyp || !handle)
+	if (!fyr || !handle)
 		return NULL;
 
 	/* start mark */
-	fy_get_mark(fyp, &start_mark);
-	rc = fy_advance_mark(fyp, advance, &start_mark);
+	fy_reader_get_mark(fyr, &start_mark);
+	rc = fy_reader_advance_mark(fyr, advance, &start_mark);
 	(void)rc;
 	/* ignore the return, if the advance failed, it's the end of input */
 
 	/* end mark */
 	end_mark = start_mark;
-	rc = fy_advance_mark(fyp, count, &end_mark);
+	rc = fy_reader_advance_mark(fyr, count, &end_mark);
 	(void)rc;
 	/* ignore the return, if the advance failed, it's the end of input */
 
-	return fy_fill_atom_mark(fyp->current_input, &start_mark, &end_mark, handle);
+	return fy_reader_fill_atom_mark(fyr, &start_mark, &end_mark, handle);
 }
 
 static inline void
@@ -205,7 +209,7 @@ fy_atom_iter_grow_chunk(struct fy_atom_iter *iter)
 }
 
 static int
-fy_atom_iter_add_chunk(struct fy_atom_iter *iter, const char *str, size_t len)
+_fy_atom_iter_add_chunk(struct fy_atom_iter *iter, const char *str, size_t len)
 {
 	struct fy_atom_iter_chunk *c;
 	int ret;
@@ -229,7 +233,7 @@ fy_atom_iter_add_chunk(struct fy_atom_iter *iter, const char *str, size_t len)
 }
 
 static int
-fy_atom_iter_add_chunk_copy(struct fy_atom_iter *iter, const char *str, size_t len)
+_fy_atom_iter_add_chunk_copy(struct fy_atom_iter *iter, const char *str, size_t len)
 {
 	struct fy_atom_iter_chunk *c;
 	int ret;
@@ -255,6 +259,101 @@ fy_atom_iter_add_chunk_copy(struct fy_atom_iter *iter, const char *str, size_t l
 	return 0;
 }
 
+/* keep it around without a warning even though it's unused */
+static int
+_fy_atom_iter_add_utf8(struct fy_atom_iter *iter, int c)
+	__attribute__((__unused__));
+
+static int
+_fy_atom_iter_add_utf8(struct fy_atom_iter *iter, int c)
+{
+	char buf[FY_UTF8_FORMAT_BUFMIN];
+	char *e;
+
+	/* only fails if invalid utf8 */
+	e = fy_utf8_put(buf, sizeof(buf), c);
+	if (!e)
+		return -1;
+
+	return _fy_atom_iter_add_chunk_copy(iter, buf, e - buf);
+}
+
+/* optimized linebreaks */
+static int
+_fy_atom_iter_add_lb(struct fy_atom_iter *iter, int c)
+{
+	switch (c) {
+	/* those are generic linebreaks */
+	case '\r':
+	case '\n':
+	case 0x85:
+		return _fy_atom_iter_add_chunk(iter, "\n", 1);
+	/* these are specific linebreaks */
+	case 0x2028:
+		return _fy_atom_iter_add_chunk(iter, "\xe2\x80\xa8", 3);
+	case 0x2029:
+		return _fy_atom_iter_add_chunk(iter, "\xe2\x80\xa9", 3);
+	}
+	/* not a linebreak */
+	return -1;
+}
+
+// #define DEBUG_CHUNK
+
+#ifndef DEBUG_CHUNK
+#define fy_atom_iter_add_chunk _fy_atom_iter_add_chunk
+#define fy_atom_iter_add_chunk_copy _fy_atom_iter_add_chunk_copy
+#define fy_atom_iter_add_utf8 _fy_atom_iter_add_utf8
+#define fy_atom_iter_add_lb _fy_atom_iter_add_lb
+#else
+#define fy_atom_iter_add_chunk(_iter, _str, _len) \
+	({ \
+		const char *__str = (_str); \
+		size_t __len2 = (_len); \
+		char *__out = NULL; \
+		int __ret = 0; \
+		\
+		if (__len2 > 0) { \
+			__out = fy_utf8_format_text_alloc(__str, __len2, fyue_doublequote); \
+			assert(__out); \
+			fprintf(stderr, "%s:%d chunk #%zu \"%s\"\n", __func__, __LINE__, __len2, __out); \
+			__ret = _fy_atom_iter_add_chunk((_iter), __str, __len2); \
+			free(__out); \
+		} \
+		__ret; \
+	})
+
+#define fy_atom_iter_add_chunk_copy(_iter, _str, _len) \
+	({ \
+		const char *__str = (_str); \
+		size_t __len2 = (_len); \
+		char *__out = NULL; \
+		int __ret = 0; \
+		\
+		if (__len2 > 0) { \
+			__out = fy_utf8_format_text_alloc(__str, __len2, fyue_doublequote); \
+			assert(__out); \
+			fprintf(stderr, "%s:%d chunk-copy #%zu \"%s\"\n", __func__, __LINE__, __len2, __out); \
+			/* fprintf(stderr, "%s:%d chunk-copy \"%.*s\"\n", __func__, __LINE__, (int)__len, __str); */ \
+			__ret = _fy_atom_iter_add_chunk_copy((_iter), __str, __len2); \
+			free(__out); \
+		} \
+		__ret; \
+	})
+#define fy_atom_iter_add_utf8(_iter, _c) \
+	({ \
+		int __c = (_c); \
+		fprintf(stderr, "%s:%d utf8 %d\n", __func__, __LINE__, __c); \
+		_fy_atom_iter_add_utf8((_iter), (_c)); \
+	})
+#define fy_atom_iter_add_lb(_iter, _c) \
+	({ \
+		int __c = (_c); \
+		fprintf(stderr, "%s:%d lb 0x%02x\n", __func__, __LINE__, __c); \
+		_fy_atom_iter_add_lb((_iter), (_c)); \
+	})
+#endif
+
 static void
 fy_atom_iter_line_analyze(struct fy_atom_iter *iter, struct fy_atom_iter_line_info *li,
 			  const char *line_start, size_t len)
@@ -279,13 +378,16 @@ fy_atom_iter_line_analyze(struct fy_atom_iter *iter, struct fy_atom_iter_line_in
 		li->chomp_start = s;
 		li->final = true;
 		li->empty = atom->empty;
-		li->trailing_breaks = false;
+		li->trailing_breaks = 0;
 		li->trailing_breaks_ws = false;
 		li->start_ws = 0;
 		li->end_ws = 0;
 		li->indented = false;
 		li->lb_end = is_block ? atom->ends_with_lb : false;
 		li->final = true;
+		li->actual_lb = -1;
+		li->s_tb = li->e_tb = NULL;
+		li->ends_with_backslash = false;
 		return;
 	}
 
@@ -294,9 +396,8 @@ fy_atom_iter_line_analyze(struct fy_atom_iter *iter, struct fy_atom_iter_line_in
 	li->nws_start = NULL;
 	li->nws_end = NULL;
 	li->chomp_start = NULL;
-	li->trailing_ws = false;
 	li->empty = true;
-	li->trailing_breaks = false;
+	li->trailing_breaks = 0;
 	li->trailing_breaks_ws = false;
 	li->first = false;
 	li->start_ws = (size_t)-1;
@@ -304,7 +405,8 @@ fy_atom_iter_line_analyze(struct fy_atom_iter *iter, struct fy_atom_iter_line_in
 	li->indented = false;
 	li->lb_end = false;
 	li->final = false;
-
+	li->actual_lb = -1;
+	li->ends_with_backslash = false;
 
 	last_was_ws = false;
 
@@ -313,6 +415,7 @@ fy_atom_iter_line_analyze(struct fy_atom_iter *iter, struct fy_atom_iter_line_in
 	/* consecutive whitespace */
 	cws = 0;
 
+	li->s_tb = s;
 	for (col = 0, ss = s; (c = fy_utf8_get(ss, (e - ss), &w)) >= 0; ss += w) {
 
 		/* mark start of chomp */
@@ -325,13 +428,25 @@ fy_atom_iter_line_analyze(struct fy_atom_iter *iter, struct fy_atom_iter_line_in
 			li->indented = fy_is_ws(c);
 		}
 
-		if (fy_input_is_lb(atom->fyi, c)) {
+		if (fy_is_lb_m(c, atom->lb_mode)) {
+
+#ifdef DEBUG_CHUNK
+			fprintf(stderr, "%s:%d lb=0x%x\n", __FILE__, __LINE__, c);
+#endif
+
 			col = 0;
 			if (!li->end) {
+
 				li->end = ss;
-				li->trailing_ws = last_was_ws;
 				li->end_ws = cws;
 				li->lb_end = true;
+				li->actual_lb = c;
+
+#ifdef DEBUG_CHUNK
+				fprintf(stderr, "%s:%d set actual_lb=0x%x\n", __FILE__, __LINE__, li->actual_lb);
+#endif
+
+				cws = 0;
 			}
 
 			/* no chomp point hit, use whatever we have here */
@@ -367,6 +482,7 @@ fy_atom_iter_line_analyze(struct fy_atom_iter *iter, struct fy_atom_iter_line_in
 				li->start_ws = cws;
 
 			last_was_ws = false;
+			cws = 0;
 
 			col++;
 		}
@@ -375,6 +491,7 @@ fy_atom_iter_line_analyze(struct fy_atom_iter *iter, struct fy_atom_iter_line_in
 		if (li->end && iter->chomp >= 0)
 			break;
 	}
+	li->e_tb = ss;
 
 	li->final = c == -1;
 
@@ -394,44 +511,28 @@ fy_atom_iter_line_analyze(struct fy_atom_iter *iter, struct fy_atom_iter_line_in
 	if (li->start_ws == (size_t)-1)
 		li->start_ws = 0;
 
+	if (li->end_ws == (size_t)-1)
+		li->end_ws = 0;
+
 	/* mark next line to the end if no linebreak found */
 	if (!li->end) {
 		li->end = iter->e;
-		li->trailing_ws = last_was_ws;
 		li->last = true;
 		li->end_ws = cws;
 		li->lb_end = false;
 		goto out;
 	}
 
-	/* if there's only one linebreak left, we don't have trailing breaks */
-	if (c >= 0) {
-		ss += w;
-		if (fy_input_is_lb(atom->fyi, c))
-			col = 0;
-		else if (fy_is_tab(c))
-			col += (ts - (col % ts));
-		else
-			col++;
-	}
-
-	if (ss >= e) {
-		li->last = true;
-		goto out;
-	}
-
 	/* find out if any trailing breaks exist afterwards */
-	for (; (c = fy_utf8_get(ss, (e - ss), &w)) >= 0 && fy_is_ws_lb(c); ss += w) {
-
-		if (!li->trailing_breaks && fy_input_is_lb(atom->fyi, c))
-			li->trailing_breaks = true;
+	for (; (c = fy_utf8_get(ss, (e - ss), &w)) >= 0 && (fy_is_ws(c) || fy_is_lb_m(c, atom->lb_mode)); ss += w) {
 
 		if (!li->trailing_breaks_ws && is_block && (unsigned int)col > iter->chomp)
 			li->trailing_breaks_ws = true;
 
-		if (fy_input_is_lb(atom->fyi, c))
+		if (fy_is_lb_m(c, atom->lb_mode)) {
+			li->trailing_breaks++;
 			col = 0;
-		else {
+		} else {
 			/* indented whitespace counts as break */
 			if (fy_is_tab(c))
 				col += (ts - (col % ts));
@@ -450,10 +551,19 @@ out:
 	assert(li->nws_start);
 	assert(li->nws_end);
 	assert(!is_block || li->chomp_start);
+
+	li->ends_with_backslash = atom->style == FYAS_DOUBLE_QUOTED &&
+				  !li->empty &&
+				  (li->nws_end > li->nws_start && li->nws_end[-1] == '\\') &&
+				  ((li->nws_end - li->nws_start) <= 1 || li->nws_end[-2] != '\\');
+#ifdef DEBUG_CHUNK
+	fprintf(stderr, "%s:%d ends_with_backslash=%s\n", __FILE__, __LINE__, li->ends_with_backslash ? "true" : "false");
+#endif
 }
 
 void fy_atom_iter_start(const struct fy_atom *atom, struct fy_atom_iter *iter)
 {
+	struct fy_atom_iter_line_info *li;
 	size_t len;
 
 	if (!atom || !iter)
@@ -472,13 +582,18 @@ void fy_atom_iter_start(const struct fy_atom *atom, struct fy_atom_iter *iter)
 	iter->tabsize = atom->tabsize ? : 8;
 
 	memset(iter->li, 0, sizeof(iter->li));
-	fy_atom_iter_line_analyze(iter, &iter->li[1], iter->s, len);
-	iter->li[1].first = true;
+	li = &iter->li[1];
+	fy_atom_iter_line_analyze(iter, li, iter->s, len);
+	li->first = true;
 
 	/* if there's single quote at the start of a line ending the atom */
 	iter->dangling_end_quote = atom->end_mark.column == 0;
 	iter->single_line = atom->start_mark.line == atom->end_mark.line;
 	iter->empty = atom->empty;
+	iter->last_ends_with_backslash = li->ends_with_backslash;
+#ifdef DEBUG_CHUNK
+	fprintf(stderr, "%s:%d ends_with_backslash=%s\n", __FILE__, __LINE__, li->ends_with_backslash ? "true" : "false");
+#endif
 
 	/* current is 0, next is 1 */
 	iter->current = 0;
@@ -563,8 +678,15 @@ fy_atom_iter_line(struct fy_atom_iter *iter)
 
 	assert(li->s <= li->e);
 
-	li->need_nl = false;
+	/* we never fold LS or PS linebreaks (on yaml 1.1) */
+	li->need_nl = fy_is_lb_LS_PS(li->actual_lb) && fy_is_lb_m(li->actual_lb, iter->atom->lb_mode) && !li->ends_with_backslash;
 	li->need_sep = false;
+
+#ifdef DEBUG_CHUNK
+	fprintf(stderr, "%s:%d need_nl=%s\n", __FILE__, __LINE__, li->need_nl ? "true" : "false");
+#endif
+	if (li->need_nl)
+		return li;
 
 	switch (atom->style) {
 	case FYAS_PLAIN:
@@ -583,8 +705,19 @@ fy_atom_iter_line(struct fy_atom_iter *iter)
 		li->need_sep = false;
 		break;
 
-	case FYAS_SINGLE_QUOTED:
 	case FYAS_DOUBLE_QUOTED:
+#ifdef DEBUG_CHUNK
+		fprintf(stderr, "%s:%d ends_with_backslash=%s\n", __FILE__, __LINE__, li->ends_with_backslash ? "true" : "false");
+#endif
+		if (li->ends_with_backslash) {
+
+			li->need_nl = false;
+			li->need_sep = false;
+			break;
+		}
+
+		/* fall-through */
+	case FYAS_SINGLE_QUOTED:
 		li->need_nl = (!li->last && !li->first && li->empty) ||
 				(nli && iter->empty && !li->first);
 
@@ -595,9 +728,6 @@ fy_atom_iter_line(struct fy_atom_iter *iter)
 				(!nli && li->last && iter->dangling_end_quote) ||
 				(nli && nli->final && nli->empty);
 
-		if (atom->style == FYAS_DOUBLE_QUOTED && li->need_sep &&
-				li->nws_end > li->nws_start && li->nws_end[-1] == '\\')
-			li->need_sep = false;
 		break;
 	case FYAS_LITERAL:
 		li->need_nl = true;
@@ -623,7 +753,11 @@ fy_atom_iter_format(struct fy_atom_iter *iter)
 	const char *s, *e, *t;
 	int value, code_length, rlen, ret;
 	uint8_t code[4], *tt;
-	int pending_nl;
+	int j, pending_nl;
+	int *pending_lb = NULL, *pending_lb_new = NULL;
+	int pending_lb_size = 0;
+	enum fy_utf8_escape esc_mode;
+	size_t i;
 
 	/* done? */
 	li = fy_atom_iter_line(iter);
@@ -643,12 +777,17 @@ fy_atom_iter_format(struct fy_atom_iter *iter)
 	case FYAS_PLAIN:
 	case FYAS_FOLDED:
 	case FYAS_COMMENT:
-		ret = fy_atom_iter_add_chunk(iter, s, e - s);
-		if (ret)
-			goto out;
+		if (s < e) {
+			ret = fy_atom_iter_add_chunk(iter, s, e - s);
+			if (ret)
+				goto out;
+		}
+
 		break;
 
 	case FYAS_SINGLE_QUOTED:
+		if (li->last)
+			e = li->nws_end;
 		while (s < e) {
 			/* find next single quote */
 			t = memchr(s, '\'', e - s);
@@ -673,6 +812,12 @@ fy_atom_iter_format(struct fy_atom_iter *iter)
 		break;
 
 	case FYAS_DOUBLE_QUOTED:
+		if (li->last)
+			e = li->nws_end;
+
+		esc_mode = atom->json_mode ? fyue_doublequote_json :
+			   atom->lb_mode == fylb_cr_nl ? fyue_doublequote : fyue_doublequote_yaml_1_1;
+
 		while (s < e) {
 			/* find next escape */
 			t = memchr(s, '\\', e - s);
@@ -685,9 +830,7 @@ fy_atom_iter_format(struct fy_atom_iter *iter)
 			if (!t || (e - t) < 2)
 				break;
 
-			ret = fy_utf8_parse_escape(&t, e - t,
-					!fy_input_json_mode(atom->fyi) ?
-					fyue_doublequote : fyue_doublequote_json);
+			ret = fy_utf8_parse_escape(&t, e - t, esc_mode);
 			if (ret < 0)
 				goto out;
 			s = t;
@@ -747,57 +890,112 @@ fy_atom_iter_format(struct fy_atom_iter *iter)
 		goto out;
 	}
 
-	if (li->last && fy_atom_style_is_block(atom->style)) {
+	if (li->last) {
 
-		switch (atom->chomp) {
-		case FYAC_STRIP:
-		case FYAC_CLIP:
-			pending_nl = 0;
-			if (!li->empty)
-				pending_nl++;
-			while ((li = fy_atom_iter_line(iter)) != NULL) {
-				if (!iter->empty && li->chomp_start < li->end) {
-					while (pending_nl > 0) {
-						ret = fy_atom_iter_add_chunk(iter, "\n", 1);
+		if (fy_atom_style_is_block(atom->style)) {
+
+			switch (atom->chomp) {
+			case FYAC_STRIP:
+			case FYAC_CLIP:
+
+				pending_lb_size = 16;
+				pending_lb = alloca(sizeof(*pending_lb) * pending_lb_size);
+
+				pending_nl = 0;
+				if (!li->empty) {
+					pending_lb[0] = li->actual_lb > 0 ? li->actual_lb : '\n';
+					pending_nl = 1;
+				}
+				while ((li = fy_atom_iter_line(iter)) != NULL) {
+					if (!iter->empty && li->chomp_start < li->end) {
+						for (j = 0; j < pending_nl; j++) {
+							ret = fy_atom_iter_add_lb(iter, pending_lb[j]);
+							if (ret)
+								goto out;
+						}
+						pending_nl = 0;
+
+						ret = fy_atom_iter_add_chunk(iter, li->chomp_start, li->end - li->chomp_start);
 						if (ret)
 							goto out;
-						pending_nl--;
 					}
-
-					ret = fy_atom_iter_add_chunk(iter, li->chomp_start, li->end - li->chomp_start);
+					if (li->lb_end && !iter->empty) {
+						if (pending_nl >= pending_lb_size) {
+							pending_lb_new = alloca(sizeof(*pending_lb) * pending_lb_size * 2);
+							memcpy(pending_lb_new, pending_lb, sizeof(*pending_lb) * pending_lb_size);
+							pending_lb_size *= 2;
+							pending_lb = pending_lb_new;
+						}
+						pending_lb[pending_nl] = li->actual_lb > 0 ? li->actual_lb : '\n';
+						pending_nl++;
+					}
+				}
+				if (atom->chomp == FYAC_CLIP && pending_nl) {
+					ret = fy_atom_iter_add_lb(iter, pending_lb[0]);
 					if (ret)
 						goto out;
 				}
-				if (li->lb_end && !iter->empty)
-					pending_nl++;
-			}
-			if (atom->chomp == FYAC_CLIP && pending_nl) {
-				ret = fy_atom_iter_add_chunk(iter, "\n", 1);
-				if (ret)
-					goto out;
-			}
-			break;
-		case FYAC_KEEP:
-			if (li->lb_end) {
-				ret = fy_atom_iter_add_chunk(iter, "\n", 1);
-				if (ret)
-					goto out;
-			}
-			while ((li = fy_atom_iter_line(iter)) != NULL) {
-				if (!iter->empty && li->chomp_start < li->end) {
-					ret = fy_atom_iter_add_chunk(iter, li->chomp_start, li->end - li->chomp_start);
-					if (ret)
-						goto out;
-				}
+				break;
+			case FYAC_KEEP:
 				if (li->lb_end) {
-					ret = fy_atom_iter_add_chunk(iter, "\n", 1);
+					ret = fy_atom_iter_add_lb(iter, li->actual_lb > 0 ? li->actual_lb : '\n');
+					if (ret)
+						goto out;
+				}
+				while ((li = fy_atom_iter_line(iter)) != NULL) {
+					if (!iter->empty && li->chomp_start < li->end) {
+						ret = fy_atom_iter_add_chunk(iter, li->chomp_start, li->end - li->chomp_start);
+						if (ret)
+							goto out;
+					}
+					if (li->lb_end) {
+						ret = fy_atom_iter_add_lb(iter, li->actual_lb > 0 ? li->actual_lb : '\n');
+						if (ret)
+							goto out;
+					}
+				}
+				break;
+			}
+
+			iter->done = true;
+
+		} else {
+
+#ifdef DEBUG_CHUNK
+			fprintf(stderr, "%s:%d trailing_breaks=%zu end_ws=%zu empty=%s\n", __func__, __LINE__,
+					li->trailing_breaks, li->end_ws,
+					li->empty ? "true" : "false");
+#endif
+
+			if (li->trailing_breaks == 0 && li->end_ws > 0) {
+				/* end of quote in a non-blank line having white space */
+				ret = fy_atom_iter_add_chunk(iter, li->nws_end, (size_t)(li->e - li->nws_end));
+				if (ret)
+					goto out;
+			} else if (li->trailing_breaks == 1) {
+
+				if (atom->style == FYAS_DOUBLE_QUOTED) {
+#ifdef DEBUG_CHUNK
+					fprintf(stderr, "%s:%d %s <>%d single trailing break %c\n", __FILE__, __LINE__, __func__,
+							(int)(li->s_tb - li->s), li->s_tb[-1]);
+#endif
+				}
+
+				if (!li->ends_with_backslash) {
+					ret = fy_atom_iter_add_chunk(iter, " ", 1);
+					if (ret)
+						goto out;
+				}
+			} else if (li->trailing_breaks > 1) {
+				for (i = 0; i < li->trailing_breaks - 1; i++) {
+					ret = fy_atom_iter_add_lb(iter, '\n');
 					if (ret)
 						goto out;
 				}
 			}
-			break;
+
+			iter->done = true;
 		}
-		iter->done = true;
 
 	} else {
 		if (li->need_sep) {
@@ -807,7 +1005,7 @@ fy_atom_iter_format(struct fy_atom_iter *iter)
 		}
 
 		if (li->need_nl) {
-			ret = fy_atom_iter_add_chunk(iter, "\n", 1);
+			ret = fy_atom_iter_add_lb(iter, li->actual_lb > 0 ? li->actual_lb : '\n');
 			if (ret)
 				goto out;
 		}
@@ -928,26 +1126,28 @@ const char *fy_atom_format_text(struct fy_atom *atom, char *buf, size_t maxsz)
 {
 	struct fy_atom_iter iter;
 	const struct fy_iter_chunk *ic;
-	char *oe;
+	char *s, *e;
 	int ret;
 
 	if (!atom || !buf)
 		return NULL;
 
-	oe = buf + maxsz;
+	s = buf;
+	e = s + maxsz;
 	fy_atom_iter_start(atom, &iter);
 	ic = NULL;
 	while ((ic = fy_atom_iter_chunk_next(&iter, ic, &ret)) != NULL) {
 		/* must fit */
-		if ((size_t)(oe - buf) < ic->len)
+		if ((size_t)(e - s) < ic->len)
 			return NULL;
-		memcpy(buf, ic->str, ic->len);
-		buf += ic->len;
+		memcpy(s, ic->str, ic->len);
+		s += ic->len;
 	}
 	fy_atom_iter_finish(&iter);
 
-	if (ret != 0)
+	if (ret != 0 || s >= e)
 		return NULL;
+	*s = '\0';
 
 	return buf;
 }
@@ -1458,7 +1658,7 @@ fy_atom_raw_line_iter_next(struct fy_atom_raw_line_iter *iter)
 
 	while (s > iter->is) {
 		c = fy_utf8_get_right(iter->is, (int)(s - iter->is), &w);
-		if (c <= 0 || fy_input_is_lb(iter->atom->fyi, c))
+		if (c <= 0 || fy_is_lb_m(c, iter->atom->lb_mode))
 			break;
 		s -= w;
 	}
@@ -1481,7 +1681,7 @@ fy_atom_raw_line_iter_next(struct fy_atom_raw_line_iter *iter)
 				col += (ts - (col % ts));
 			else
 				col++;
-		} else if (!fy_input_is_lb(iter->atom->fyi, c)) {
+		} else if (!fy_is_lb_m(c, iter->atom->lb_mode)) {
 			col++;
 			col8++;
 		} else
@@ -1508,7 +1708,7 @@ fy_atom_raw_line_iter_next(struct fy_atom_raw_line_iter *iter)
 				col += (ts - (col % ts));
 			else
 				col++;
-		} else if (!fy_input_is_lb(iter->atom->fyi, c)) {
+		} else if (!fy_is_lb_m(c, iter->atom->lb_mode)) {
 			col++;
 			col8++;
 		} else
@@ -1537,7 +1737,7 @@ fy_atom_raw_line_iter_next(struct fy_atom_raw_line_iter *iter)
 					col += (ts - (col % ts));
 				else
 					col++;
-			} else if (!fy_input_is_lb(iter->atom->fyi, c)) {
+			} else if (!fy_is_lb_m(c, iter->atom->lb_mode)) {
 				col++;
 				col8++;
 			} else
@@ -1551,7 +1751,7 @@ fy_atom_raw_line_iter_next(struct fy_atom_raw_line_iter *iter)
 	l->line_len = (size_t)(s - l->line_start);
 	l->line_count = count;
 
-	if (fy_input_is_lb(iter->atom->fyi, c)) {
+	if (fy_is_lb_m(c, iter->atom->lb_mode)) {
 		s += w;
 		/* special case for MSDOS */
 		if (c == '\r' && (s < iter->ie && s[1] == '\n'))

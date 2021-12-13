@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>org.mrpt.rawlogviewer.desktop</id>
+  <metadata_license>MIT</metadata_license>
+  <name>RawLogViewer</name>
+  <summary>GUI to visualize and manipulate robotics datasets</summary>
+  <description>
+    <p>GUI to visualize and manipulate robotics datasets.</p>
+  </description>
+  <launchable type="desktop-id">rawlogviewer.desktop</launchable>
+  <screenshots>
+    <screenshot type="default">
+        <caption>Application screenshot</caption>
+        <image>https://static.mrpt.org/screenshots/rawlogviewer.png</image>
+    </screenshot>
+  </screenshots>
+  <url type="homepage">https://www.mrpt.org/</url>
+  <update_contact>joseluisblancoc@gmail.com</update_contact>
+</component>

@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -15,6 +15,7 @@
 #include <mrpt/core/demangle.h>
 #include <mrpt/core/exceptions.h>
 #include <mrpt/core/format.h>
+#include <mrpt/typemeta/TEnumType.h>
 
 #include <any>
 #include <array>
@@ -74,6 +75,9 @@ namespace mrpt::containers
  * Output:
  *  \include containers_yaml_example/console.out
  *
+ * Verbose debug information on YAML document parsing is emitted if the
+ * environment variable `MRPT_YAML_PARSER_VERBOSE` is set to `1`.
+ *
  * \ingroup mrpt_containers_yaml
  * \note [New in MRPT 2.1.0]
  */
@@ -86,7 +90,7 @@ class yaml
 	struct node_t;
 	using scalar_t = std::any;
 	using sequence_t = std::vector<node_t>;
-	using map_t = std::map<node_t, node_t, std::less<> /*transparent comp*/>;
+	using map_t = std::map<node_t, node_t>;
 
 	using comments_t = std::array<
 		std::optional<std::string>, static_cast<size_t>(CommentPosition::MAX)>;
@@ -99,13 +103,17 @@ class yaml
 		/** Optional comment block */
 		comments_t comments;
 
+		/** Optional flag to print collections in short form (e.g. [A,B] for
+		 * sequences) \note (New in MRPT 2.1.8) */
+		bool printInShortFormat = false;
+
 		node_t() = default;
 		~node_t() = default;
 
 		template <
-			typename T,  //
+			typename T,	 //
 			typename = std::enable_if_t<!std::is_constructible_v<
-				std::initializer_list<map_t::value_type>, T>>,  //
+				std::initializer_list<map_t::value_type>, T>>,	//
 			typename = std::enable_if_t<!std::is_constructible_v<
 				std::initializer_list<sequence_t::value_type>, T>>>
 		node_t(const T& scalar)
@@ -178,24 +186,54 @@ class yaml
 			ASSERT_(isScalar());
 			if (const char* const* s = std::any_cast<const char*>(&asScalar());
 				s != nullptr)
-			{
-				return {*s};
-			}
+			{ return {*s}; }
 			if (const std::string* s = std::any_cast<std::string>(&asScalar());
 				s != nullptr)
-			{
-				return {*s};
-			}
+			{ return {*s}; }
 			if (const std::string_view* s =
 					std::any_cast<std::string_view>(&asScalar());
 				s != nullptr)
-			{
-				return {*s};
-			}
+			{ return {*s}; }
 			THROW_EXCEPTION_FMT(
 				"Used node_t as map key with a type non-convertible to string: "
 				"'%s'",
 				typeName().c_str());
+		}
+
+		bool hasComment() const
+		{
+			for (const auto& c : comments)
+				if (c.has_value()) return true;
+			return false;
+		}
+		bool hasComment(CommentPosition pos) const
+		{
+			MRPT_START
+			int posIndex = static_cast<int>(pos);
+			ASSERT_GE_(posIndex, 0);
+			ASSERT_LT_(posIndex, static_cast<int>(CommentPosition::MAX));
+			return comments[posIndex].has_value();
+			MRPT_END
+		}
+		const std::string& comment() const
+		{
+			MRPT_START
+			for (const auto& c : comments)
+				if (c.has_value()) return c.value();
+			THROW_EXCEPTION("Trying to access comment but this node has none.");
+			MRPT_END
+		}
+		const std::string& comment(CommentPosition pos) const
+		{
+			MRPT_START
+			int posIndex = static_cast<int>(pos);
+			ASSERT_GE_(posIndex, 0);
+			ASSERT_LT_(posIndex, static_cast<int>(CommentPosition::MAX));
+			ASSERTMSG_(
+				comments[posIndex].has_value(),
+				"Trying to access comment but this node has none.");
+			return comments[posIndex].value();
+			MRPT_END
 		}
 	};
 
@@ -291,11 +329,46 @@ class yaml
 	template <typename YAML_NODE>
 	inline void loadFromYAMLCPP(const YAML_NODE& n);
 
+	/** Creates a yaml dictionary node from an Eigen or mrpt::math matrix.
+	 * Example (compatible with OpenCV & ROS YAML formats):
+	 * \code
+	 * rows: 2
+	 * cols: 3
+	 * data: [11, 12, 13, 21, 22, 23]
+	 * \endcode
+	 * \sa toMatrix()
+	 */
+	template <typename MATRIX>
+	inline static yaml FromMatrix(const MATRIX& m);
+
+	/** Fills in a matrix from a yaml dictionary node.
+	 * The matrix can be either an Eigen or mrpt::math matrix.
+	 * Example yaml node (compatible with OpenCV & ROS YAML formats):
+	 * \code
+	 * rows: 2
+	 * cols: 3
+	 * data: [11, 12, 13, 21, 22, 23]
+	 * \endcode
+	 * \sa FromMatrix()
+	 */
+	template <typename MATRIX>
+	inline void toMatrix(MATRIX& m) const;
+
+	/** Converts a sequence yaml node into a std::vector, trying to convert all
+	 *  nodes to the same given `Scalar` type.
+	 *  \note (New in MRPT 2.3.3)
+	 */
+	template <typename Scalar>
+	inline std::vector<Scalar> toStdVector() const;
+
 	/** @} */
 
 	/** @name Content and type checkers
 	 * @{ */
-	/** For map nodes, checks if the given key name exists */
+	/** For map nodes, checks if the given key name exists.
+	 *  Returns false if the node is a `null` node.
+	 *  Throws if the node is not a map or null.
+	 */
 	bool has(const std::string& key) const;
 
 	/** For map or sequence nodes, checks if the container is empty. Also
@@ -677,6 +750,7 @@ class yaml
 		int indent = 0;
 		bool needsNL = false;
 		bool needsSpace = false;
+		bool shortFormat = false;
 	};
 
 	// Return: true if the last printed char is a newline char
@@ -741,14 +815,20 @@ std::ostream& operator<<(std::ostream& o, const yaml& p);
  *
  * MCP_LOAD_REQ(p, K);
  * \endcode
+ *
+ * Since MRPT 2.3.2, this also works for enums, converting to textual names of
+ * values. Note that this requires enums to implement mrpt::typemeta::TEnumType.
  */
-#define MCP_LOAD_REQ(paramsVariable__, keyproxiedMapEntryName__)           \
-	if (!paramsVariable__.has(#keyproxiedMapEntryName__))                  \
-		throw std::invalid_argument(mrpt::format(                          \
-			"Required parameter `%s` not an existing key in dictionary.",  \
-			#keyproxiedMapEntryName__));                                   \
-	keyproxiedMapEntryName__ = paramsVariable__[#keyproxiedMapEntryName__] \
-								   .as<decltype(keyproxiedMapEntryName__)>()
+#define MCP_LOAD_REQ(Yaml__, Var__)                                            \
+	if (!Yaml__.has(#Var__))                                                   \
+		throw std::invalid_argument(mrpt::format(                              \
+			"Required parameter `%s` not an existing key in dictionary.",      \
+			#Var__));                                                          \
+	if constexpr (std::is_enum_v<decltype(Var__)>)                             \
+		Var__ = mrpt::typemeta::TEnumType<std::remove_cv_t<decltype(Var__)>>:: \
+			name2value(Yaml__[#Var__].as<std::string>());                      \
+	else                                                                       \
+		Var__ = Yaml__[#Var__].as<decltype(Var__)>()
 
 /** Macro to load a variable from a mrpt::containers::yaml (initials MCP)
  * dictionary, leaving it with its former value if not found (OPTional).
@@ -760,23 +840,32 @@ std::ostream& operator<<(std::ostream& o, const yaml& p);
  *
  * MCP_LOAD_OPT(p, K);
  * \endcode
+ *
+ * Since MRPT 2.3.2, this also works for enums, converting to textual names of
+ * values. Note that this requires enums to implement mrpt::typemeta::TEnumType.
  */
-#define MCP_LOAD_OPT(paramsVariable__, keyproxiedMapEntryName__) \
-	keyproxiedMapEntryName__ = paramsVariable__.getOrDefault(    \
-		#keyproxiedMapEntryName__, keyproxiedMapEntryName__)
+#define MCP_LOAD_OPT(Yaml__, Var__)                                            \
+	if constexpr (std::is_enum_v<decltype(Var__)>)                             \
+	{                                                                          \
+		if (!Yaml__.empty() && Yaml__.has(#Var__))                             \
+			Var__ = mrpt::typemeta::TEnumType<std::remove_cv_t<decltype(       \
+				Var__)>>::name2value(Yaml__[#Var__].as<std::string>());        \
+	}                                                                          \
+	else if (!Yaml__.isNullNode() && !Yaml__.empty() && Yaml__.has(#Var__))    \
+	Var__ = Yaml__[#Var__].as<decltype(Var__)>()
 
 /** Just like MCP_LOAD_REQ(), but converts the read number from degrees to
  * radians */
-#define MCP_LOAD_REQ_DEG(paramsVariable__, keyproxiedMapEntryName__) \
-	MCP_LOAD_REQ(paramsVariable__, keyproxiedMapEntryName__);        \
-	keyproxiedMapEntryName__ = mrpt::DEG2RAD(keyproxiedMapEntryName__)
+#define MCP_LOAD_REQ_DEG(Yaml__, Var__)                                        \
+	MCP_LOAD_REQ(Yaml__, Var__);                                               \
+	Var__ = mrpt::DEG2RAD(Var__)
 
 /** Just like MCP_LOAD_OPT(), but converts the read number from degrees to
  * radians */
-#define MCP_LOAD_OPT_DEG(paramsVariable__, keyproxiedMapEntryName__)    \
-	keyproxiedMapEntryName__ = mrpt::RAD2DEG(keyproxiedMapEntryName__); \
-	MCP_LOAD_OPT(paramsVariable__, keyproxiedMapEntryName__);           \
-	keyproxiedMapEntryName__ = mrpt::DEG2RAD(keyproxiedMapEntryName__)
+#define MCP_LOAD_OPT_DEG(Yaml__, Var__)                                        \
+	Var__ = mrpt::RAD2DEG(Var__);                                              \
+	MCP_LOAD_OPT(Yaml__, Var__);                                               \
+	Var__ = mrpt::DEG2RAD(Var__)
 
 /** Macro to store a variable into a mrpt::containers::yaml (initials MCP)
  * dictionary, using as "key" the name of the variable.
@@ -792,13 +881,18 @@ std::ostream& operator<<(std::ostream& o, const yaml& p);
  * // loaded in memory:
  * MCP_SAVE_DEG(p,K);
  * \endcode
+ *
+ * Since MRPT 2.3.2, this also works for enums, converting to textual names of
+ * values. Note that this requires enums to implement mrpt::typemeta::TEnumType.
  */
-#define MCP_SAVE(paramsVariable__, keyproxiedMapEntryName__) \
-	paramsVariable__[#keyproxiedMapEntryName__] = keyproxiedMapEntryName__;
+#define MCP_SAVE(Yaml__, Var__)                                                \
+	if constexpr (std::is_enum_v<decltype(Var__)>)                             \
+		Yaml__[#Var__] = mrpt::typemeta::TEnumType<                            \
+			std::remove_cv_t<decltype(Var__)>>::value2name(Var__);             \
+	else                                                                       \
+		Yaml__[#Var__] = Var__;
 
-#define MCP_SAVE_DEG(paramsVariable__, keyproxiedMapEntryName__) \
-	paramsVariable__[#keyproxiedMapEntryName__] =                \
-		mrpt::RAD2DEG(keyproxiedMapEntryName__);
+#define MCP_SAVE_DEG(Yaml__, Var__) Yaml__[#Var__] = mrpt::RAD2DEG(Var__);
 
 }  // namespace mrpt::containers
 
@@ -932,6 +1026,67 @@ inline void yaml::loadFromYAMLCPP(const YAML_NODE& n)
 	*this = yaml::FromYAMLCPP(n);
 }
 
+template <typename MATRIX>
+inline yaml yaml::FromMatrix(const MATRIX& m)
+{
+	yaml r = mrpt::containers::yaml::Map();
+	r["rows"] = static_cast<int64_t>(m.rows());
+	r["cols"] = static_cast<int64_t>(m.cols());
+	auto& data = r["data"] = mrpt::containers::yaml::Sequence();
+	data.node().printInShortFormat = true;
+	for (int iRow = 0; iRow < m.rows(); iRow++)
+		for (int iCol = 0; iCol < m.cols(); iCol++)
+			data.push_back(m(iRow, iCol));
+	return r;
+}
+
+template <typename MATRIX>
+inline void yaml::toMatrix(MATRIX& m) const
+{
+	ASSERT_(isMap());
+	ASSERT_(has("rows") && has("cols") && has("data"));
+	const int nRows = (*this)["rows"].as<int>();
+	const int nCols = (*this)["cols"].as<int>();
+	ASSERT_((nRows > 0 && nCols > 0) || (nRows == 0 && nCols == 0));
+
+	const auto& data = (*this)["data"];
+	ASSERT_(data.isSequence());
+	ASSERT_EQUAL_(static_cast<int>(data.size()), nRows * nCols);
+
+	using entry_t = std::decay_t<decltype(m(0, 0))>;
+
+	if (m.cols() <= 0 || m.rows() <= 0)
+	{
+		try
+		{
+			m.resize(nRows, nCols);
+		}
+		catch (const std::exception&)
+		{
+		}
+	}
+	ASSERT_EQUAL_(m.cols(), nCols);
+	ASSERT_EQUAL_(m.rows(), nRows);
+
+	for (int r = 0, idx = 0; r < nRows; r++)
+		for (int c = 0; c < nCols; c++, idx++)
+			m(r, c) = data.operator()(idx).as<entry_t>();
+}
+
+template <typename Scalar>
+inline std::vector<Scalar> yaml::toStdVector() const
+{
+	ASSERT_(isSequence());
+	const auto& seq = asSequence();
+
+	std::vector<Scalar> ret;
+	ret.reserve(seq.size());
+
+	for (const auto& n : seq)
+		ret.push_back(n.as<Scalar>());
+	return ret;
+}
+
 /** Sort operator required for std::map with node_t as key */
 inline bool operator<(const yaml::node_t& lhs, const yaml::node_t& rhs)
 {
@@ -968,21 +1123,35 @@ T implAnyAsGetter(const mrpt::containers::yaml::scalar_t& s)
 		if (!ss.fail()) return ret;
 	}
 
-	// 3) Integers. Recognize hex or octal prefixes with stol()
+	// 3) Integers. Recognize hex or octal prefixes with strtol()
 	if constexpr (std::is_convertible_v<int, T>)
 	{
 		std::stringstream ss;
 		yaml::internalPrintAsYAML(s, ss, {}, {});
 		const std::string str = ss.str();
-		try
+
+		char* retStr = nullptr;
+		const long long ret =
+			std::strtoll(str.c_str(), &retStr, 0 /*auto base*/);
+		if (retStr != 0 && retStr != str.c_str())
 		{
-			std::size_t processed = 0;
-			T ret = static_cast<T>(
-				std::stol(str, &processed, 0 /*auto detect base*/));
-			if (processed > 0) return ret;
-		}
-		catch (...)
-		{ /*Invalid number*/
+			const auto minVal =
+				static_cast<long long>(std::numeric_limits<T>::min());
+			auto maxVal = static_cast<long long>(std::numeric_limits<T>::max());
+			// Handle the case of unsigned long long:
+			if (maxVal < 0) maxVal = std::numeric_limits<long long>::max();
+
+			if ((ret == 0 && errno == ERANGE) || ret < minVal || ret > maxVal)
+			{
+				std::stringstream sError;
+				sError << "yaml: Out of range integer: '" << str
+					   << "' (Valid range [" << minVal << "," << maxVal
+					   << "], parsed=" << ret;
+				if (errno == ERANGE) sError << " errno=ERANGE";
+				sError << "')";
+				THROW_EXCEPTION(sError.str());
+			}
+			return static_cast<T>(ret);
 		}
 	}
 
@@ -1003,8 +1172,8 @@ T implAnyAsGetter(const mrpt::containers::yaml::scalar_t& s)
 		{
 			const auto str = implAnyAsGetter<std::string>(s);
 			return str == "y" || str == "Y" || str == "yes" || str == "Yes" ||
-				   str == "YES" || str == "true" || str == "True" ||
-				   str == "TRUE" || str == "on" || str == "ON" || str == "On";
+				str == "YES" || str == "true" || str == "True" ||
+				str == "TRUE" || str == "on" || str == "ON" || str == "On";
 		}
 	}
 
