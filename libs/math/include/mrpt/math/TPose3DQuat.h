@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -15,6 +15,7 @@ namespace mrpt::math
 /** Lightweight 3D pose (three spatial coordinates, plus a quaternion ). Allows
  * coordinate access using [] operator.
  * \sa mrpt::poses::CPose3DQuat
+ * \ingroup geometry_grp
  */
 struct TPose3DQuat : public TPoseOrPoint,
 					 public internal::ProvideStaticResize<TPose3DQuat>
@@ -42,22 +43,14 @@ struct TPose3DQuat : public TPoseOrPoint,
 	{
 		switch (i)
 		{
-			case 0:
-				return x;
-			case 1:
-				return y;
-			case 2:
-				return z;
-			case 3:
-				return qr;
-			case 4:
-				return qx;
-			case 5:
-				return qy;
-			case 6:
-				return qz;
-			default:
-				throw std::out_of_range("index out of range");
+			case 0: return x;
+			case 1: return y;
+			case 2: return z;
+			case 3: return qr;
+			case 4: return qx;
+			case 5: return qy;
+			case 6: return qz;
+			default: throw std::out_of_range("index out of range");
 		}
 	}
 	/** Coordinate access using operator[]. Order: x,y,z,qr,qx,qy,qz */
@@ -65,22 +58,14 @@ struct TPose3DQuat : public TPoseOrPoint,
 	{
 		switch (i)
 		{
-			case 0:
-				return x;
-			case 1:
-				return y;
-			case 2:
-				return z;
-			case 3:
-				return qr;
-			case 4:
-				return qx;
-			case 5:
-				return qy;
-			case 6:
-				return qz;
-			default:
-				throw std::out_of_range("index out of range");
+			case 0: return x;
+			case 1: return y;
+			case 2: return z;
+			case 3: return qr;
+			case 4: return qx;
+			case 5: return qy;
+			case 6: return qz;
+			default: throw std::out_of_range("index out of range");
 		}
 	}
 	/** Pose's spatial coordinates (x,y,z) norm. */
@@ -89,7 +74,8 @@ struct TPose3DQuat : public TPoseOrPoint,
 	void asVector(std::vector<double>& v) const
 	{
 		v.resize(7);
-		for (size_t i = 0; i < 7; i++) v[i] = (*this)[i];
+		for (size_t i = 0; i < 7; i++)
+			v[i] = (*this)[i];
 	}
 	/** Returns a human-readable textual representation of the object as "[x y z
 	 * qr qx qy qz]"

@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -62,9 +62,10 @@ license is as follows:
 */
 
 #include "img-precomp.h"  // Precompiled headers
-
+//
 #include <mrpt/core/exceptions.h>
 #include <mrpt/img/CImage.h>
+
 #include <cstring>
 #include <string>
 #include <unordered_map>
@@ -123,8 +124,8 @@ typedef struct
 	uint32_t rgb;
 } rgbRecord;
 
-#define myRGB(r, g, b)                                                \
-	(static_cast<uint32_t>(r) << 16 | static_cast<uint32_t>(g) << 8 | \
+#define myRGB(r, g, b)                                                         \
+	(static_cast<uint32_t>(r) << 16 | static_cast<uint32_t>(g) << 8 |          \
 	 static_cast<uint32_t>(b))
 
 static const rgbRecord theRGBRecords[] = {
@@ -370,14 +371,12 @@ static unsigned char ParseHexadecimal(char digit1, char digit2)
 {
 	unsigned char i1, i2;
 
-	if (digit1 >= 'a')
-		i1 = (unsigned char)(digit1 - 'a' + 0x0A);
+	if (digit1 >= 'a') i1 = (unsigned char)(digit1 - 'a' + 0x0A);
 	else if (digit1 >= 'A')
 		i1 = (unsigned char)(digit1 - 'A' + 0x0A);
 	else
 		i1 = (unsigned char)(digit1 - '0');
-	if (digit2 >= 'a')
-		i2 = (unsigned char)(digit2 - 'a' + 0x0A);
+	if (digit2 >= 'a') i2 = (unsigned char)(digit2 - 'a' + 0x0A);
 	else if (digit2 >= 'A')
 		i2 = (unsigned char)(digit2 - 'A' + 0x0A);
 	else
@@ -417,7 +416,7 @@ static bool GetRGBFromName(
 	{
 		while (*(p))  // till eof of string
 		{
-			*p = *(p + 1);  // copy to the left
+			*p = *(p + 1);	// copy to the left
 			p++;
 		}
 	}
@@ -478,7 +477,7 @@ static bool GetRGBFromName(
 }
 #endif
 
-/** Loads the image from an XPM array, as #include'd from a ".xpm" file.
+/** Loads the image from an XPM array, as included from a ".xpm" file.
  * \sa loadFromFile
  * \return false on any error */
 bool mrpt::img::CImage::loadFromXPM(
@@ -501,9 +500,7 @@ bool mrpt::img::CImage::loadFromXPM(
 			xpm_data[0], "%u %u %u %u", &width, &height, &colors_cnt,
 			&chars_per_pixel);
 		if (count != 4 || width * height * colors_cnt == 0)
-		{
-			THROW_EXCEPTION("XPM: incorrect header format!");
-		}
+		{ THROW_EXCEPTION("XPM: incorrect header format!"); }
 
 		// VS: XPM color map this large would be insane, since XPMs are encoded
 		// with 92 possible values on each position, 92^64 is *way* larger space
@@ -573,9 +570,7 @@ bool mrpt::img::CImage::loadFromXPM(
 			for (rgb = 0; rgb <= 0xffffff && rgb_table.count(rgb); ++rgb)
 				;
 			if (rgb > 0xffffff)
-			{
-				THROW_EXCEPTION("XPM: no colors left to use for mask!");
-			}
+			{ THROW_EXCEPTION("XPM: no colors left to use for mask!"); }
 
 			XPMColorMapData& maskData = clr_tbl[maskKey];
 			maskData.R = uint8_t(rgb >> 16);

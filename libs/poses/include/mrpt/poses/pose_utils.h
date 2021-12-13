@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)               |
    |                          https://www.mrpt.org/                            |
    |                                                                           |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file        |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file        |
    | See: https://www.mrpt.org/Authors - All rights reserved.                  |
    | Released under BSD License. See details in https://www.mrpt.org/License   |
    +---------------------------------------------------------------------------+
@@ -104,10 +104,10 @@ inline void getPoseFromString</*QUAT_REPR=*/true, /*TUM_FORMAT=*/false>(
  *
  * The expected format is the following:
  *
- * For 2D Poses: timestamp x y theta (in rad)
- * For 3D Poses in RPY form : x y z yaw pitch roll
- * For 3D Poses in Quaternion form : x y z qw qx qy qz
- * For 3D Poses in Quaternion form [TUM Datasets] : x y z qx qy qz qw
+ * - For 2D Poses: timestamp x y theta (in rad)
+ * - For 3D Poses in RPY form : x y z yaw pitch roll
+ * - For 3D Poses in Quaternion form : x y z qw qx qy qz
+ * - For 3D Poses in Quaternion form [TUM Datasets] : x y z qx qy qz qw
  *
  * The 2D format abides to the groundtruth file format used by the
  * <em>GridMapNavSimul</em> application
@@ -145,11 +145,12 @@ void readFileWithPoses(
 
 	// make sure file exists
 	ASSERTMSG_(
-		fileExists(fname), format(
-							   "\nFile %s was not found.\n"
-							   "Either specify a valid filename or set set the "
-							   "m_visualize_GT flag to false\n",
-							   fname.c_str()));
+		fileExists(fname),
+		format(
+			"\nFile %s was not found.\n"
+			"Either specify a valid filename or set set the "
+			"m_visualize_GT flag to false\n",
+			fname.c_str()));
 
 	CFileInputStream file_GT(fname);
 	ASSERTMSG_(
@@ -162,10 +163,7 @@ void readFileWithPoses(
 	// move to the first non-commented line
 	for (size_t i = 0; file_GT.readLine(curr_line); i++)
 	{
-		if (curr_line.at(0) != '#')
-		{
-			break;
-		}
+		if (curr_line.at(0) != '#') { break; }
 	}
 
 	// handle the first pose as an offset
@@ -202,9 +200,7 @@ void readFileWithPoses(
 
 		// scalar substraction of initial offset
 		if (substract_init_offset)
-		{
-			curr_pose.addComponents(pose_offset_opposite);
-		}
+		{ curr_pose.addComponents(pose_offset_opposite); }
 
 		// push the newly created pose
 		poses_vec->push_back(curr_pose);

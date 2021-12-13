@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
-#include "opengl-precomp.h"  // Precompiled header
-
+#include "opengl-precomp.h"	 // Precompiled header
+//
 #include <mrpt/opengl/CVectorField3D.h>
 #include <mrpt/opengl/opengl_api.h>
 #include <mrpt/serialization/CArchive.h>
@@ -86,10 +86,7 @@ void CVectorField3D::onUpdateBuffers_Wireframe()
 				x_p(j, i) + x_vf(j, i), y_p(j, i) + y_vf(j, i),
 				z_p(j, i) + z_vf(j, i));
 
-			if (!m_colorFromModule)
-			{
-				cbd.emplace_back(m_field_color);
-			}
+			if (!m_colorFromModule) { cbd.emplace_back(m_field_color); }
 			else
 			{
 				// Compute color
@@ -97,8 +94,7 @@ void CVectorField3D::onUpdateBuffers_Wireframe()
 				const float module = sqrt(
 					square(x_vf(j, i)) + square(y_vf(j, i)) +
 					square(z_vf(j, i)));
-				if (module > m_maxspeed)
-					col = m_maxspeed_color;
+				if (module > m_maxspeed) col = m_maxspeed_color;
 				else
 				{
 					const float f = (m_maxspeed - module) / m_maxspeed;
@@ -161,60 +157,12 @@ void CVectorField3D::serializeFrom(
 			in >> m_field_color;
 			break;
 
-		default:
-			MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
-			break;
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version); break;
 	};
 	CRenderizable::notifyChange();
 }
 
-void CVectorField3D::getBoundingBox(
-	mrpt::math::TPoint3D& bb_min, mrpt::math::TPoint3D& bb_max) const
+auto CVectorField3D::getBoundingBox() const -> mrpt::math::TBoundingBox
 {
-	bb_min.x = 10e10;
-	bb_min.y = 10e10;
-	bb_min.z = 10e10;
-	bb_max.x = -10e10;
-	bb_max.y = -10e10;
-	bb_max.z = -10e10;
-
-	for (int i = 0; i < x_p.cols(); i++)
-		for (int j = 0; j < x_p.rows(); j++)
-		{
-			// Minimum values
-			if (x_p(j, i) < bb_min.x) bb_min.x = x_p(j, i);
-
-			if (x_p(j, i) + x_vf(j, i) < bb_min.x)
-				bb_min.x = x_p(j, i) + x_vf(j, i);
-
-			if (y_p(j, i) < bb_min.y) bb_min.y = y_p(j, i);
-
-			if (y_p(j, i) + y_vf(j, i) < bb_min.y)
-				bb_min.y = y_p(j, i) + y_vf(j, i);
-
-			if (z_p(j, i) < bb_min.z) bb_min.z = z_p(j, i);
-
-			if (z_p(j, i) + z_vf(j, i) < bb_min.z)
-				bb_min.z = z_p(j, i) + z_vf(j, i);
-
-			// Maximum values
-			if (x_p(j, i) > bb_max.x) bb_max.x = x_p(j, i);
-
-			if (x_p(j, i) + x_vf(j, i) > bb_max.x)
-				bb_max.x = x_p(j, i) + x_vf(j, i);
-
-			if (y_p(j, i) > bb_max.y) bb_max.y = y_p(j, i);
-
-			if (y_p(j, i) + y_vf(j, i) > bb_max.y)
-				bb_max.y = y_p(j, i) + y_vf(j, i);
-
-			if (z_p(j, i) > bb_max.z) bb_max.z = z_p(j, i);
-
-			if (z_p(j, i) + z_vf(j, i) > bb_max.z)
-				bb_max.z = z_p(j, i) + z_vf(j, i);
-		}
-
-	// Convert to coordinates of my parent:
-	m_pose.composePoint(bb_min, bb_min);
-	m_pose.composePoint(bb_max, bb_max);
+	return verticesBoundingBox().compose(m_pose);
 }

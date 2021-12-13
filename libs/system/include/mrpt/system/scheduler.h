@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -34,11 +34,11 @@ enum TThreadPriority
 {
 	tpLowests = -15,  //!< Win32: THREAD_PRIORITY_IDLE
 	tpLower = -2,  //!< Win32: THREAD_PRIORITY_LOWEST
-	tpLow = -1,  //!< Win32: THREAD_PRIORITY_BELOW_NORMAL
+	tpLow = -1,	 //!< Win32: THREAD_PRIORITY_BELOW_NORMAL
 	tpNormal = 0,  //!< Win32: THREAD_PRIORITY_NORMAL
-	tpHigh = 1,  //!< Win32: THREAD_PRIORITY_ABOVE_NORMAL
+	tpHigh = 1,	 //!< Win32: THREAD_PRIORITY_ABOVE_NORMAL
 	tpHigher = 2,  //!< Win32: THREAD_PRIORITY_HIGHEST
-	tpHighest = 15  //!< Win32: THREAD_PRIORITY_TIME_CRITICAL
+	tpHighest = 15	//!< Win32: THREAD_PRIORITY_TIME_CRITICAL
 };
 
 /** Change the priority of the current thread - for Windows, see also

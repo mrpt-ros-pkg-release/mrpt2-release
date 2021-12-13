@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
-#include "opengl-precomp.h"  // Precompiled header
-
+#include "opengl-precomp.h"	 // Precompiled header
+//
 #include <mrpt/opengl/CDisk.h>
 #include <mrpt/serialization/CArchive.h>
 
@@ -72,15 +72,17 @@ void CDisk::onUpdateBuffers_Triangles()
 	}
 
 	// All faces, same color:
-	for (auto& t : tris) t.setColor(m_color);
+	for (auto& t : tris)
+		t.setColor(m_color);
 }
 
-uint8_t CDisk::serializeGetVersion() const { return 1; }
+uint8_t CDisk::serializeGetVersion() const { return 2; }
 void CDisk::serializeTo(mrpt::serialization::CArchive& out) const
 {
 	writeToStreamRender(out);
 	out << m_radiusIn << m_radiusOut;
 	out << m_nSlices;
+	CRenderizableShaderTriangles::params_serialize(out);  // v2
 }
 
 void CDisk::serializeFrom(mrpt::serialization::CArchive& in, uint8_t version)
@@ -89,6 +91,7 @@ void CDisk::serializeFrom(mrpt::serialization::CArchive& in, uint8_t version)
 	{
 		case 0:
 		case 1:
+		case 2:
 		{
 			readFromStreamRender(in);
 			in >> m_radiusIn >> m_radiusOut;
@@ -98,10 +101,12 @@ void CDisk::serializeFrom(mrpt::serialization::CArchive& in, uint8_t version)
 				float dummy_loops;
 				in >> dummy_loops;
 			}
+
+			if (version >= 2)
+				CRenderizableShaderTriangles::params_deserialize(in);
 		}
 		break;
-		default:
-			MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
 	};
 	CRenderizable::notifyChange();
 }
@@ -128,9 +133,10 @@ bool CDisk::traceRay(const mrpt::poses::CPose3D& o, double& dist) const
 	// The following expression yields the collision point between the plane and
 	// the beam (the y and z
 	// coordinates are zero).
-	dist = x + (y * (sin(p) * sin(w) * cos(r) - cos(w) * sin(r)) +
-				z * cos(p) * cos(r)) /
-				   coef;
+	dist = x +
+		(y * (sin(p) * sin(w) * cos(r) - cos(w) * sin(r)) +
+		 z * cos(p) * cos(r)) /
+			coef;
 	if (dist < 0) return false;
 	// Euclidean distance is invariant to rotations...
 	double d2 = (x - dist) * (x - dist) + y * y + z * z;
@@ -140,18 +146,8 @@ bool CDisk::traceRay(const mrpt::poses::CPose3D& o, double& dist) const
 	// CPose's line intersection is SLOWER than the used method.
 }
 
-void CDisk::getBoundingBox(
-	mrpt::math::TPoint3D& bb_min, mrpt::math::TPoint3D& bb_max) const
+auto CDisk::getBoundingBox() const -> mrpt::math::TBoundingBox
 {
-	bb_min.x = -std::max(m_radiusIn, m_radiusOut);
-	bb_min.y = bb_min.x;
-	bb_min.z = 0;
-
-	bb_max.x = std::max(m_radiusIn, m_radiusOut);
-	bb_max.y = bb_max.x;
-	bb_max.z = 0;
-
-	// Convert to coordinates of my parent:
-	m_pose.composePoint(bb_min, bb_min);
-	m_pose.composePoint(bb_max, bb_max);
+	const double R = std::max(m_radiusIn, m_radiusOut);
+	return mrpt::math::TBoundingBox({-R, -R, 0}, {R, R, .0}).compose(m_pose);
 }

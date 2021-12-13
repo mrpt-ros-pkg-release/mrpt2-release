@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -77,41 +77,35 @@ class CMyGLCanvas_DisplayWindow3D;
  *      mrpt::opengl::COpenGLScene::Ptr ptrScene;
  *      mrpt::gui::CDisplayWindow3DLocker  locker(win,ptrScene);
  *      //...
+ *      // Either:
+ *      // - modify ptrScene
+ *      // - Or assign it a prebuilt object with:
+ *      *ptrScene = *otherScene;
  *
  *   } // scene is unlocked upon dtor of `locker`
  * \endcode
  *
  * Notice however that a copy of the smart pointer is made, so replacement of
- * the entire scene
- * via `operator =` is not possible if using this method. Still, in general it
- * should be preferred because
- * the mutexes are automatically released in case of unexpected exceptions.
+ * the entire scene via `operator =` is not possible if using this method.
+ * Instead, the content of the scene should be assigned using the `operator =`
+ * of the **dereferenced** object as illustrated with
+ * the `*ptrScene = *otherScene;` above.
  *
  * The window can also display a set of 2D text messages overlapped to the 3D
- * scene.
- *  See CDisplayWindow3D::addTextMessage
+ * scene. See CDisplayWindow3D::addTextMessage
  *
  *  For a list of supported events with the observer/observable pattern, see
  * the discussion in mrpt::gui::CBaseGUIWindow.
  *  In addition to those events, this class introduces
  * mrpt::gui::mrptEvent3DWindowGrabImageFile
  *
- * ** CDisplayWindow3D mouse view navigation cheatsheet **
- *  - <b>Orbit camera</b>: Left-button pressed + move
- *  - <b>Zoom in / out</b>:
- *    - Mouse scroll wheel, or
- *    - SHIFT+Left-button pressed + move up/down
- *  - <b>Look around (pivot camera)</b>: CTRL+Left-button pressed + move
- * up/down
- *  - <b>Pan (XY plane)</b>: Right-button pressed + move
- *  - <b>Move camera along Z axis</b>: SHIFT+Left-button pressed + move
- * left/right
- *
+ * [CDisplayWindow3D mouse view navigation
+ * cheatsheet](tutorial-3d-navigation-cheatsheet.html)
  *
  * ![mrpt::gui::CDisplayWindow3D screenshot](preview_CDisplayWindow3D.png)
  *
- * \sa  The example /samples/display3D, the <a
- * href="http://www.mrpt.org/Tutorial_3D_Scenes" > tutorial only</a>.
+ * \sa \ref tutorial_3D_scenes
+ *
  * \ingroup mrpt_gui_grp
  */
 class CDisplayWindow3D : public mrpt::gui::CBaseGUIWindow
@@ -127,7 +121,7 @@ class CDisplayWindow3D : public mrpt::gui::CBaseGUIWindow
 	/** Internal OpenGL object (see general discussion in about usage of this
 	 * object) */
 	mrpt::opengl::COpenGLScene::Ptr m_3Dscene;
-	/** Critical section for accesing m_3Dscene */
+	/** Critical section for accessing m_3Dscene */
 	mutable std::recursive_timed_mutex m_csAccess3DScene;
 
 	/** Throws an exception on initialization error */
@@ -169,7 +163,7 @@ class CDisplayWindow3D : public mrpt::gui::CBaseGUIWindow
 
 	/** Gets a reference to the smart shared pointer that holds the internal
 	 * scene (carefuly read introduction in gui::CDisplayWindow3D before use!)
-	 *  This also locks the critical section for accesing the scene, thus the
+	 *  This also locks the critical section for accessing the scene, thus the
 	 * window will not be repainted until it is unlocked.
 	 * \note It is safer to use mrpt::gui::CDisplayWindow3DLocker instead.*/
 	mrpt::opengl::COpenGLScene::Ptr& get3DSceneAndLock();
@@ -383,6 +377,12 @@ class CDisplayWindow3D : public mrpt::gui::CBaseGUIWindow
 	 */
 	void setImageView(mrpt::img::CImage&& img);
 
+	void sendFunctionToRunOnGUIThread(const std::function<void(void)>& f);
+
+	bool is_GL_context_created() const;
+
+	bool wait_for_GL_context(const double timeout_seconds = 1.0) const;
+
    protected:
 	/** Set the rendering FPS (users don't call this, the method is for internal
 	 * MRPT objects only) \sa getRenderingFPS */
@@ -390,7 +390,7 @@ class CDisplayWindow3D : public mrpt::gui::CBaseGUIWindow
 	/** called by CMyGLCanvas_DisplayWindow3D::OnPostRenderSwapBuffers */
 	void internal_emitGrabImageEvent(const std::string& fil);
 
-};  // End of class def.
+};	// End of class def.
 
 /** @name Events specific to CDisplayWindow3D
 	@{  */
@@ -418,7 +418,7 @@ class mrptEvent3DWindowGrabImageFile : public mrpt::system::mrptEvent
 	CDisplayWindow3D* source_object;
 	/** The absolute path of the file that has been just saved. */
 	const std::string& img_file;
-};  // End of class def.
+};	// End of class def.
 
 /** @} */
 

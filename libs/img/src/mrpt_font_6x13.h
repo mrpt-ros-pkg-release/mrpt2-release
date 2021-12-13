@@ -2,11 +2,12 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
+// clang-format off
 static const unsigned char mrpt_font_gz_6x13[] = {
 	31,  139, 8,   0,   0,   0,   0,   0,   4,   3,   237, 153, 217, 142, 35,
 	55,  12,  69,  59,  219, 100, 223, 247, 253, 255, 191, 50,  209, 233, 246,
@@ -115,3 +116,4 @@ static const unsigned char mrpt_font_gz_6x13[] = {
 	207, 96,  145, 228, 217, 212, 53,  202, 187, 155, 62,  199, 181, 57,  138,
 	237, 108, 158, 127, 1,   156, 249, 163, 199, 24,  52,  0,   0,
 };
+// clang-format on

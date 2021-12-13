@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -12,6 +12,7 @@
 #include <mrpt/maps/CSimpleMap.h>
 #include <mrpt/random.h>
 #include <mrpt/system/filesystem.h>
+
 #include <iostream>
 
 using namespace mrpt;
@@ -23,8 +24,7 @@ using namespace mrpt::img;
 using namespace std;
 
 #include <mrpt/examples_config.h>
-const string sample_simplemap_file =
-	MRPT_EXAMPLES_BASE_DIRECTORY +
+const string sample_simplemap_file = MRPT_EXAMPLES_BASE_DIRECTORY +
 	string("../share/mrpt/datasets/localization_demo.simplemap.gz");
 
 // ------------------------------------------------------

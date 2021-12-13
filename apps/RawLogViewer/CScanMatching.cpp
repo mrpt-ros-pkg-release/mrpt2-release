@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -33,6 +33,7 @@
 #include <wx/log.h>
 #include <wx/msgdlg.h>
 #include <wx/progdlg.h>
+
 #include "xRawLogViewerMain.h"
 
 using namespace mrpt;
@@ -543,7 +544,7 @@ static void insert_obs_into_map(
 	if (IS_CLASS(*obj, CSensoryFrame))
 	{
 		auto SF = std::dynamic_pointer_cast<CSensoryFrame>(obj);
-		SF->insertObservationsInto(theMap);
+		SF->insertObservationsInto(*theMap);
 	}
 	else if (IS_DERIVED(*obj, CObservation))
 	{
@@ -669,11 +670,8 @@ void CScanMatching::OnbtnICPClick(wxCommandEvent&)
 	insert_obs_into_map(obj_new, &newMapPt);
 
 	// Delete all existing draw layers:
-	m_gl_map_ref->clear();
-	m_gl_map_new->clear();
-
-	refMap->getAs3DObject(m_gl_map_ref);
-	newMapPt.getAs3DObject(m_gl_map_new);
+	m_gl_map_ref = refMap->getVisualization();
+	m_gl_map_new = newMapPt.getVisualization();
 
 	auto gl_ellipse = mrpt::opengl::CEllipsoid2D::Create();
 	gl_ellipse->setQuantiles(3.0f);
@@ -705,7 +703,7 @@ void CScanMatching::OnbtnICPClick(wxCommandEvent&)
 				txtStep->SetLabel(
 					(format("Step: %u / %u", curStep, maxSteps).c_str()));
 				pbSteps->SetValue(curStep);
-				wxTheApp->Yield();  // Let the app. process messages
+				wxTheApp->Yield();	// Let the app. process messages
 			}
 
 			icp.options.maxIterations = curStep;
@@ -774,7 +772,7 @@ void CScanMatching::OnbtnICPClick(wxCommandEvent&)
 
 			if (isAnimation)
 			{
-				wxTheApp->Yield();  // Let the app. process messages
+				wxTheApp->Yield();	// Let the app. process messages
 				::wxMilliSleep(100);
 			}
 

@@ -2,12 +2,10 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
-
-#include "xRawLogViewerMain.h"
 
 #include <wx/app.h>
 #include <wx/busyinfo.h>
@@ -19,6 +17,8 @@
 #include <wx/msgdlg.h>
 #include <wx/progdlg.h>
 #include <wx/textdlg.h>
+
+#include "xRawLogViewerMain.h"
 
 // General global variables:
 #include <mrpt/obs/CObservationImage.h>
@@ -61,7 +61,7 @@ void xRawLogViewerFrame::OnGenerateSeqImgs(wxCommandEvent& event)
 		wxPD_CAN_ABORT | wxPD_APP_MODAL | wxPD_SMOOTH | wxPD_AUTO_HIDE |
 			wxPD_ELAPSED_TIME | wxPD_ESTIMATED_TIME | wxPD_REMAINING_TIME);
 
-	wxTheApp->Yield();  // Let the app. process messages
+	wxTheApp->Yield();	// Let the app. process messages
 
 	int imgSaved = 0;
 	string errorMsg;
@@ -72,7 +72,7 @@ void xRawLogViewerFrame::OnGenerateSeqImgs(wxCommandEvent& event)
 		{
 			auxStr.sprintf(wxT("Parsing rawlog... %u objects"), countLoop);
 			if (!progDia.Update(countLoop, auxStr)) break;
-			wxTheApp->Yield();  // Let the app. process messages
+			wxTheApp->Yield();	// Let the app. process messages
 		}
 
 		try
@@ -147,8 +147,7 @@ void xRawLogViewerFrame::OnGenerateSeqImgs(wxCommandEvent& event)
 				}
 				break;
 
-				default:
-					break;
+				default: break;
 			}  // end for each entry
 		}
 		catch (exception& e)
@@ -197,7 +196,7 @@ void xRawLogViewerFrame::OnMenuMono2Stereo(wxCommandEvent& event)
 		wxPD_CAN_ABORT | wxPD_APP_MODAL | wxPD_SMOOTH | wxPD_AUTO_HIDE |
 			wxPD_ELAPSED_TIME | wxPD_ESTIMATED_TIME | wxPD_REMAINING_TIME);
 
-	wxTheApp->Yield();  // Let the app. process messages
+	wxTheApp->Yield();	// Let the app. process messages
 
 	for (unsigned int countLoop = 0; countLoop < nEntries; countLoop++)
 	{
@@ -207,10 +206,8 @@ void xRawLogViewerFrame::OnMenuMono2Stereo(wxCommandEvent& event)
 					countLoop,
 					wxString::Format(
 						wxT("Parsing rawlog... %u objects"), countLoop)))
-			{
-				return;
-			}
-			wxTheApp->Yield();  // Let the app. process messages
+			{ return; }
+			wxTheApp->Yield();	// Let the app. process messages
 		}
 
 		switch (rawlog.getType(countLoop))
@@ -267,8 +264,7 @@ void xRawLogViewerFrame::OnMenuMono2Stereo(wxCommandEvent& event)
 			}
 			break;
 
-			default:
-				break;
+			default: break;
 		}  // end for each entry
 
 	}  // end while keep loading
@@ -308,7 +304,7 @@ void xRawLogViewerFrame::OnMenuRectifyImages(wxCommandEvent& event)
 		wxPD_CAN_ABORT | wxPD_APP_MODAL | wxPD_SMOOTH | wxPD_AUTO_HIDE |
 			wxPD_ELAPSED_TIME | wxPD_ESTIMATED_TIME | wxPD_REMAINING_TIME);
 
-	wxTheApp->Yield();  // Let the app. process messages
+	wxTheApp->Yield();	// Let the app. process messages
 
 	int N = 0;
 	string errorMsg;
@@ -319,7 +315,7 @@ void xRawLogViewerFrame::OnMenuRectifyImages(wxCommandEvent& event)
 		{
 			auxStr.sprintf(wxT("Rectifying images... %u images"), countLoop);
 			if (!progDia.Update(countLoop, auxStr)) break;
-			wxTheApp->Yield();  // Let the app. process messages
+			wxTheApp->Yield();	// Let the app. process messages
 		}
 
 		try
@@ -353,8 +349,7 @@ void xRawLogViewerFrame::OnMenuRectifyImages(wxCommandEvent& event)
 
 								// Set distortion parameters to zero ->
 								// indicating that the image is now rectified
-								obsIm->cameraParams
-									.setDistortionParamsFromValues(0, 0, 0, 0);
+								obsIm->cameraParams.dist.fill(0);
 
 								// Save image to file and free memory
 								if (obsIm->image.isExternallyStored())
@@ -392,8 +387,7 @@ void xRawLogViewerFrame::OnMenuRectifyImages(wxCommandEvent& event)
 
 							// Set distortion parameters to zero -> indicating
 							// that the image is now rectified
-							obsIm->cameraParams.setDistortionParamsFromValues(
-								0, 0, 0, 0);
+							obsIm->cameraParams.dist.fill(0);
 
 							// Save image to file and free memory
 							if (obsIm->image.isExternallyStored())
@@ -407,8 +401,7 @@ void xRawLogViewerFrame::OnMenuRectifyImages(wxCommandEvent& event)
 				}  // end case etObservation
 				break;
 
-				default:
-					break;
+				default: break;
 			}  // end for each entry
 		}
 		catch (exception& e)
@@ -440,11 +433,9 @@ void renameExternalImageFile(CObservationImage::Ptr o)
 
 	bool imgFileExistsNow = mrpt::system::fileExists(img_file);
 
-	string new_img_file =
-		o->sensorLabel +
-		format(
-			"_%.06f.%s", (double)timestampTotime_t(o->timestamp),
-			mrpt::system::extractFileExtension(img_file).c_str());
+	string new_img_file = o->sensorLabel +
+		format("_%.06f.%s", (double)timestampTotime_t(o->timestamp),
+			   mrpt::system::extractFileExtension(img_file).c_str());
 	string new_img_fullpath =
 		mrpt::system::extractFileDirectory(img_file) + "/" + new_img_file;
 
@@ -468,11 +459,9 @@ void renameExternalStereoImageFile(CObservationStereoImages::Ptr o)
 
 		bool imgFileExistsNow = mrpt::system::fileExists(img_file);
 
-		string new_img_file =
-			o->sensorLabel +
-			format(
-				"_L_%.06f.%s", (double)timestampTotime_t(o->timestamp),
-				mrpt::system::extractFileExtension(img_file).c_str());
+		string new_img_file = o->sensorLabel +
+			format("_L_%.06f.%s", (double)timestampTotime_t(o->timestamp),
+				   mrpt::system::extractFileExtension(img_file).c_str());
 		string new_img_fullpath =
 			mrpt::system::extractFileDirectory(img_file) + "/" + new_img_file;
 
@@ -494,11 +483,9 @@ void renameExternalStereoImageFile(CObservationStereoImages::Ptr o)
 
 		bool imgFileExistsNow = mrpt::system::fileExists(img_file);
 
-		string new_img_file =
-			o->sensorLabel +
-			format(
-				"_R_%.06f.%s", (double)timestampTotime_t(o->timestamp),
-				mrpt::system::extractFileExtension(img_file).c_str());
+		string new_img_file = o->sensorLabel +
+			format("_R_%.06f.%s", (double)timestampTotime_t(o->timestamp),
+				   mrpt::system::extractFileExtension(img_file).c_str());
 		string new_img_fullpath =
 			mrpt::system::extractFileDirectory(img_file) + "/" + new_img_file;
 
@@ -536,7 +523,7 @@ void xRawLogViewerFrame::OnMenuRenameImageFiles(wxCommandEvent& event)
 		wxPD_CAN_ABORT | wxPD_APP_MODAL | wxPD_SMOOTH | wxPD_AUTO_HIDE |
 			wxPD_ELAPSED_TIME | wxPD_ESTIMATED_TIME | wxPD_REMAINING_TIME);
 
-	wxTheApp->Yield();  // Let the app. process messages
+	wxTheApp->Yield();	// Let the app. process messages
 
 	int N = 0;
 	string errorMsg;
@@ -547,7 +534,7 @@ void xRawLogViewerFrame::OnMenuRenameImageFiles(wxCommandEvent& event)
 		{
 			auxStr.sprintf(wxT("Renaming images... %u images"), countLoop);
 			if (!progDia.Update(countLoop, auxStr)) break;
-			wxTheApp->Yield();  // Let the app. process messages
+			wxTheApp->Yield();	// Let the app. process messages
 		}
 
 		try
@@ -604,8 +591,7 @@ void xRawLogViewerFrame::OnMenuRenameImageFiles(wxCommandEvent& event)
 				}  // end case etObservation
 				break;
 
-				default:
-					break;
+				default: break;
 			}  // end for each entry
 		}
 		catch (exception& e)

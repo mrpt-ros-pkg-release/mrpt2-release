@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -14,6 +14,7 @@
 #include <mrpt/math/ops_vectors.h>
 #include <mrpt/math/utils.h>
 #include <mrpt/system/CTicTac.h>
+
 #include <Eigen/Dense>
 #include <iostream>
 
@@ -165,7 +166,8 @@ void TestCov()
 	for (size_t i = 0; i < 4; i++)
 	{
 		samples[i].resize(3);
-		for (size_t j = 0; j < 3; j++) samples[i][j] = Mdyn(i, j);
+		for (size_t j = 0; j < 3; j++)
+			samples[i][j] = Mdyn(i, j);
 	}
 
 	cout << "COV (vector of vectors): " << endl

@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -11,8 +11,9 @@
 #include <mrpt/config.h>  // MRPT_WORD_SIZE
 #include <mrpt/io/CStream.h>
 #include <mrpt/system/os.h>
+
 #include <cstdint>
-#include <cstring>  // strlen()
+#include <cstring>	// strlen()
 #include <string>
 
 namespace mrpt
@@ -50,7 +51,12 @@ class CClientTCPSocket : public mrpt::io::CStream
 #endif
 #else
 	/** The handle for the connected TCP socket, or -1 */
-	int m_hSock;
+	int m_hSock = -1;
+#if defined(MRPT_OS_LINUX)	// These dont work in OSX
+	int m_epoll4read_fd = -1;
+	int m_epoll4write_fd = -1;
+	void internal_attach_epoll_to_hsock();
+#endif
 #endif
 	/** The IP address of the remote part of the connection. */
 	std::string m_remotePartIP;
@@ -201,7 +207,7 @@ class CClientTCPSocket : public mrpt::io::CStream
 		uint32_t actRead =
 			readAsync(magic, toRead, timeoutStart_ms, timeoutBetween_ms);
 		if (actRead != toRead) return false;  // Error!
-		magic[actRead] = 0;  // Null-term string
+		magic[actRead] = 0;	 // Null-term string
 		// Check magic:
 		if (0 != ::strcmp("MRPTMessage", magic)) return false;
 		// (2) Read the message type:
@@ -247,7 +253,7 @@ class CClientTCPSocket : public mrpt::io::CStream
 	/** Return the current size of the SO send buffer. */
 	int getSOSendBufffer();
 
-};  // End of class def.
+};	// End of class def.
 
 }  // namespace comms
 }  // namespace mrpt

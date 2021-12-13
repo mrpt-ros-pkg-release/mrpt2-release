@@ -2,16 +2,17 @@
    |                     Mobile Robot Programming Toolkit (MRPT)               |
    |                          https://www.mrpt.org/                            |
    |                                                                           |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file        |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file        |
    | See: https://www.mrpt.org/Authors - All rights reserved.                  |
    | Released under BSD License. See details in https://www.mrpt.org/License   |
    +---------------------------------------------------------------------------+
    */
 #include "COccupancyConfig.h"
-#include "TypeOfConfig.h"
-#include "ui_COccupancyConfig.h"
 
 #include <mrpt/io/CFileOutputStream.h>
+
+#include "TypeOfConfig.h"
+#include "ui_COccupancyConfig.h"
 
 using namespace mrpt;
 using namespace maps;

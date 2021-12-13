@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -85,12 +85,12 @@ class CColouredOctoMap
 
 	MAP_DEFINITION_START(CColouredOctoMap)
 	double resolution{
-		0.10};  //!< The finest resolution of the octomap (default: 0.10
+		0.10};	//!< The finest resolution of the octomap (default: 0.10
 	//! meters)
 	mrpt::maps::CColouredOctoMap::TInsertionOptions
-		insertionOpts;  //!< Observations insertion options
+		insertionOpts;	//!< Observations insertion options
 	mrpt::maps::CColouredOctoMap::TLikelihoodOptions
-		likelihoodOpts;  //!< Probabilistic observation likelihood options
+		likelihoodOpts;	 //!< Probabilistic observation likelihood options
 	MAP_DEFINITION_END(CColouredOctoMap)
 
 	/** Returns true if the map is empty/no observation has been inserted */
@@ -163,11 +163,12 @@ class CColouredOctoMap
 
 	bool internal_insertObservation(
 		const mrpt::obs::CObservation& obs,
-		const mrpt::poses::CPose3D* robotPose) override;
+		const std::optional<const mrpt::poses::CPose3D>& robotPose =
+			std::nullopt) override;
 
 	TColourUpdate m_colour_method{
-		INTEGRATE};  //! Method used to updated voxels colour.
+		INTEGRATE};	 //! Method used to updated voxels colour.
 
-};  // End of class def.
+};	// End of class def.
 }  // namespace maps
 }  // namespace mrpt

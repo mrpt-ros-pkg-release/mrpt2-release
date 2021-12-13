@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -13,6 +13,7 @@
 #include <mrpt/obs/CSinCosLookUpTableFor2DScans.h>
 #include <mrpt/poses/CPose3D.h>
 #include <mrpt/serialization/CSerializable.h>
+
 #include <variant>
 #include <vector>
 
@@ -83,6 +84,7 @@ class CObservationRotatingScan : public CObservation
 	 * for efficiency of post-processing filters, etc. Zero means no return
 	 * (i.e. invalid range). This member must be always provided, containing the
 	 * ranges for the STRONGEST ray returns.
+	 * To obtain ranges in meters, multiply this matrix by `rangeResolution`.
 	 */
 	mrpt::math::CMatrix_u16 rangeImage{0, 0};
 
@@ -173,7 +175,7 @@ class CObservationRotatingScan : public CObservation
 	}
 	void getDescriptionAsText(std::ostream& o) const override;
 
-};  // End of class def.
+};	// End of class def.
 
 /** @} */
 

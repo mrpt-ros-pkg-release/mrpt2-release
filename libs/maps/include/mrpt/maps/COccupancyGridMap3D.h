@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -66,7 +66,8 @@ class COccupancyGridMap3D
 	 */
 	bool internal_insertObservation(
 		const mrpt::obs::CObservation& obs,
-		const mrpt::poses::CPose3D* robotPose = nullptr) override;
+		const std::optional<const mrpt::poses::CPose3D>& robotPose =
+			std::nullopt) override;
 
 	void internal_insertObservationScan2D(
 		const mrpt::obs::CObservation2DRangeScan& o,
@@ -187,7 +188,8 @@ class COccupancyGridMap3D
 	void getAsOctoMapVoxels(mrpt::opengl::COctoMapVoxels& gl_obj) const;
 
 	/** Returns a 3D object representing the map. \sa renderingOptions */
-	void getAs3DObject(mrpt::opengl::CSetOfObjects::Ptr& outObj) const override;
+	void getVisualizationInto(
+		mrpt::opengl::CSetOfObjects& outObj) const override;
 
 	/** With this struct options are provided to the observation insertion
 	 * process.
@@ -376,11 +378,22 @@ class COccupancyGridMap3D
 
 	void saveMetricMapRepresentationToFile(const std::string& f) const override;
 
+	/** Returns a short description of the map. */
+	std::string asString() const override
+	{
+		return mrpt::format(
+			"3D gridmap, extending from (%f,%f,%f) to (%f,%f,%f), voxel "
+			"resolution in XY=%f in Z=%f",
+			m_grid.getXMin(), m_grid.getYMin(), m_grid.getZMin(),
+			m_grid.getXMax(), m_grid.getYMax(), m_grid.getZMax(),
+			m_grid.getResolutionXY(), m_grid.getResolutionZ());
+	}
+
    private:
 	// See docs in base class
 	double internal_computeObservationLikelihood(
 		const mrpt::obs::CObservation& obs,
-		const mrpt::poses::CPose3D& takenFrom) override;
+		const mrpt::poses::CPose3D& takenFrom) const override;
 	// See docs in base class
 	bool internal_canComputeObservationLikelihood(
 		const mrpt::obs::CObservation& obs) const override;

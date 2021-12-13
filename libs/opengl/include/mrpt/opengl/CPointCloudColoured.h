@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -21,23 +21,14 @@ namespace mrpt::opengl
  * component is shared by all the points and is stored in the base member
  * m_color_A.
  *
- *  To load from a points-map, CPointCloudColoured::loadFromPointsMap().
+ * To load from a points-map, CPointCloudColoured::loadFromPointsMap().
  *
- *   This class uses smart optimizations while rendering to efficiently draw
- * clouds of millions of points,
- *   as described in this page:
- * https://www.mrpt.org/Efficiently_rendering_point_clouds_of_millions_of_points
+ * This class uses smart optimizations while rendering to efficiently draw
+ * clouds of millions of points, using octrees.
  *
- *  \sa opengl::COpenGLScene, opengl::CPointCloud
+ * ![mrpt::opengl::CPointCloudColoured](preview_CPointCloudColoured.png)
  *
- *  <div align="center">
- *  <table border="0" cellspan="4" cellspacing="4" style="border-width: 1px;
- * border-style: solid;">
- *   <tr> <td> mrpt::opengl::CPointCloudColoured </td> <td> \image html
- * preview_CPointCloudColoured.png </td> </tr>
- *  </table>
- *  </div>
- *
+ * \sa opengl::COpenGLScene, opengl::CPointCloud
  * \ingroup mrpt_opengl_grp
  */
 class CPointCloudColoured : public CRenderizableShaderPoints,
@@ -69,11 +60,12 @@ class CPointCloudColoured : public CRenderizableShaderPoints,
    public:
 	/** Evaluates the bounding box of this object (including possible children)
 	 * in the coordinate frame of the object parent. */
-	void getBoundingBox(
-		mrpt::math::TPoint3D& bb_min,
-		mrpt::math::TPoint3D& bb_max) const override
+	mrpt::math::TBoundingBox getBoundingBox() const override
 	{
-		this->octree_getBoundingBox(bb_min, bb_max);
+		if (empty()) return {};
+		if (auto bb = this->octree_getBoundingBox(); bb) return *bb;
+		else
+			return {};
 	}
 
 	/** @name Read/Write of the list of points to render
@@ -83,8 +75,11 @@ class CPointCloudColoured : public CRenderizableShaderPoints,
 	void push_back(
 		float x, float y, float z, float R, float G, float B, float A = 1);
 
+	/** inserts a new point */
+	void insertPoint(const mrpt::math::TPointXYZfRGBAu8& p);
+
 	/** Set the number of points, with undefined contents */
-	inline void resize(size_t N)
+	void resize(size_t N)
 	{
 		m_points.resize(N);
 		m_point_colors.resize(N);
@@ -93,13 +88,13 @@ class CPointCloudColoured : public CRenderizableShaderPoints,
 	}
 
 	/** Like STL std::vector's reserve */
-	inline void reserve(size_t N)
+	void reserve(size_t N)
 	{
 		m_points.reserve(N);
 		m_point_colors.reserve(N);
 	}
 
-	inline const mrpt::math::TPoint3Df& getPoint3Df(size_t i) const
+	const mrpt::math::TPoint3Df& getPoint3Df(size_t i) const
 	{
 		return m_points[i];
 	}
@@ -109,8 +104,7 @@ class CPointCloudColoured : public CRenderizableShaderPoints,
 	void setPoint(size_t i, const mrpt::math::TPointXYZfRGBAu8& p);
 
 	/** Like \a setPoint() but does not check for index out of bounds */
-	inline void setPoint_fast(
-		const size_t i, const mrpt::math::TPointXYZfRGBAu8& p)
+	void setPoint_fast(const size_t i, const mrpt::math::TPointXYZfRGBAu8& p)
 	{
 		m_points[i] = p.pt;
 		m_point_colors[i] = mrpt::img::TColor(p.r, p.g, p.b, p.a);
@@ -118,7 +112,7 @@ class CPointCloudColoured : public CRenderizableShaderPoints,
 	}
 
 	/** Like \a setPoint() but does not check for index out of bounds */
-	inline void setPoint_fast(
+	void setPoint_fast(
 		const size_t i, const float x, const float y, const float z)
 	{
 		m_points[i] = {x, y, z};
@@ -126,7 +120,7 @@ class CPointCloudColoured : public CRenderizableShaderPoints,
 	}
 
 	/** Like \c setPointColor but without checking for out-of-index erors */
-	inline void setPointColor_fast(
+	void setPointColor_fast(
 		size_t index, float R, float G, float B, float A = 1)
 	{
 		m_point_colors[index].R = f2u8(R);
@@ -134,7 +128,7 @@ class CPointCloudColoured : public CRenderizableShaderPoints,
 		m_point_colors[index].B = f2u8(B);
 		m_point_colors[index].A = f2u8(A);
 	}
-	inline void setPointColor_u8_fast(
+	void setPointColor_u8_fast(
 		size_t index, uint8_t r, uint8_t g, uint8_t b, uint8_t a = 0xff)
 	{
 		m_point_colors[index].R = r;
@@ -143,29 +137,31 @@ class CPointCloudColoured : public CRenderizableShaderPoints,
 		m_point_colors[index].A = a;
 	}
 	/** Like \c getPointColor but without checking for out-of-index erors */
-	inline void getPointColor_fast(
-		size_t index, float& R, float& G, float& B) const
+	void getPointColor_fast(size_t index, float& R, float& G, float& B) const
 	{
 		R = u8tof(m_point_colors[index].R);
 		G = u8tof(m_point_colors[index].G);
 		B = u8tof(m_point_colors[index].B);
 	}
-	inline void getPointColor_fast(
+	void getPointColor_fast(
 		size_t index, uint8_t& r, uint8_t& g, uint8_t& b) const
 	{
 		r = m_point_colors[index].R;
 		g = m_point_colors[index].B;
 		b = m_point_colors[index].B;
 	}
-	inline mrpt::img::TColor getPointColor(size_t index) const
+	mrpt::img::TColor getPointColor(size_t index) const
 	{
 		return m_point_colors[index];
 	}
 
 	/** Return the number of points */
-	inline size_t size() const { return m_points.size(); }
+	size_t size() const { return m_points.size(); }
+
+	bool empty() const { return m_points.empty(); }
+
 	/** Erase all the points */
-	inline void clear()
+	void clear()
 	{
 		m_points.clear();
 		m_point_colors.clear();
@@ -249,19 +245,19 @@ class PointCloudAdapter<mrpt::opengl::CPointCloudColoured>
 	static constexpr bool HAS_RGBu8 = false;
 
 	/** Constructor (accept a const ref for convenience) */
-	inline PointCloudAdapter(const mrpt::opengl::CPointCloudColoured& obj)
+	PointCloudAdapter(const mrpt::opengl::CPointCloudColoured& obj)
 		: m_obj(*const_cast<mrpt::opengl::CPointCloudColoured*>(&obj))
 	{
 	}
 	/** Get number of points */
-	inline size_t size() const { return m_obj.size(); }
+	size_t size() const { return m_obj.size(); }
 	/** Set number of points (to uninitialized values) */
-	inline void resize(const size_t N) { m_obj.resize(N); }
+	void resize(const size_t N) { m_obj.resize(N); }
 	/** Does nothing as of now */
-	inline void setDimensions(size_t height, size_t width) {}
+	void setDimensions(size_t height, size_t width) {}
 	/** Get XYZ coordinates of i'th point */
 	template <typename T>
-	inline void getPointXYZ(const size_t idx, T& x, T& y, T& z) const
+	void getPointXYZ(const size_t idx, T& x, T& y, T& z) const
 	{
 		const auto& p = m_obj.getPoint3Df(idx);
 		x = p.x;
@@ -269,20 +265,20 @@ class PointCloudAdapter<mrpt::opengl::CPointCloudColoured>
 		z = p.z;
 	}
 	/** Set XYZ coordinates of i'th point */
-	inline void setPointXYZ(
+	void setPointXYZ(
 		const size_t idx, const coords_t x, const coords_t y, const coords_t z)
 	{
 		m_obj.setPoint_fast(idx, x, y, z);
 	}
 
-	inline void setInvalidPoint(const size_t idx)
+	void setInvalidPoint(const size_t idx)
 	{
 		m_obj.setPoint_fast(idx, 0, 0, 0);
 	}
 
 	/** Get XYZ_RGBf coordinates of i'th point */
 	template <typename T>
-	inline void getPointXYZ_RGBAf(
+	void getPointXYZ_RGBAf(
 		const size_t idx, T& x, T& y, T& z, float& Rf, float& Gf, float& Bf,
 		float& Af) const
 	{
@@ -297,18 +293,19 @@ class PointCloudAdapter<mrpt::opengl::CPointCloudColoured>
 		Af = u8tof(col.A);
 	}
 	/** Set XYZ_RGBf coordinates of i'th point */
-	inline void setPointXYZ_RGBAf(
+	void setPointXYZ_RGBAf(
 		const size_t idx, const coords_t x, const coords_t y, const coords_t z,
 		const float Rf, const float Gf, const float Bf, const float Af)
 	{
 		m_obj.setPoint(
-			idx, mrpt::math::TPointXYZfRGBAu8(
-					 x, y, z, f2u8(Rf), f2u8(Gf), f2u8(Bf), f2u8(Af)));
+			idx,
+			mrpt::math::TPointXYZfRGBAu8(
+				x, y, z, f2u8(Rf), f2u8(Gf), f2u8(Bf), f2u8(Af)));
 	}
 
 	/** Get XYZ_RGBu8 coordinates of i'th point */
 	template <typename T>
-	inline void getPointXYZ_RGBu8(
+	void getPointXYZ_RGBu8(
 		const size_t idx, T& x, T& y, T& z, uint8_t& r, uint8_t& g,
 		uint8_t& b) const
 	{
@@ -322,7 +319,7 @@ class PointCloudAdapter<mrpt::opengl::CPointCloudColoured>
 		b = col.B;
 	}
 	/** Set XYZ_RGBu8 coordinates of i'th point */
-	inline void setPointXYZ_RGBu8(
+	void setPointXYZ_RGBu8(
 		const size_t idx, const coords_t x, const coords_t y, const coords_t z,
 		const uint8_t r, const uint8_t g, const uint8_t b,
 		const uint8_t a = 0xff)
@@ -332,32 +329,31 @@ class PointCloudAdapter<mrpt::opengl::CPointCloudColoured>
 	}
 
 	/** Get RGBf color of i'th point */
-	inline void getPointRGBf(
-		const size_t idx, float& r, float& g, float& b) const
+	void getPointRGBf(const size_t idx, float& r, float& g, float& b) const
 	{
 		m_obj.getPointColor_fast(idx, r, g, b);
 	}
 	/** Set XYZ_RGBf coordinates of i'th point */
-	inline void setPointRGBf(
+	void setPointRGBf(
 		const size_t idx, const float r, const float g, const float b)
 	{
 		m_obj.setPointColor_fast(idx, r, g, b);
 	}
 
 	/** Get RGBu8 color of i'th point */
-	inline void getPointRGBu8(
+	void getPointRGBu8(
 		const size_t idx, uint8_t& r, uint8_t& g, uint8_t& b) const
 	{
 		m_obj.getPointColor_fast(idx, r, g, b);
 	}
 	/** Set RGBu8 coordinates of i'th point */
-	inline void setPointRGBu8(
+	void setPointRGBu8(
 		const size_t idx, const uint8_t r, const uint8_t g, const uint8_t b)
 	{
 		m_obj.setPointColor_u8_fast(idx, r, g, b);
 	}
 
-};  // end of PointCloudAdapter<mrpt::opengl::CPointCloudColoured>
+};	// end of PointCloudAdapter<mrpt::opengl::CPointCloudColoured>
 
 // After declaring the adapter we can here implement this method:
 template <class POINTSMAP>

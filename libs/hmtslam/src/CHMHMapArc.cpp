@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "hmtslam-precomp.h"  // Precomp header
-
+//
 using namespace mrpt;
 using namespace mrpt::slam;
 using namespace mrpt::hmtslam;
@@ -124,8 +124,7 @@ void CHMHMapArc::serializeFrom(
 				node->onArcAddition(myPtr);
 		}
 		break;
-		default:
-			MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
 	};
 }
 
@@ -159,5 +158,6 @@ void TArcList::read(mrpt::serialization::CArchive& in)
 void TArcList::write(mrpt::serialization::CArchive& out) const
 {
 	out.WriteAs<uint32_t>(this->size());
-	for (const auto& i : *this) out << *i;
+	for (const auto& i : *this)
+		out << *i;
 }

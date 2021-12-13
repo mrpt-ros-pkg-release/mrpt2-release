@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "nav-precomp.h"  // Precomp header
-
+//
 #include <mrpt/math/CVectorDynamic.h>
 #include <mrpt/nav/tpspace/CParameterizedTrajectoryGenerator.h>
 #include <mrpt/opengl/CSetOfLines.h>
@@ -24,7 +24,7 @@ void CPTG_RobotShape_Polygonal::setRobotShape(
 	ASSERT_GE_(robotShape.size(), 3u);
 	m_robotShape = robotShape;
 
-	m_robotMaxRadius = .0;  // Default minimum
+	m_robotMaxRadius = .0;	// Default minimum
 	for (const auto& v : m_robotShape)
 		mrpt::keep_max(m_robotMaxRadius, v.norm());
 
@@ -90,11 +90,11 @@ void CPTG_RobotShape_Polygonal::saveToConfigFile(
 	}
 }
 
-void CPTG_RobotShape_Polygonal::add_robotShape_to_setOfLines(
-	mrpt::opengl::CSetOfLines& gl_shape,
-	const mrpt::poses::CPose2D& origin) const
+void CPTG_RobotShape_Polygonal::static_add_robotShape_to_setOfLines(
+	mrpt::opengl::CSetOfLines& gl_shape, const mrpt::poses::CPose2D& origin,
+	const mrpt::math::CPolygon& robotShape)
 {
-	const int N = m_robotShape.size();
+	const int N = robotShape.size();
 	if (N >= 2)
 	{
 		// Transform coordinates:
@@ -102,7 +102,7 @@ void CPTG_RobotShape_Polygonal::add_robotShape_to_setOfLines(
 		for (int i = 0; i < N; i++)
 		{
 			origin.composePoint(
-				m_robotShape[i].x, m_robotShape[i].y, 0, shap_x[i], shap_y[i],
+				robotShape[i].x, robotShape[i].y, 0, shap_x[i], shap_y[i],
 				shap_z[i]);
 		}
 
@@ -116,6 +116,13 @@ void CPTG_RobotShape_Polygonal::add_robotShape_to_setOfLines(
 	}
 }
 
+void CPTG_RobotShape_Polygonal::add_robotShape_to_setOfLines(
+	mrpt::opengl::CSetOfLines& gl_shape,
+	const mrpt::poses::CPose2D& origin) const
+{
+	static_add_robotShape_to_setOfLines(gl_shape, origin, m_robotShape);
+}
+
 void CPTG_RobotShape_Polygonal::internal_shape_loadFromStream(
 	mrpt::serialization::CArchive& in)
 {
@@ -124,11 +131,8 @@ void CPTG_RobotShape_Polygonal::internal_shape_loadFromStream(
 
 	switch (version)
 	{
-		case 0:
-			in >> m_robotShape;
-			break;
-		default:
-			MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+		case 0: in >> m_robotShape; break;
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
 	}
 }
 

@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -12,6 +12,7 @@
 #include <mrpt/gui/CDisplayWindowPlots.h>
 #include <mrpt/random.h>
 #include <mrpt/system/CTicTac.h>
+
 #include <iostream>
 #include <map>
 
@@ -47,7 +48,7 @@ double myDijkstraWeight(
 	const CMyDijkstra::edge_t& edge)
 {
 	//	return 1;					// Topological distance
-	return edge.norm();  // Metric distance
+	return edge.norm();	 // Metric distance
 }
 
 // ------------------------------------------------------
@@ -115,27 +116,20 @@ void TestDijkstra()
 	// Text representation of the tree:
 	cout << "TREE:\n" << graphAsTree.getAsTextDescription() << endl;
 
-	struct CMyVisitor : public CMyDijkstra::tree_graph_t::Visitor
-	{
-		void OnVisitNode(
-			const TNodeID parent,
-			const CMyDijkstra::tree_graph_t::TEdgeInfo& edge_to_child,
-			const size_t depth_level) override
-		{
-			cout << string(depth_level * 3, ' ');
-			cout << edge_to_child.id << endl;
-		}
+	auto lmb = [&]([[maybe_unused]] const TNodeID parent,
+				   const CMyDijkstra::tree_graph_t::TEdgeInfo& edge_to_child,
+				   const size_t depth_level) {
+		cout << string(depth_level * 3, ' ');
+		cout << edge_to_child.id << endl;
 	};
-
-	CMyVisitor myVisitor;
 
 	cout << "Depth-first traverse of graph:\n";
 	cout << SOURCE_NODE << endl;
-	graphAsTree.visitDepthFirst(SOURCE_NODE, myVisitor);
+	graphAsTree.visitDepthFirst(SOURCE_NODE, lmb);
 
 	cout << endl << "Breadth-first traverse of graph:\n";
 	cout << SOURCE_NODE << endl;
-	graphAsTree.visitBreadthFirst(SOURCE_NODE, myVisitor);
+	graphAsTree.visitBreadthFirst(SOURCE_NODE, lmb);
 
 	// ----------------------------
 	// Display results graphically:

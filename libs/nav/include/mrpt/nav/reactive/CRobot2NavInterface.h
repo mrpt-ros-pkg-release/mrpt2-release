@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -11,7 +11,7 @@
 #include <mrpt/kinematics/CVehicleVelCmd.h>
 #include <mrpt/math/TPose2D.h>
 #include <mrpt/math/TTwist2D.h>
-#include <mrpt/obs/obs_frwds.h>  // CSimplePointsMap
+#include <mrpt/obs/obs_frwds.h>	 // CSimplePointsMap
 #include <mrpt/system/COutputLogger.h>
 #include <mrpt/system/CTicTac.h>
 #include <mrpt/system/datetime.h>

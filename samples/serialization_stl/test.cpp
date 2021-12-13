@@ -2,18 +2,19 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 /** \example serialization_stl/test.cpp */
 
-#include <iostream>  // cout
+#include <iostream>	 // cout
 
 template <class CONTAINER>
 void printMap(const CONTAINER& m)
 {
-	for (const auto& e : m) std::cout << e.first << "=" << e.second << ", ";
+	for (const auto& e : m)
+		std::cout << e.first << "=" << e.second << ", ";
 	std::cout << std::endl;
 }
 
@@ -23,7 +24,7 @@ void printMap(const CONTAINER& m)
 #include <mrpt/serialization/CArchive.h>
 #include <mrpt/serialization/stl_serialization.h>
 
-#include <iostream>  // cout
+#include <iostream>	 // cout
 
 void WriteAndReadExample()
 {
@@ -60,9 +61,9 @@ void WriteAndReadExample()
 #include <mrpt/serialization/CArchive.h>
 #include <mrpt/serialization/archiveFrom_std_streams.h>
 #include <mrpt/serialization/stl_serialization.h>
-#include <fstream>  // io std streams
 
-#include <iostream>  // cout
+#include <fstream>	// io std streams
+#include <iostream>	 // cout
 
 void WriteAndReadExampleStdIO()
 {

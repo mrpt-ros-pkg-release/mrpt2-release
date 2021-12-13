@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "hmtslam-precomp.h"  // Precomp header
-
+//
 #include <mrpt/io/CFileGZOutputStream.h>
 #include <mrpt/io/CFileOutputStream.h>
 #include <mrpt/serialization/CArchive.h>
@@ -69,7 +69,7 @@ CPose3DPDF::Ptr CTopLCDetector_GridMatching::computeTopologicalObservationModel(
 
 	// Do the map align:
 	CPosePDF::Ptr alignRes = gridAligner.Align(
-		hMapCur.get(),  // "ref" as seen from "cur"...The order is critical!!!
+		hMapCur.get(),	// "ref" as seen from "cur"...The order is critical!!!
 		hMapRef.get(), initEstimate, info);
 
 #if 0
@@ -93,14 +93,12 @@ CPose3DPDF::Ptr CTopLCDetector_GridMatching::computeTopologicalObservationModel(
 		mrpt::system::createDirectory(dbg_dir);
 		static int cnt = 0;
 		++cnt;
-		const std::string filStat =
-			dbg_dir + format(
-						  "/state_%05i_test_%i_%i.hmtslam", cnt,
-						  (int)currentArea->getID(), (int)refArea->getID());
-		const std::string filRes =
-			dbg_dir + format(
-						  "/state_%05i_test_%i_%i_result.txt", cnt,
-						  (int)currentArea->getID(), (int)refArea->getID());
+		const std::string filStat = dbg_dir +
+			format("/state_%05i_test_%i_%i.hmtslam", cnt,
+				   (int)currentArea->getID(), (int)refArea->getID());
+		const std::string filRes = dbg_dir +
+			format("/state_%05i_test_%i_%i_result.txt", cnt,
+				   (int)currentArea->getID(), (int)refArea->getID());
 
 		m_hmtslam->logFmt(
 			mrpt::system::LVL_DEBUG, "[TLCD_gridmatch] DEBUG: Saving %s\n",

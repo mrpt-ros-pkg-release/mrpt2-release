@@ -2,15 +2,16 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include <mrpt/gui/CDisplayWindow3D.h>
 #include <mrpt/system/CTimeLogger.h>
-#include <mrpt/system/filesystem.h>  // for ASSERT_FILE_EXISTS_
+#include <mrpt/system/filesystem.h>	 // for ASSERT_FILE_EXISTS_
 #include <mrpt/vision/chessboard_stereo_camera_calib.h>
+
 #include <iostream>
 
 using namespace mrpt;
@@ -113,9 +114,9 @@ int TestStereoCalibrate(int argc, char** argv)
 				win.get3DSceneAndLock();
 
 				view1->setImageView(
-					calib_imgs[i].left.img_rectified);  // img_checkboard );
+					calib_imgs[i].left.img_rectified);	// img_checkboard );
 				view2->setImageView(
-					calib_imgs[i].right.img_rectified);  // img_checkboard );
+					calib_imgs[i].right.img_rectified);	 // img_checkboard );
 
 				win.setWindowTitle(mrpt::format(
 					"Detected corners: %u / %u",

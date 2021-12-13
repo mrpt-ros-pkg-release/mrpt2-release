@@ -2,14 +2,14 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #pragma once
 
-#include <mrpt/math/geometry.h>  // distance()
+#include <mrpt/math/geometry.h>	 // distance()
 
 namespace mrpt::math
 {
@@ -21,11 +21,13 @@ class FAddPoint
 	T& object;
 	FAddPoint(T& o) : object(o)
 	{
-		for (size_t i = 0; i < N; i++) object[i] = 0.0;
+		for (size_t i = 0; i < N; i++)
+			object[i] = 0.0;
 	}
 	void operator()(const T& o)
 	{
-		for (size_t i = 0; i < N; i++) object[i] += o[i];
+		for (size_t i = 0; i < N; i++)
+			object[i] += o[i];
 	}
 };
 

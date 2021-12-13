@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -12,6 +12,7 @@
 #include <mrpt/math/TPose2D.h>
 #include <mrpt/math/TTwist2D.h>
 #include <mrpt/poses/poses_frwds.h>
+
 #include <mutex>
 #include <optional>
 
@@ -110,6 +111,6 @@ class CRobot2DPoseEstimator
 	/** Robot odometry-based velocity in a local frame of reference. */
 	mrpt::math::TTwist2D m_robot_vel_local;
 
-};  // end of class
+};	// end of class
 
 }  // namespace mrpt::poses

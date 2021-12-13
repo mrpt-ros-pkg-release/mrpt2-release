@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -13,16 +13,10 @@
 namespace mrpt::opengl
 {
 /** A solid or wire-frame sphere.
- *  \sa opengl::COpenGLScene
  *
- *  <div align="center">
- *  <table border="0" cellspan="4" cellspacing="4" style="border-width: 1px;
- * border-style: solid;">
- *   <tr> <td> mrpt::opengl::CSphere </td> <td> \image html preview_CSphere.png
- * </td> </tr>
- *  </table>
- *  </div>
+ * ![mrpt::opengl::CSphere](preview_CSphere.png)
  *
+ * \sa opengl::COpenGLScene
  * \ingroup mrpt_opengl_grp
  */
 class CSphere : public CGeneralizedEllipsoidTemplate<3>
@@ -51,9 +45,7 @@ class CSphere : public CGeneralizedEllipsoidTemplate<3>
 	}
 
 	bool traceRay(const mrpt::poses::CPose3D& o, double& dist) const override;
-	virtual void getBoundingBox(
-		mrpt::math::TPoint3D& bb_min,
-		mrpt::math::TPoint3D& bb_max) const override;
+	virtual mrpt::math::TBoundingBox getBoundingBox() const override;
 
 	/** Constructor */
 	CSphere(
@@ -63,7 +55,7 @@ class CSphere : public CGeneralizedEllipsoidTemplate<3>
 		  m_nDivsLatitude(nDivsLatitude)
 	{
 		regenerateBaseParams();
-		BASE::enableDrawSolid3D(true);  // default
+		BASE::enableDrawSolid3D(true);	// default
 	}
 
 	virtual ~CSphere() override = default;

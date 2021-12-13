@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -11,10 +11,6 @@
 
 #include <mrpt/core/exceptions.h>
 #include <mrpt/graphs/CNetworkOfPoses.h>
-#include <mrpt/poses/CPose3DPDFGaussianInf.h>
-#include <mrpt/poses/CPosePDFGaussianInf.h>
-#include <mrpt/system/filesystem.h>
-
 #include <mrpt/graphslam/ERD/CEmptyERD.h>
 #include <mrpt/graphslam/ERD/CICPCriteriaERD.h>
 #include <mrpt/graphslam/ERD/CLoopCloserERD.h>
@@ -22,6 +18,9 @@
 #include <mrpt/graphslam/NRD/CEmptyNRD.h>
 #include <mrpt/graphslam/NRD/CFixedIntervalsNRD.h>
 #include <mrpt/graphslam/NRD/CICPCriteriaNRD.h>
+#include <mrpt/poses/CPose3DPDFGaussianInf.h>
+#include <mrpt/poses/CPosePDFGaussianInf.h>
+#include <mrpt/system/filesystem.h>
 
 #include <iostream>
 #include <string>

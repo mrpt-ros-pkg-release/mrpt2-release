@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -18,9 +18,9 @@
 //*)
 
 #include <mrpt/gui/CMyRedirector.h>
-#include "_DSceneViewerMain.h"
-
 #include <mrpt/system/os.h>
+
+#include "_DSceneViewerMain.h"
 
 #ifdef Button1
 #undef Button1
@@ -188,7 +188,7 @@ void CAboutBox::OnInit(wxInitDialogEvent& event)
 	wxVer << _T("-Unicode build");
 #else
 	wxVer << _T("-ANSI build");
-#endif  // wxUSE_UNICODE
+#endif	// wxUSE_UNICODE
 
 	// Set the label with MRPT version:
 	wxString s(_("Build: "));

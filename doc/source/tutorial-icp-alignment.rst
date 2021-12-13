@@ -1,4 +1,4 @@
-.. tutorial-icp-alignment:
+.. _tutorial-icp-alignment:
 
 ===================================================================
 Iterative Closest Point (ICP) and other registration algorithms
@@ -229,5 +229,5 @@ in\ `tfest <group__mrpt__tfest__grp.html>`__::robustRigidTransformation.
 Bibliography
 =================
 
-.. bibliography:: bibliography.bib
+.. bibliography::
    :cited:

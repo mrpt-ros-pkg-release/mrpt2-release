@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -14,6 +14,7 @@
 #include <mrpt/random/RandomGenerators.h>
 #include <mrpt/system/filesystem.h>
 #include <test_mrpt_common.h>
+
 #include <algorithm>  // std::equal
 
 const size_t tst_data_len = 1000U;
@@ -45,8 +46,7 @@ TEST(CFileGZStreams, readwriteTmpFileCompressed)
 	for (int compress_level = 1; compress_level <= 9; compress_level++)
 	{
 		const std::string fil = mrpt::system::getTempFileName() +
-								std::string("_") +
-								std::to_string(compress_level);
+			std::string("_") + std::to_string(compress_level);
 		// Write:
 		{
 			mrpt::io::CFileGZOutputStream fil_out;
@@ -68,6 +68,61 @@ TEST(CFileGZStreams, readwriteTmpFileCompressed)
 
 			EXPECT_TRUE(std::equal(
 				std::begin(tst_data), std::end(tst_data), std::begin(rd_buf)));
+		}
+
+		// Write for append =============================
+		{
+			mrpt::io::CFileGZOutputStream fil_out;
+			const bool open_ok = fil_out.open(
+				fil, compress_level, std::nullopt, mrpt::io::OpenMode::APPEND);
+			EXPECT_TRUE(open_ok);
+
+			const size_t wr_count =
+				fil_out.Write(&tst_data[0], tst_data_len / 2);
+			EXPECT_EQ(wr_count, tst_data_len / 2);
+		}
+		// Read all:
+		{
+			mrpt::io::CFileGZInputStream fil_in;
+			const bool open_ok = fil_in.open(fil);
+			EXPECT_TRUE(open_ok);
+
+			uint8_t rd_buf[tst_data_len + tst_data_len / 2];
+			const size_t rd_count =
+				fil_in.Read(rd_buf, tst_data_len + tst_data_len / 2);
+			EXPECT_EQ(rd_count, tst_data_len + tst_data_len / 2);
+
+			EXPECT_TRUE(std::equal(
+				std::begin(tst_data), std::end(tst_data), std::begin(rd_buf)));
+		}
+		// Write and truncate =============================
+		{
+			mrpt::io::CFileGZOutputStream fil_out;
+			const bool open_ok = fil_out.open(
+				fil, compress_level, std::nullopt,
+				mrpt::io::OpenMode::TRUNCATE);
+			EXPECT_TRUE(open_ok);
+
+			const size_t wr_count =
+				fil_out.Write(&tst_data[0], tst_data_len / 4);
+			EXPECT_EQ(wr_count, tst_data_len / 4);
+		}
+		// Read all:
+		{
+			mrpt::io::CFileGZInputStream fil_in;
+			const bool open_ok = fil_in.open(fil);
+			EXPECT_TRUE(open_ok);
+
+			uint8_t rd_buf[tst_data_len / 4];
+			const size_t rd_count = fil_in.Read(rd_buf, tst_data_len / 4);
+			EXPECT_EQ(rd_count, tst_data_len / 4);
+
+			EXPECT_TRUE(std::equal(
+				std::begin(tst_data), std::end(tst_data), std::begin(rd_buf)));
+
+			// next I should find an EOF:
+			const auto rdEof = fil_in.Read(rd_buf, 1);
+			EXPECT_EQ(rdEof, 0U);
 		}
 	}
 }

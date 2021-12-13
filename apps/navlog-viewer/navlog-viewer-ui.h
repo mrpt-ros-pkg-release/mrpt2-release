@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -43,6 +43,13 @@ class NavlogViewerApp
 	nanogui::CheckBox* m_cbShowCursor = nullptr;
 	nanogui::CheckBox* m_ClearanceOverPath = nullptr;
 	nanogui::ComboBox* m_rbPerPTGPlots = nullptr;
+	nanogui::CheckBox* m_cbOrtho2DView = nullptr;
+
+	nanogui::CheckBox* m_cbManualPickMode = nullptr;
+	nanogui::Slider* m_slidPtgIndex = nullptr;
+	nanogui::Slider* m_slidTrajectoryIndex = nullptr;
+	nanogui::Label* m_manualPickLabel = nullptr;
+	nanogui::Button* m_btnManualPickAppendYaml = nullptr;
 
 	// ============ app data ===============
 	std::string m_openedFileName = "UNNAMED";
@@ -67,19 +74,27 @@ class NavlogViewerApp
 
    private:
 	void OnbtnLoadClick();
-	void OnslidLogCmdScroll();
+	void updateVisualization();
 	void OnmnuMatlabPlotsSelected();
 	void OnmnuSeePTGParamsSelected();
 	void OnmnuSaveScoreMatrixSelected();
 	void OntimMouseXY();
 	void OnmnuMatlabExportPaths();
+	void OnmnuExportSelected(std::string filename = {});
 	void OnmnuSaveCurrentObstacles();
 	void OnMainIdleLoop();
 	bool OnKeyboardCallback(int key, int scancode, int action, int modifiers);
+
+	void OnManualPickAppendYaml();
+	void updateManualPickControls();
 
 	mrpt::system::CTicTac m_autoPlayTimer;
 	bool m_autoPlayEnabled = false;
 	double m_autoPlayInterval = 100e-3;
 
 	bool m_showCursorXY = false;
+
+	int m_manualPickPTGIdx = -1;
+	int m_manualPickTrajectoryIdx = -1;
+	double m_manualPickTimestamp = .0;
 };

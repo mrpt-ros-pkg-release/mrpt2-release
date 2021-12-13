@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -90,30 +90,26 @@ class generic_copier_ptr
 
 	T* operator->()
 	{
-		if (m_ptr)
-			return m_ptr;
+		if (m_ptr) return m_ptr;
 		else
 			throw std::runtime_error("dereferencing nullptr poly_ptr");
 	}
 	const T* operator->() const
 	{
-		if (m_ptr)
-			return m_ptr;
+		if (m_ptr) return m_ptr;
 		else
 			throw std::runtime_error("dereferencing nullptr poly_ptr");
 	}
 
 	T& operator*()
 	{
-		if (m_ptr)
-			return *m_ptr;
+		if (m_ptr) return *m_ptr;
 		else
 			throw std::runtime_error("dereferencing nullptr poly_ptr");
 	}
 	const T& operator*() const
 	{
-		if (m_ptr)
-			return *m_ptr;
+		if (m_ptr) return *m_ptr;
 		else
 			throw std::runtime_error("dereferencing nullptr poly_ptr");
 	}

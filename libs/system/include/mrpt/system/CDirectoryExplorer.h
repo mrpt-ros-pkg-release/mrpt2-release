@@ -2,13 +2,14 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 #pragma once
 
 #include <mrpt/system/os.h>
+
 #include <deque>
 
 namespace mrpt::system
@@ -33,23 +34,11 @@ class CDirectoryExplorer
 	 */
 	struct TFileInfo
 	{
-		/** The file name (without the whole path).
-		 */
-		std::string name;
-
-		/** The whole file path.
-		 */
-		std::string wholePath;
-
-		/** Access and modification times.
-		 */
-		time_t accessTime, modTime;
-
-		bool isDir, isSymLink;
-
-		/** The size of the file in bytes.
-		 */
-		uint64_t fileSize;
+		std::string name;  //!< The file name part only, without path.
+		std::string wholePath;	//!< Full, absolute path of the file
+		time_t accessTime, modTime;	 //!< Access and modification times.
+		bool isDir = false, isSymLink = false;
+		uint64_t fileSize = 0;	//!< File size [bytes]
 	};
 
 	/** The list type used in "explore".
@@ -71,9 +60,16 @@ class CDirectoryExplorer
 	 * \param outList The list of found files/directories is stored here.
 	 * \sa sortByName
 	 */
+	static TFileInfoList explore(
+		const std::string& path, const unsigned long mask);
+
+	/// \overload \deprecated Prefer the return-by-value signature (MRPT 2.3.1)
 	static void explore(
 		const std::string& path, const unsigned long mask,
-		TFileInfoList& outList);
+		TFileInfoList& outList)
+	{
+		outList = explore(path, mask);
+	}
 
 	/** Sort the file entries by name, in ascending or descending order
 	 */
@@ -86,6 +82,6 @@ class CDirectoryExplorer
 	static void filterByExtension(
 		TFileInfoList& lstFiles, const std::string& extension);
 
-};  // End of class def.
+};	// End of class def.
 
 }  // namespace mrpt::system

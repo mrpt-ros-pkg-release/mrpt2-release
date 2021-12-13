@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -14,16 +14,10 @@ namespace mrpt::opengl
 {
 class CCylinder;
 /** A cylinder or cone whose base lies in the XY plane.
+ *
+ * ![mrpt::opengl::CCylinder](preview_CCylinder.png)
+ *
  * \sa opengl::COpenGLScene,opengl::CDisk
- *
- *  <div align="center">
- *  <table border="0" cellspan="4" cellspacing="4" style="border-width: 1px;
- * border-style: solid;">
- *   <tr> <td> mrpt::opengl::CCylinder </td> <td> \image html
- * preview_CCylinder.png </td> </tr>
- *  </table>
- *  </div>
- *
  * \ingroup mrpt_opengl_grp
  */
 class CCylinder : public CRenderizableShaderTriangles
@@ -109,9 +103,7 @@ class CCylinder : public CRenderizableShaderTriangles
 
 	/** Evaluates the bounding box of this object (including possible children)
 	 * in the coordinate frame of the object parent. */
-	void getBoundingBox(
-		mrpt::math::TPoint3D& bb_min,
-		mrpt::math::TPoint3D& bb_max) const override;
+	mrpt::math::TBoundingBox getBoundingBox() const override;
 
 	CCylinder() = default;
 	/**

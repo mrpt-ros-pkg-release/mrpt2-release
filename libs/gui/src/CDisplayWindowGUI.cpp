@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "gui-precomp.h"  // Precompiled headers
-
+//
 #include <mrpt/core/exceptions.h>
 #include <mrpt/gui/CDisplayWindowGUI.h>
 #include <mrpt/gui/default_mrpt_glfw_icon.h>
@@ -32,7 +32,7 @@ CDisplayWindowGUI::CDisplayWindowGUI(
 	images.pixels = default_mrpt_glfw_icon();
 
 // glfwSetWindowIcon added in glfw 3.2
-#if GLFW_VERSION_MAJOR > 3 || \
+#if GLFW_VERSION_MAJOR > 3 ||                                                  \
 	(GLFW_VERSION_MAJOR == 3 && GLFW_VERSION_MINOR >= 2)
 	glfwSetWindowIcon(screen()->glfwWindow(), 1, &images);
 #endif
@@ -47,7 +47,18 @@ CDisplayWindowGUI::~CDisplayWindowGUI()
 void CDisplayWindowGUI::drawContents()
 {
 	// If provided, call the user loop code:
-	if (m_loopCallback) m_loopCallback();
+	for (const auto& callback : m_loopCallbacks)
+	{
+		try
+		{
+			callback();
+		}
+		catch (const std::exception& e)
+		{
+			std::cerr << "[CDisplayWindowGUI] Exception in loop callback:\n"
+					  << e.what() << std::endl;
+		}
+	}
 
 	// Optional: render background scene.
 	std::lock_guard<std::mutex> lck(background_scene_mtx);
@@ -120,17 +131,39 @@ bool CDisplayWindowGUI::scrollEvent(
 
 bool CDisplayWindowGUI::dropEvent(const std::vector<std::string>& filenames)
 {
-	if (m_dropFilesCallback)
-		return m_dropFilesCallback(filenames);
-	else
-		return false;
+	for (const auto& callback : m_dropFilesCallbacks)
+	{
+		try
+		{
+			if (callback(filenames)) return true;
+		}
+		catch (const std::exception& e)
+		{
+			std::cerr << "[CDisplayWindowGUI] Exception in drop file event "
+						 "callback:\n"
+					  << e.what() << std::endl;
+		}
+	}
+
+	return false;
 }
 
 bool CDisplayWindowGUI::keyboardEvent(
 	int key, int scancode, int action, int modifiers)
 {
-	if (m_keyboardCallback)
-		if (m_keyboardCallback(key, scancode, action, modifiers)) return true;
+	for (const auto& callback : m_keyboardCallbacks)
+	{
+		try
+		{
+			if (callback(key, scancode, action, modifiers)) return true;
+		}
+		catch (const std::exception& e)
+		{
+			std::cerr
+				<< "[CDisplayWindowGUI] Exception in keyboard event callback:\n"
+				<< e.what() << std::endl;
+		}
+	}
 
 	if (Screen::keyboardEvent(key, scancode, action, modifiers)) return true;
 
@@ -269,7 +302,6 @@ void CDisplayWindowGUI::SubWindows::minimize(int index)
 	auto w = windows.at(index);
 
 	w->setVisible(false);
-	// w->setFixedSize({1, 1});
 	parent.performLayout();
 }
 
@@ -294,4 +326,4 @@ void CDisplayWindowGUI::SubWindows::onSubWindowFocused(int index)
 	if (index >= 0 && index < n) uiCombo->setSelectedIndex(index);
 }
 
-#endif  // MRPT_HAS_NANOGUI
+#endif	// MRPT_HAS_NANOGUI

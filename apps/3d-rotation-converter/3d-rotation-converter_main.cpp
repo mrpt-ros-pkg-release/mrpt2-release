@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -14,10 +14,10 @@
 #include <mrpt/opengl/CGridPlaneXY.h>
 #include <mrpt/opengl/stock_objects.h>
 #include <mrpt/poses/Lie/SO.h>
-#include <iostream>
 
 #include <Eigen/Dense>
 #include <Eigen/SVD>
+#include <iostream>
 
 static void AppRotationConverter()
 {
@@ -97,7 +97,8 @@ static void AppRotationConverter()
 				mrpt::math::TVector3D v =
 					in_axisangle_ax * (in_axisangle_ang * K);
 				mrpt::math::CVectorFixed<double, 3> vn;
-				for (int i = 0; i < 3; i++) vn[i] = v[i];
+				for (int i = 0; i < 3; i++)
+					vn[i] = v[i];
 
 				userPose.setRotationMatrix(mrpt::poses::Lie::SO<3>::exp(vn));
 			}
@@ -330,7 +331,7 @@ static void AppRotationConverter()
 		winMenu->add<nanogui::Button>("Quit", ENTYPO_ICON_ARROW_BOLD_LEFT)
 			->setCallback([&win]() { win.setVisible(false); });
 
-		winMenu->add<nanogui::Label>("      ");  // separator
+		winMenu->add<nanogui::Label>("      ");	 // separator
 
 		winMenu
 			->add<nanogui::CheckBox>(

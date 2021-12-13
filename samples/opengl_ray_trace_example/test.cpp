@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -29,6 +29,7 @@
 #include <mrpt/poses/CPose3D.h>
 #include <mrpt/random.h>
 #include <mrpt/system/CTicTac.h>
+
 #include <iostream>
 
 #define COLORR 1.0f
@@ -136,7 +137,8 @@ void generateObjects(CSetOfObjects::Ptr& world)
 
 	CEllipsoid3D::Ptr ell = CEllipsoid3D::Create();
 	CMatrixDouble md = CMatrixDouble(3, 3);
-	for (size_t i = 0; i < 3; i++) md(i, i) = MYRANDG(8.0, 1.0);
+	for (size_t i = 0; i < 3; i++)
+		md(i, i) = MYRANDG(8.0, 1.0);
 	for (size_t i = 0; i < 3; i++)
 	{
 		size_t ii = (i + 1) % 3;

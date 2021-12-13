@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)               |
    |                          https://www.mrpt.org/                            |
    |                                                                           |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file        |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file        |
    | See: https://www.mrpt.org/Authors - All rights reserved.                  |
    | Released under BSD License. See details in https://www.mrpt.org/License   |
    +---------------------------------------------------------------------------+
@@ -18,7 +18,7 @@ CObservationTreeModel::CObservationTreeModel(
 	if (!simplemap.empty())
 		for (auto iter = simplemap.begin(); iter != simplemap.end(); ++iter)
 		{
-			m_poses.push_back(iter->first->getMeanVal());
+			m_poses.emplace_back(iter->pose->getMeanVal());
 		}
 }
 
@@ -72,8 +72,7 @@ QModelIndex CObservationTreeModel::index(
 	CNode* parentNode = getNodeFromIndexSafe(parent);
 
 	CNode* childItem = (parentNode->child(row));
-	if (childItem)
-		return createIndex(row, column, childItem);
+	if (childItem) return createIndex(row, column, childItem);
 	else
 		return QModelIndex();
 }
@@ -101,8 +100,7 @@ CNode* CObservationTreeModel::getNodeFromIndexSafe(
 	const QModelIndex& index) const
 {
 	CNode* node;
-	if (!index.isValid() || !index.internalPointer())
-		node = m_rootNode.get();
+	if (!index.isValid() || !index.internalPointer()) node = m_rootNode.get();
 	else
 		node = static_cast<CNode*>(index.internalPointer());
 

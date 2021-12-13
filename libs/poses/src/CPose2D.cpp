@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
-#include "poses-precomp.h"  // Precompiled headers
-
+#include "poses-precomp.h"	// Precompiled headers
+//
 #include <mrpt/config.h>  // HAVE_SINCOS
 #include <mrpt/math/TPose2D.h>
 #include <mrpt/math/wrap2pi.h>
@@ -18,6 +18,7 @@
 #include <mrpt/poses/CPose3D.h>
 #include <mrpt/serialization/CArchive.h>
 #include <mrpt/serialization/CSchemeArchiveBase.h>
+
 #include <Eigen/Dense>
 #include <limits>
 
@@ -78,8 +79,7 @@ void CPose2D::serializeFrom(mrpt::serialization::CArchive& in, uint8_t version)
 			m_cossin_uptodate = false;
 		}
 		break;
-		default:
-			MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
 	};
 }
 
@@ -103,8 +103,7 @@ void CPose2D::serializeFrom(mrpt::serialization::CSchemeArchiveBase& in)
 			m_phi = static_cast<double>(in["phi"]);
 		}
 		break;
-		default:
-			MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
 	}
 }
 
@@ -278,9 +277,9 @@ void CPose2D::inverseComposeFrom(const CPose2D& A, const CPose2D& B)
 	B.update_cached_cos_sin();
 
 	m_coords[0] = (A.m_coords[0] - B.m_coords[0]) * B.m_cosphi +
-				  (A.m_coords[1] - B.m_coords[1]) * B.m_sinphi;
+		(A.m_coords[1] - B.m_coords[1]) * B.m_sinphi;
 	m_coords[1] = -(A.m_coords[0] - B.m_coords[0]) * B.m_sinphi +
-				  (A.m_coords[1] - B.m_coords[1]) * B.m_cosphi;
+		(A.m_coords[1] - B.m_coords[1]) * B.m_cosphi;
 	m_phi = math::wrapToPi(A.m_phi - B.m_phi);
 	m_cossin_uptodate = false;
 }
@@ -410,7 +409,8 @@ void CPose2D::fromString(const std::string& s)
 {
 	CMatrixDouble m;
 	if (!m.fromMatlabStringFormat(s))
-		THROW_EXCEPTION("Malformed expression in ::fromString");
+		THROW_EXCEPTION_FMT(
+			"Malformed expression in ::fromString, s=\"%s\"", s.c_str());
 	ASSERTMSG_(m.rows() == 1 && m.cols() == 3, "Expected vector length=3");
 	x(m(0, 0));
 	y(m(0, 1));
@@ -442,9 +442,9 @@ CPose2D CPose2D::getOppositeScalar() const
 	return CPose2D(-m_coords[0], -m_coords[1], -m_phi);
 }
 
-void CPose2D::asString(std::string& s) const
+std::string CPose2D::asString() const
 {
-	s = mrpt::format("[%f %f %fdeg]", x(), y(), mrpt::RAD2DEG(m_phi));
+	return mrpt::format("[%f %f %fdeg]", x(), y(), mrpt::RAD2DEG(m_phi));
 }
 
 void CPose2D::setToNaN()

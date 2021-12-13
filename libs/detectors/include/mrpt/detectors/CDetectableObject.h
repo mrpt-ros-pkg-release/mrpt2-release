@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -11,6 +11,7 @@
 
 #include <mrpt/obs/CObservation.h>
 #include <mrpt/serialization/CSerializable.h>
+
 #include <cmath>
 
 namespace mrpt::detectors
@@ -38,7 +39,7 @@ class CDetectableObject : public mrpt::serialization::CSerializable
 		obs = newObs;
 	};
 
-};  // End of class
+};	// End of class
 
 class CDetectable2D : public CDetectableObject
 {
@@ -85,5 +86,5 @@ class CDetectable3D : public CDetectable2D
 	/** Z coordinate of detected object */
 	float m_z;
 
-};  // End of class
+};	// End of class
 }  // namespace mrpt::detectors

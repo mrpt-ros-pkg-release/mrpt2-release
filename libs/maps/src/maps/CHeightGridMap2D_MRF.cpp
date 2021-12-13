@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "maps-precomp.h"  // Precomp header
-
+//
 #include <mrpt/maps/CHeightGridMap2D_MRF.h>
 #include <mrpt/poses/CPose2D.h>
 #include <mrpt/poses/CPose3D.h>
@@ -142,7 +142,8 @@ void CHeightGridMap2D_MRF::internal_clear()
 }
 
 bool CHeightGridMap2D_MRF::internal_insertObservation(
-	const CObservation& obs, const CPose3D* robotPose)
+	const CObservation& obs,
+	const std::optional<const mrpt::poses::CPose3D>& robotPose)
 {
 	return dem_internal_insertObservation(obs, robotPose);
 }
@@ -152,7 +153,7 @@ bool CHeightGridMap2D_MRF::internal_insertObservation(
   ---------------------------------------------------------------*/
 double CHeightGridMap2D_MRF::internal_computeObservationLikelihood(
 	[[maybe_unused]] const CObservation& obs,
-	[[maybe_unused]] const CPose3D& takenFrom)
+	[[maybe_unused]] const CPose3D& takenFrom) const
 {
 	THROW_EXCEPTION("Not implemented yet!");
 }
@@ -254,8 +255,7 @@ void CHeightGridMap2D_MRF::serializeFrom(
 			m_hasToRecoverMeanAndCov = true;
 		}
 		break;
-		default:
-			MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
 	};
 }
 
@@ -289,15 +289,12 @@ void CHeightGridMap2D_MRF::TInsertionOptions::loadFromConfigFile(
 	// ...
 }
 
-/*---------------------------------------------------------------
-						getAs3DObject
----------------------------------------------------------------*/
-void CHeightGridMap2D_MRF::getAs3DObject(
-	mrpt::opengl::CSetOfObjects::Ptr& outObj) const
+void CHeightGridMap2D_MRF::getVisualizationInto(
+	mrpt::opengl::CSetOfObjects& o) const
 {
 	MRPT_START
 	if (!genericMapParams.enableSaveAs3DObject) return;
-	CRandomFieldGridMap2D::getAs3DObject(outObj);
+	CRandomFieldGridMap2D::getVisualizationInto(o);
 	MRPT_END
 }
 
@@ -305,8 +302,7 @@ void CHeightGridMap2D_MRF::getAs3DObject(
 						getAs3DObject
 ---------------------------------------------------------------*/
 void CHeightGridMap2D_MRF::getAs3DObject(
-	mrpt::opengl::CSetOfObjects::Ptr& meanObj,
-	mrpt::opengl::CSetOfObjects::Ptr& varObj) const
+	opengl::CSetOfObjects& meanObj, opengl::CSetOfObjects& varObj) const
 {
 	MRPT_START
 	if (!genericMapParams.enableSaveAs3DObject) return;

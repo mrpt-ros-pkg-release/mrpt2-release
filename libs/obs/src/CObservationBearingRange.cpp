@@ -2,18 +2,19 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "obs-precomp.h"  // Precompiled headers
-
-#include <mrpt/math/matrix_serialization.h>  // for << ops
+//
+#include <mrpt/math/matrix_serialization.h>	 // for << ops
 #include <mrpt/math/wrap2pi.h>
 #include <mrpt/obs/CObservationBearingRange.h>
 #include <mrpt/serialization/CArchive.h>
 #include <mrpt/system/os.h>
+
 #include <set>
 
 using namespace mrpt::obs;
@@ -74,10 +75,7 @@ void CObservationBearingRange::serializeFrom(
 			// The data
 			in >> minSensorDistance >> maxSensorDistance;
 
-			if (version >= 3)
-			{
-				in >> fieldOfView_yaw >> fieldOfView_pitch;
-			}
+			if (version >= 3) { in >> fieldOfView_yaw >> fieldOfView_pitch; }
 			else
 			{
 				float fieldOfView;
@@ -88,8 +86,7 @@ void CObservationBearingRange::serializeFrom(
 
 			in >> sensorLocationOnRobot;
 
-			if (version >= 2)
-				in >> timestamp;
+			if (version >= 2) in >> timestamp;
 			else
 				timestamp = INVALID_TIMESTAMP;
 
@@ -127,14 +124,12 @@ void CObservationBearingRange::serializeFrom(
 				}
 			}
 
-			if (version >= 1)
-				in >> sensorLabel;
+			if (version >= 1) in >> sensorLabel;
 			else
 				sensorLabel = "";
 		}
 		break;
-		default:
-			MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
 	};
 }
 
@@ -168,8 +163,8 @@ void CObservationBearingRange::getDescriptionAsText(std::ostream& o) const
 	o << "Homogeneous matrix for the sensor's 3D pose, relative to robot "
 		 "base:\n";
 	o << sensorLocationOnRobot.getHomogeneousMatrixVal<CMatrixDouble44>()
-	  << sensorLocationOnRobot << endl
-	  << endl;
+	  << "\n"
+	  << sensorLocationOnRobot << "\n\n";
 
 	o << "Do observations have individual covariance matrices? "
 	  << (validCovariances ? "YES" : "NO") << endl
@@ -192,8 +187,7 @@ void CObservationBearingRange::getDescriptionAsText(std::ostream& o) const
 	for (const auto& q : sensedData)
 	{
 		o << "      ";
-		if (q.landmarkID == INVALID_LANDMARK_ID)
-			o << "(NO ID)";
+		if (q.landmarkID == INVALID_LANDMARK_ID) o << "(NO ID)";
 		else
 			o << format("%7u", q.landmarkID);
 
@@ -202,8 +196,7 @@ void CObservationBearingRange::getDescriptionAsText(std::ostream& o) const
 			RAD2DEG(mrpt::math::wrapToPi(q.yaw)),
 			RAD2DEG(mrpt::math::wrapToPi(q.pitch)));
 
-		if (validCovariances)
-			o << q.covariance.inMatlabFormat() << endl;
+		if (validCovariances) o << q.covariance.inMatlabFormat() << endl;
 		else
 			o << "  (N/A)\n";
 	}

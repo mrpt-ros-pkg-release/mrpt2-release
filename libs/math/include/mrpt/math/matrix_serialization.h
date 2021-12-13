@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -96,7 +96,8 @@ void deserializeSymmetricMatrixFrom(MAT& m, mrpt::serialization::CArchive& in)
 {
 	ASSERT_EQUAL_(m.rows(), m.cols());
 	auto N = m.cols();
-	for (decltype(N) i = 0; i < N; i++) in >> m(i, i);
+	for (decltype(N) i = 0; i < N; i++)
+		in >> m(i, i);
 	for (decltype(N) r = 0; r < N - 1; r++)
 	{
 		for (decltype(N) c = r + 1; c < N; c++)
@@ -115,12 +116,14 @@ void serializeSymmetricMatrixTo(MAT& m, mrpt::serialization::CArchive& out)
 {
 	ASSERT_EQUAL_(m.rows(), m.cols());
 	auto N = m.cols();
-	for (decltype(N) i = 0; i < N; i++) out << m(i, i);
+	for (decltype(N) i = 0; i < N; i++)
+		out << m(i, i);
 	for (decltype(N) r = 0; r < N - 1; r++)
-		for (decltype(N) c = r + 1; c < N; c++) out << m(r, c);
+		for (decltype(N) c = r + 1; c < N; c++)
+			out << m(r, c);
 }
 
 /** @} */  // end MRPT matrices stream operators
 
-/**  @} */  // end of grouping
+/**  @} */	// end of grouping
 }  // namespace mrpt::math

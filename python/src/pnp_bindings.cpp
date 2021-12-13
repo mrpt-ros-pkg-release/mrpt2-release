@@ -2,13 +2,14 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <Python.h>
 #include <numpy/arrayobject.h>
+
 #include <boost/python.hpp>
 using namespace boost::python;
 
@@ -17,7 +18,6 @@ using namespace boost::python;
 using namespace Eigen;
 
 #include <mrpt/config.h>
-
 #include <mrpt/vision/pnp_algos.h>
 mrpt::vision::pnp::CPnP pnp_algos;
 

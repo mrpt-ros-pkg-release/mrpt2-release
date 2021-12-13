@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -37,6 +37,7 @@ Output files:
 #include <mrpt/obs/CObservationIMU.h>
 #include <mrpt/serialization/CArchive.h>
 #include <mrpt/system/filesystem.h>
+
 #include <iostream>
 
 using namespace std;
@@ -67,8 +68,8 @@ void rgbd2rawlog(const string& src_path, const string& out_name)
 	const string in_fil_acc = src_path + string("/accelerometer.txt");
 	const string in_fil_depth =
 		mrpt::system::fileExists(src_path + string("/ir.txt"))
-			? src_path + string("/ir.txt")
-			: src_path + string("/depth.txt");
+		? src_path + string("/ir.txt")
+		: src_path + string("/depth.txt");
 	const string in_fil_rgb = src_path + string("/rgb.txt");
 
 	// ASSERT_FILE_EXISTS_(in_fil_acc)
@@ -136,14 +137,14 @@ void rgbd2rawlog(const string& src_path, const string& out_name)
 	// Fill out the common field to all entries:
 	CObservation3DRangeScan obs;
 	obs.sensorLabel = "KINECT";
-	obs.range_is_depth = true;  // Kinect style: ranges are actually depth
+	obs.range_is_depth = true;	// Kinect style: ranges are actually depth
 	// values, not Euclidean distances.
 
 	// Range & RGB images are already registered and warped to remove
 	// distortion:
 	const double FOCAL = 525.0;
-	obs.cameraParams.nrows = 640;
-	obs.cameraParams.ncols = 480;
+	obs.cameraParams.nrows = 480;
+	obs.cameraParams.ncols = 640;
 	obs.cameraParams.fx(FOCAL);
 	obs.cameraParams.fy(FOCAL);
 	obs.cameraParams.cx(319.5);

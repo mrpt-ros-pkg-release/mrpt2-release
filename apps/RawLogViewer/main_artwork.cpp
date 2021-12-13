@@ -2,43 +2,28 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
-#include "xRawLogViewerMain.h"
-
 #include <wx/tooltip.h>
 
-#include "imgs/Applications.xpm"
-#include "imgs/ArrowLeft2.xpm"
-#include "imgs/Exec.xpm"
-#include "imgs/Folderdownloads.xpm"
-#include "imgs/MAIN_ICON.xpm"
-#include "imgs/Qmark.xpm"
-#include "imgs/Sports-Car-2.xpm"
-#include "imgs/file_save.xpm"
-#include "imgs/icon_animate_scans.xpm"
-#include "imgs/icon_icp.xpm"
-#include "imgs/icon_play.xpm"
-
+#include "../wx-common/return_bitmap.h"
+//
+#include "../wx-common/Applications.xpm"
+#include "../wx-common/ArrowLeft2.xpm"
+#include "../wx-common/Exec.xpm"
+#include "../wx-common/Folderdownloads.xpm"
+#include "../wx-common/Qmark.xpm"
+#include "../wx-common/Sports-Car-2.xpm"
+#include "../wx-common/file_save.xpm"
+#include "../wx-common/icon_animate_scans.xpm"
+#include "../wx-common/icon_icp.xpm"
+#include "../wx-common/icon_play.xpm"
 #include "../wx-common/mrpt_logo.xpm"
-
-#define RETURN_BITMAP(artid, xpm)                                        \
-	if (id == artid)                                                     \
-	{                                                                    \
-		if (client == wxART_MENU)                                        \
-		{                                                                \
-			wxBitmap b(xpm);                                             \
-			return wxBitmap(                                             \
-				b.ConvertToImage().Scale(16, 16, wxIMAGE_QUALITY_HIGH)); \
-		}                                                                \
-		else                                                             \
-		{                                                                \
-			return wxBitmap(xpm);                                        \
-		}                                                                \
-	}
+#include "imgs/MAIN_ICON.xpm"
+#include "xRawLogViewerMain.h"
 
 // CreateBitmap function
 wxBitmap MyArtProvider::CreateBitmap(

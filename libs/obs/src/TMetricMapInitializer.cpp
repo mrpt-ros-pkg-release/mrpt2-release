@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "obs-precomp.h"  // Precomp header
-
+//
 #include <mrpt/config/CConfigFileBase.h>
 #include <mrpt/maps/TMetricMapInitializer.h>
 #include <mrpt/serialization/CArchive.h>
@@ -52,7 +52,7 @@ void TMetricMapInitializer::saveToConfigFile(
 	mrpt::config::CConfigFileBase& target, const std::string& section) const
 {
 	auto s = section + std::string("_") +
-			 std::string(this->metricMapClassType->className);
+		std::string(this->metricMapClassType->className);
 	this->genericMapParams.saveToConfigFile(target, s);
 }
 
@@ -114,7 +114,8 @@ void TSetOfMetricMapInitializers::loadFromConfigFile(
 void TSetOfMetricMapInitializers::saveToConfigFile(
 	mrpt::config::CConfigFileBase& target, const std::string& section) const
 {
-	for (auto& mi : *this) mi->saveToConfigFile(target, section);
+	for (auto& mi : *this)
+		mi->saveToConfigFile(target, section);
 }
 
 void TSetOfMetricMapInitializers::dumpToTextStream(std::ostream& out) const

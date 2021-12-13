@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -67,7 +67,7 @@ size_t find_descriptor_pairings(
 	const size_t N = feats_img1.size();
 	if (pairings_1_to_multi_2)
 		pairings_1_to_multi_2->assign(
-			N, std::vector<size_t>());  // Reset output container
+			N, std::vector<size_t>());	// Reset output container
 	if (pairings_1_to_2)
 	{
 		pairings_1_to_2->clear();
@@ -116,15 +116,14 @@ size_t find_descriptor_pairings(
 		const CFeature::TDescriptors& descs = feats_img1[i].descriptors;
 
 		const void* ptr_query;
-		if (descriptor == descSIFT)
-			ptr_query = &(*descs.SIFT)[0];
+		if (descriptor == descSIFT) ptr_query = &(*descs.SIFT)[0];
 		else if (descriptor == descSURF)
 			ptr_query = &(*descs.SURF)[0];
 
 		feats_img2_kdtree.get_kdtree().knnSearch(
 			static_cast<const KDTreeElementType*>(ptr_query),  // Query point
-			max_neighbors,  // Number of neigbors
-			&indices[0], &distances[0]  // Output
+			max_neighbors,	// Number of neigbors
+			&indices[0], &distances[0]	// Output
 		);
 
 		// Include all correspondences below the absolute and the relative

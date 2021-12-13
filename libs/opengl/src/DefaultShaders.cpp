@@ -2,12 +2,12 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
-#include "opengl-precomp.h"  // Precompiled header
+#include "opengl-precomp.h"	 // Precompiled header
 //
 #include <mrpt/opengl/DefaultShaders.h>
 #include <mrpt/opengl/opengl_api.h>
@@ -19,15 +19,6 @@ using namespace mrpt::opengl;
 Program::Ptr mrpt::opengl::LoadDefaultShader(const shader_id_t id)
 {
 #if MRPT_HAS_OPENGL_GLUT
-
-#if defined(MRPT_OS_LINUX)
-	// Workaround to enfore wxWidgets to use GLSL>=3.3 even for wxWidgets<3.0.4
-	// See CWxGLCanvasBase::CWxGLCanvasBase.
-	if (!::getenv("MESA_GL_VERSION_OVERRIDE"))
-	{
-		::setenv("MESA_GL_VERSION_OVERRIDE", "3.3", 1 /*overwrite*/);
-	}
-#endif
 
 	// Vertex shader:
 	const char* vertex_shader = nullptr;
@@ -43,12 +34,13 @@ Program::Ptr mrpt::opengl::LoadDefaultShader(const shader_id_t id)
 			fragment_shader =
 #include "../shaders/points.f.glsl"
 				;
-			uniforms = {"p_matrix",
-						"mv_matrix",
-						"vertexPointSize",
-						"enableVariablePointSize",
-						"variablePointSize_K",
-						"variablePointSize_DepthScale"};
+			uniforms = {
+				"p_matrix",
+				"mv_matrix",
+				"vertexPointSize",
+				"enableVariablePointSize",
+				"variablePointSize_K",
+				"variablePointSize_DepthScale"};
 			attribs = {"position", "vertexColor"};
 			break;
 
@@ -72,8 +64,8 @@ Program::Ptr mrpt::opengl::LoadDefaultShader(const shader_id_t id)
 			fragment_shader =
 #include "../shaders/triangles.f.glsl"
 				;
-			uniforms = {"p_matrix",		 "mv_matrix",	  "light_diffuse",
-						"light_ambient", "light_specular", "light_direction"};
+			uniforms = {"p_matrix",		 "mv_matrix",		"light_diffuse",
+						"light_ambient", "light_direction", "enableLight"};
 			attribs = {"position", "vertexColor", "vertexNormal"};
 			break;
 			// ==============================
@@ -84,9 +76,9 @@ Program::Ptr mrpt::opengl::LoadDefaultShader(const shader_id_t id)
 			fragment_shader =
 #include "../shaders/textured-triangles.f.glsl"
 				;
-			uniforms = {"p_matrix",		   "mv_matrix",		 "pmv_matrix",
-						"light_diffuse",   "light_ambient",  "light_specular",
-						"light_direction", "textureSampler", "enableLight"};
+			uniforms = {"p_matrix",		  "mv_matrix",	   "pmv_matrix",
+						"light_diffuse",  "light_ambient", "light_direction",
+						"textureSampler", "enableLight"};
 			attribs = {"position", "vertexUV", "vertexNormal"};
 			break;
 			// ==============================
@@ -140,10 +132,12 @@ Program::Ptr mrpt::opengl::LoadDefaultShader(const shader_id_t id)
 #endif
 
 	// Uniforms:
-	for (const auto& name : uniforms) shader->declareUniform(name);
+	for (const auto& name : uniforms)
+		shader->declareUniform(name);
 
 	// Attributes:
-	for (const auto& name : attribs) shader->declareAttribute(name);
+	for (const auto& name : attribs)
+		shader->declareAttribute(name);
 
 	return shader;
 #else

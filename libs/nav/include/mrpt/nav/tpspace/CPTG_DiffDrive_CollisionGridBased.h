@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -88,8 +88,7 @@ class CPTG_DiffDrive_CollisionGridBased : public CPTG_RobotShape_Polygonal
 
 	// Access to PTG paths (see docs in base class)
 	size_t getPathStepCount(uint16_t k) const override;
-	void getPathPose(
-		uint16_t k, uint32_t step, mrpt::math::TPose2D& p) const override;
+	mrpt::math::TPose2D getPathPose(uint16_t k, uint32_t step) const override;
 	double getPathDist(uint16_t k, uint32_t step) const override;
 	bool getPathStepForDist(
 		uint16_t k, double dist, uint32_t& out_step) const override;
@@ -157,6 +156,8 @@ class CPTG_DiffDrive_CollisionGridBased : public CPTG_RobotShape_Polygonal
 		float min_dist, float* out_max_acc_v = nullptr,
 		float* out_max_acc_w = nullptr);
 
+	mrpt::math::TTwist2D getPathTwist(uint16_t k, uint32_t step) const override;
+
 	/**  A list of all the pairs (alpha,distance) such as the robot collides at
 	 *that cell.
 	 *  - map key   (uint16_t) -> alpha value (k)
@@ -205,12 +206,12 @@ class CPTG_DiffDrive_CollisionGridBased : public CPTG_RobotShape_Polygonal
 			const unsigned int icx, const unsigned int icy, const uint16_t k,
 			const float dist);
 
-	};  // end of class CCollisionGrid
+	};	// end of class CCollisionGrid
 
 	// Save/Load from files.
 	bool saveColGridsToFile(
 		const std::string& filename,
-		const mrpt::math::CPolygon& computed_robotShape) const;  // true = OK
+		const mrpt::math::CPolygon& computed_robotShape) const;	 // true = OK
 	bool loadColGridsFromFile(
 		const std::string& filename,
 		const mrpt::math::CPolygon& current_robotShape);  // true = OK

@@ -42,6 +42,12 @@ fy_utf8_is_valid(int c)
 	return c >= 0 && !((c >= 0xd800 && c <= 0xdfff) || c >= 0x110000);
 }
 
+static inline bool
+fy_utf8_is_printable_ascii(int c)
+{
+	return c >= 0x20 && c <= 0x7e;
+}
+
 /* generic utf8 decoder (not inlined) */
 int fy_utf8_get_generic(const void *ptr, int left, int *widthp);
 
@@ -119,10 +125,16 @@ static inline void *fy_utf8_put(void *ptr, size_t left, int c)
 #define FY_UTF8_FORMAT_BUFMIN	5
 enum fy_utf8_escape {
 	fyue_none,
-	fyue_doublequote,
 	fyue_singlequote,
+	fyue_doublequote,
 	fyue_doublequote_json,
+	fyue_doublequote_yaml_1_1,
 };
+
+static inline bool fy_utf8_escape_is_any_doublequote(enum fy_utf8_escape esc)
+{
+	return esc >= fyue_doublequote && esc <= fyue_doublequote_yaml_1_1;
+}
 
 char *fy_utf8_format(int c, char *buf, enum fy_utf8_escape esc);
 
@@ -147,6 +159,8 @@ char *fy_utf8_format_text(const char *buf, size_t len,
 		char *_out = alloca(_outsz + 1); \
 		fy_utf8_format_text(__buf, __len, _out, _outsz, __esc); \
 	})
+
+char *fy_utf8_format_text_alloc(const char *buf, size_t len, enum fy_utf8_escape esc);
 
 const void *fy_utf8_memchr_generic(const void *s, int c, size_t n);
 
@@ -189,5 +203,17 @@ static inline int fy_utf8_count(const void *ptr, size_t len)
 }
 
 int fy_utf8_parse_escape(const char **strp, size_t len, enum fy_utf8_escape esc);
+
+#define F_NONE			0
+#define F_NON_PRINT		FY_BIT(0)	/* non printable */
+#define F_SIMPLE_SCALAR		FY_BIT(1)	/* part of simple scalar */
+#define F_QUOTE_ESC		FY_BIT(2)	/* escape form, i.e \n */
+#define F_LB			FY_BIT(3)	/* is a linebreak */
+#define F_WS			FY_BIT(4)	/* is a whitespace */
+#define F_PUNCT			FY_BIT(5)	/* is a punctuation mark */
+#define F_LETTER		FY_BIT(6)	/* is a letter a..z A..Z */
+#define F_DIGIT			FY_BIT(7)	/* is a digit 0..9 */
+
+extern uint8_t fy_utf8_low_ascii_flags[0x80];
 
 #endif

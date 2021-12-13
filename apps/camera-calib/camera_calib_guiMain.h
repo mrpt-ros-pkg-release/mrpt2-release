@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -25,12 +25,11 @@
 #include <wx/spinctrl.h>
 #include <wx/stattext.h>
 #include <wx/textctrl.h>
+
 #include "MyGLCanvas.h"
 //*)
 
 #include <mrpt/gui/CDisplayWindow3D.h>
-
-#define CAMERA_CALIB_GUI_VERSION "2.0"
 
 class camera_calib_guiDialog : public wxDialog
 {
@@ -141,4 +140,4 @@ class camera_calib_guiDialog : public wxDialog
 	void clearListImages();
 };
 
-#endif  // CAMERA_CALIB_GUIMAIN_H
+#endif	// CAMERA_CALIB_GUIMAIN_H

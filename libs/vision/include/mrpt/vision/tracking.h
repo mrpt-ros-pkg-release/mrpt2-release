@@ -2,19 +2,19 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #pragma once
 
-#include <mrpt/vision/types.h>
-
 #include <mrpt/containers/yaml.h>
 #include <mrpt/img/CImage.h>
 #include <mrpt/system/CTimeLogger.h>
 #include <mrpt/vision/TKeyPoint.h>
+#include <mrpt/vision/types.h>
+
 #include <memory>  // for unique_ptr
 
 namespace mrpt::vision
@@ -303,5 +303,5 @@ struct CFeatureTracker_KL : public CGenericFeatureTracker
 		FEATLIST& inout_featureList);
 };
 
-/**  @}  */  // end of grouping
+/**  @}  */	 // end of grouping
 }  // namespace mrpt::vision

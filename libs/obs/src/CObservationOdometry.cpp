@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "obs-precomp.h"  // Precompiled headers
-
+//
 #include <mrpt/obs/CObservationOdometry.h>
 #include <mrpt/serialization/CArchive.h>
 #include <mrpt/system/os.h>
@@ -80,8 +80,7 @@ void CObservationOdometry::serializeFrom(
 			}
 		}
 		break;
-		default:
-			MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
 	};
 }
 
@@ -102,9 +101,32 @@ void CObservationOdometry::getDescriptionAsText(std::ostream& o) const
 		o << "Encoder info: Not available!\n";
 
 	if (hasVelocities)
-	{
-		o << format("Velocity info: %s\n", velocityLocal.asString().c_str());
-	}
+	{ o << format("Velocity info: %s\n", velocityLocal.asString().c_str()); }
 	else
 		o << "Velocity info: Not available!\n";
+}
+
+std::string CObservationOdometry::exportTxtHeader() const
+{
+	return mrpt::format(
+		"%18s %18s %18s "  // GLOBAL_ODO_{x,y,phi}
+		"%18s %18s %18s "  // HAS, TICKS_L/R
+		"%18s %18s %18s %18s "	// HAS, VX, VY,W
+		,
+		"GLOBAL_ODO_X", "GLOBAL_ODO_Y", "GLOBAL_ODO_PHI_RAD", "HAS_ENCODERS",
+		"LEFT_ENC_INCR_TICKS", "RIGHT_ENC_INCR_TICKS", "HAS_VELOCITIES",
+		"VEL_VX_MetPerSec", "VEL_VY_MetPerSec", "ANG_SPEED_RadPerSec");
+}
+std::string CObservationOdometry::exportTxtDataRow() const
+{
+	return mrpt::format(
+		"%18.5f %18.5f %18.5f "	 // GLOBAL_ODO_{x,y,phi}
+		"%18i %18i %18i "  // HAS, TICKS_L/R
+		"%18i %18.5f %18.5f %18.5f"	 // HAS, Vx, Vy,W
+		,
+		odometry.x(), odometry.y(), odometry.phi(),
+		static_cast<int>(hasEncodersInfo ? 1 : 0),
+		static_cast<int>(encoderLeftTicks), static_cast<int>(encoderRightTicks),
+		static_cast<int>(hasVelocities ? 1 : 0), velocityLocal.vx,
+		velocityLocal.vy, velocityLocal.omega);
 }
