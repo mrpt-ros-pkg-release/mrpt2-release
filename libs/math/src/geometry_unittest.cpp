@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -14,6 +14,7 @@
 #include <mrpt/math/TObject3D.h>
 #include <mrpt/math/TPose2D.h>
 #include <mrpt/math/geometry.h>
+
 #include <algorithm>
 
 using namespace mrpt;
@@ -30,7 +31,7 @@ TEST(Geometry, Line2DIntersect)
 	bool do_inter = intersect(l1, l2, inter);
 
 	EXPECT_TRUE(do_inter);
-	EXPECT_EQ(inter.getType(), GEOMETRIC_TYPE_POINT);
+	EXPECT_TRUE(inter.isPoint());
 
 	TPoint2D i(0, 0);
 	inter.getPoint(i);
@@ -77,6 +78,50 @@ TEST(Geometry, Line3DAngle)
 	EXPECT_NEAR(mrpt::RAD2DEG(mrpt::math::getAngle(l4, l1)), 30.0, 1e-5);
 }
 
+TEST(Geometry, Line3DDistance)
+{
+	{
+		// intersect
+		const auto l1 = TLine3D::FromTwoPoints({0, 0, 0}, {1, 0, 0});
+		const auto l2 = TLine3D::FromTwoPoints({-1, -1, 0}, {5, 5, 0});
+		EXPECT_NEAR(l1.distance(l2).value(), .0, 1e-10);
+	}
+	{
+		// cross (do not intersect)
+		const auto l1 = TLine3D::FromTwoPoints({0, 0, 0}, {1, 0, 0});
+		const auto l2 = TLine3D::FromTwoPoints({-1, -1, 1}, {5, 5, 1});
+		EXPECT_NEAR(l1.distance(l2).value(), 1.0, 1e-10);
+	}
+	{
+		// parallel:
+		const auto l1 = TLine3D::FromTwoPoints({0, 0, 0}, {1, 0, 0});
+		const auto l2 = TLine3D::FromTwoPoints({0, 2, 0}, {2, 2, 0});
+		EXPECT_FALSE(l1.distance(l2).has_value());
+	}
+}
+
+TEST(Geometry, Line3DDclosestPointTo)
+{
+	{
+		const auto l = TLine3D::FromTwoPoints({0, 0, 0}, {1, 0, 0});
+		const auto p = TPoint3D(-1, -1, 1);
+		const auto pc = l.closestPointTo(p);
+
+		EXPECT_NEAR(pc.x, -1, 1e-8);
+		EXPECT_NEAR(pc.y, 0, 1e-8);
+		EXPECT_NEAR(pc.z, 0, 1e-8);
+	}
+	{
+		const auto l = TLine3D::FromTwoPoints({0, 0, 0}, {0, 0, 1});
+		const auto p = TPoint3D(0, 0, -2);
+		const auto pc = l.closestPointTo(p);
+
+		EXPECT_NEAR(pc.x, 0, 1e-8);
+		EXPECT_NEAR(pc.y, 0, 1e-8);
+		EXPECT_NEAR(pc.z, -2, 1e-8);
+	}
+}
+
 TEST(Geometry, Segment2DIntersect)
 {
 	{
@@ -88,7 +133,7 @@ TEST(Geometry, Segment2DIntersect)
 		bool do_inter = intersect(s1, s2, inter);
 
 		EXPECT_TRUE(do_inter);
-		EXPECT_EQ(inter.getType(), GEOMETRIC_TYPE_POINT);
+		EXPECT_TRUE(inter.isPoint());
 
 		TPoint2D i(0, 0);
 		inter.getPoint(i);
@@ -131,7 +176,7 @@ TEST(Geometry, Intersection3D)
 
 		TObject3D inter;
 		EXPECT_TRUE(intersect(p3d, s3d, inter));
-		EXPECT_EQ(inter.getType(), GEOMETRIC_TYPE_SEGMENT);
+		EXPECT_TRUE(inter.isSegment());
 		TSegment3D test;
 		inter.getSegment(test);
 		// Should this be true? EXPECT_EQ(s3d, test);
@@ -145,7 +190,7 @@ TEST(Geometry, Intersection3D)
 
 		TObject3D inter;
 		EXPECT_TRUE(intersect(p3d, s3d, inter));
-		EXPECT_EQ(inter.getType(), GEOMETRIC_TYPE_POINT);
+		EXPECT_TRUE(inter.isPoint());
 	}
 	{
 		TSegment3D s3d1({
@@ -159,7 +204,7 @@ TEST(Geometry, Intersection3D)
 
 		TObject3D inter;
 		EXPECT_TRUE(intersect(s3d1, s3d2, inter));
-		EXPECT_EQ(inter.getType(), GEOMETRIC_TYPE_SEGMENT);
+		EXPECT_TRUE(inter.isSegment());
 	}
 	{
 		TSegment3D s3d1({
@@ -173,7 +218,7 @@ TEST(Geometry, Intersection3D)
 
 		TObject3D inter;
 		EXPECT_TRUE(intersect(s3d1, s3d2, inter));
-		EXPECT_EQ(inter.getType(), GEOMETRIC_TYPE_POINT);
+		EXPECT_TRUE(inter.isPoint());
 
 		TPoint3D test;
 		TPoint3D expect{0.5, 0.5, 0};
@@ -215,7 +260,7 @@ TEST(Geometry, IntersectionPlanePlane)
 
 		TObject3D inter;
 		EXPECT_TRUE(intersect(plane1, plane2, inter));
-		EXPECT_EQ(inter.getType(), GEOMETRIC_TYPE_PLANE);
+		EXPECT_TRUE(inter.isPlane());
 	}
 	{
 		// Intersecting planes
@@ -232,7 +277,7 @@ TEST(Geometry, IntersectionPlanePlane)
 
 		TObject3D inter;
 		EXPECT_TRUE(intersect(plane1, plane2, inter));
-		EXPECT_EQ(inter.getType(), GEOMETRIC_TYPE_LINE);
+		EXPECT_TRUE(inter.isLine());
 	}
 }
 
@@ -342,10 +387,11 @@ TEST(Geometry, conformAPlane)
 		EXPECT_FALSE(mrpt::math::conformAPlane(pts));
 	}
 	{
-		std::vector<TPoint3D> pts = {{5.56496063, -2.30508217, 29.53900000},
-									 {5.87949871, 0.00000000, 29.53900000},
-									 {13.50000000, 0.00000000, 0.00000000},
-									 {12.50465807, -7.29433126, 0.00000000}};
+		std::vector<TPoint3D> pts = {
+			{5.56496063, -2.30508217, 29.53900000},
+			{5.87949871, 0.00000000, 29.53900000},
+			{13.50000000, 0.00000000, 0.00000000},
+			{12.50465807, -7.29433126, 0.00000000}};
 		EXPECT_TRUE(mrpt::math::conformAPlane(pts));
 	}
 }
@@ -361,7 +407,7 @@ TEST(Geometry, RectanglesIntersection)
 
 	// Test cases: x,y,phi,  0/1:false/true (expected output)
 	const std::vector<tst_set_t> tsts = {
-		{0, 0, 0.0_deg, /*result*/ 1},	{3.1, 0, 0.0_deg, /*result*/ 0},
+		{0, 0, 0.0_deg, /*result*/ 1},	  {3.1, 0, 0.0_deg, /*result*/ 0},
 		{-3.1, 0, 0.0_deg, /*result*/ 0}, {2.9, 0, 0.0_deg, /*result*/ 1},
 		{-2.9, 0, 0.0_deg, /*result*/ 1}, {0, 4.1, 0.0_deg, /*result*/ 0},
 		{0, 3.9, 0.0_deg, /*result*/ 1},  {0, -4.1, 0.0_deg, /*result*/ 0},
@@ -401,4 +447,81 @@ TEST(TPlane, asString)
 	const auto p = TPlane::From3Points({1, 1, 1}, {2, 0, 0}, {0, 0, 5});
 	const auto s = p.asString();
 	EXPECT_EQ(s, "[  -5.00000,   -3.00000,   -2.00000,   10.00000]");
+}
+
+TEST(Geometry, closestFromPointToSegment)
+{
+	using mrpt::math::closestFromPointToSegment;
+	using mrpt::math::TPoint2D;
+
+	EXPECT_NEAR(
+		(closestFromPointToSegment({0, 0}, {0, 1}, {1, 1}) - TPoint2D(0, 1))
+			.norm(),
+		.0, 1e-5);
+	EXPECT_NEAR(
+		(closestFromPointToSegment({0, 1}, {0, 1}, {1, 1}) - TPoint2D(0, 1))
+			.norm(),
+		.0, 1e-5);
+	EXPECT_NEAR(
+		(closestFromPointToSegment({1, 1}, {0, 1}, {1, 1}) - TPoint2D(1, 1))
+			.norm(),
+		.0, 1e-5);
+	EXPECT_NEAR(
+		(closestFromPointToSegment({-1, 2}, {0, 1}, {1, 1}) - TPoint2D(0, 1))
+			.norm(),
+		.0, 1e-5);
+	EXPECT_NEAR(
+		(closestFromPointToSegment({3, 3}, {0, 1}, {1, 1}) - TPoint2D(1, 1))
+			.norm(),
+		.0, 1e-5);
+	EXPECT_NEAR(
+		(closestFromPointToSegment({0.5, 0.1}, {0, 1}, {1, 1}) -
+		 TPoint2D(0.5, 1))
+			.norm(),
+		.0, 1e-5);
+}
+
+TEST(Geometry, closestFromPointToLine)
+{
+	using mrpt::math::closestFromPointToLine;
+	using mrpt::math::TPoint2D;
+
+	EXPECT_NEAR(
+		(closestFromPointToLine({0, 0}, {0, 1}, {1, 1}) - TPoint2D(0, 1))
+			.norm(),
+		.0, 1e-5);
+	EXPECT_NEAR(
+		(closestFromPointToLine({0, 1}, {0, 1}, {1, 1}) - TPoint2D(0, 1))
+			.norm(),
+		.0, 1e-5);
+	EXPECT_NEAR(
+		(closestFromPointToLine({1, 1}, {0, 1}, {1, 1}) - TPoint2D(1, 1))
+			.norm(),
+		.0, 1e-5);
+	EXPECT_NEAR(
+		(closestFromPointToLine({-1, 2}, {0, 1}, {1, 1}) - TPoint2D(-1, 1))
+			.norm(),
+		.0, 1e-5);
+	EXPECT_NEAR(
+		(closestFromPointToLine({3, 3}, {0, 1}, {1, 1}) - TPoint2D(3, 1))
+			.norm(),
+		.0, 1e-5);
+	EXPECT_NEAR(
+		(closestFromPointToLine({0.5, 0.1}, {0, 1}, {1, 1}) - TPoint2D(0.5, 1))
+			.norm(),
+		.0, 1e-5);
+}
+
+TEST(Geometry, squaredDistancePointToLine)
+{
+	using mrpt::math::squaredDistancePointToLine;
+	using mrpt::math::TPoint2D;
+	EXPECT_NEAR(squaredDistancePointToLine({0, 0}, {0, 1}, {1, 1}), 1.0, 1e-5);
+	EXPECT_NEAR(squaredDistancePointToLine({0, 1}, {0, 1}, {1, 1}), .0, 1e-5);
+	EXPECT_NEAR(squaredDistancePointToLine({1, 1}, {0, 1}, {1, 1}), .0, 1e-5);
+	EXPECT_NEAR(squaredDistancePointToLine({-1, 2}, {0, 1}, {1, 1}), 1.0, 1e-5);
+	EXPECT_NEAR(squaredDistancePointToLine({3, 3}, {0, 1}, {1, 1}), 4.0, 1e-5);
+	EXPECT_NEAR(
+		squaredDistancePointToLine({0.5, 0.1}, {0, 1}, {1, 1}), 0.9 * 0.9,
+		1e-5);
 }

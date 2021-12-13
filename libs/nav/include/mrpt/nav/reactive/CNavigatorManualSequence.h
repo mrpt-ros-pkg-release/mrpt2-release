@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -10,6 +10,7 @@
 
 #include <mrpt/nav/reactive/CAbstractNavigator.h>
 #include <mrpt/system/CTicTac.h>
+
 #include <map>
 
 namespace mrpt::nav
@@ -29,7 +30,7 @@ class CNavigatorManualSequence : public mrpt::nav::CAbstractNavigator
 	void loadConfigFile(const mrpt::config::CConfigFileBase& c)
 		override;  // See base class docs!
 	void saveConfigFile(mrpt::config::CConfigFileBase& c)
-		const override;  // See base class docs!
+		const override;	 // See base class docs!
 	/** Must be called for loading collision grids, etc. before invoking any
 	 * navigation command */
 	void initialize() override;

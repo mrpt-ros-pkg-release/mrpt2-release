@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)               |
    |                          https://www.mrpt.org/                            |
    |                                                                           |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file        |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file        |
    | See: https://www.mrpt.org/Authors - All rights reserved.                  |
    | Released under BSD License. See details in https://www.mrpt.org/License   |
    +---------------------------------------------------------------------------+
@@ -25,18 +25,12 @@ inline std::string typeToName(TypeOfConfig type)
 {
 	switch (type)
 	{
-		case PointsMap:
-			return "pointsMap";
-		case Occupancy:
-			return "occupancyGrid";
-		case Landmarks:
-			return "landmarksMap";
-		case Beacon:
-			return "beaconMap";
-		case GasGrid:
-			return "gasGrid";
-		default:
-			break;
+		case PointsMap: return "pointsMap";
+		case Occupancy: return "occupancyGrid";
+		case Landmarks: return "landmarksMap";
+		case Beacon: return "beaconMap";
+		case GasGrid: return "gasGrid";
+		default: break;
 	}
 
 	return "";

@@ -1,12 +1,10 @@
 \defgroup mrpt_math_grp [mrpt-math]
 
-Math C++ library: vectors and matrices, probability distributions, statistics,
-geometry, etc.
+Math C++ library: vectors and matrices, probability distributions, statistics, geometry, etc.
 
 [TOC]
 
 # Library mrpt-math
-<small> [New in MRPT 2.0.0] </small>
 
 This library is part of MRPT and can be installed in Debian-based systems with:
 

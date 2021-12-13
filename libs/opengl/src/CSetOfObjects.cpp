@@ -2,18 +2,18 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
-#include "opengl-precomp.h"  // Precompiled header
-
+#include "opengl-precomp.h"	 // Precompiled header
+//
 #include <mrpt/opengl/CSetOfObjects.h>
 #include <mrpt/opengl/CTexturedPlane.h>
+#include <mrpt/opengl/opengl_api.h>
 #include <mrpt/serialization/CArchive.h>
 
-#include <mrpt/opengl/opengl_api.h>
 #include <algorithm>
 
 using namespace mrpt;
@@ -51,7 +51,8 @@ void CSetOfObjects::serializeTo(mrpt::serialization::CArchive& out) const
 	writeToStreamRender(out);
 
 	out.WriteAs<uint32_t>(m_objects.size());
-	for (const auto& m_object : m_objects) out << *m_object;
+	for (const auto& m_object : m_objects)
+		out << *m_object;
 }
 
 /*---------------------------------------------------------------
@@ -76,8 +77,7 @@ void CSetOfObjects::serializeFrom(
 				m_objects.begin(), m_objects.end(), ObjectReadFromStream(&in));
 		}
 		break;
-		default:
-			MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
 	};
 }
 
@@ -89,29 +89,59 @@ void CSetOfObjects::insert(const CRenderizable::Ptr& newObject)
 	m_objects.push_back(newObject);
 }
 
-/*--------------------------------------------------------------
-					dumpListOfObjects
-  ---------------------------------------------------------------*/
-void CSetOfObjects::dumpListOfObjects(std::vector<std::string>& lst)
+void CSetOfObjects::dumpListOfObjects(std::vector<std::string>& lst) const
 {
-	for (auto& m_object : m_objects)
+	for (auto& obj : m_objects)
 	{
 		// Single obj:
-		string s(m_object->GetRuntimeClass()->className);
-		if (m_object->m_name.size())
-			s += string(" (") + m_object->m_name + string(")");
+		string s(obj->GetRuntimeClass()->className);
+		if (obj->m_name.size()) s += string(" (") + obj->m_name + string(")");
 		lst.emplace_back(s);
 
-		if (m_object->GetRuntimeClass() ==
+		if (obj->GetRuntimeClass() ==
 			CLASS_ID_NAMESPACE(CSetOfObjects, mrpt::opengl))
 		{
-			auto* objs = dynamic_cast<CSetOfObjects*>(m_object.get());
+			auto* objs = dynamic_cast<CSetOfObjects*>(obj.get());
 
 			std::vector<std::string> auxLst;
 			objs->dumpListOfObjects(auxLst);
-			for (const auto& i : auxLst) lst.emplace_back(string(" ") + i);
+			for (const auto& i : auxLst)
+				lst.emplace_back(string(" ") + i);
 		}
 	}
+}
+
+mrpt::containers::yaml CSetOfObjects::asYAML() const
+{
+	mrpt::containers::yaml d = mrpt::containers::yaml::Sequence();
+
+	d.asSequence().resize(m_objects.size());
+
+	for (uint32_t i = 0; i < m_objects.size(); i++)
+	{
+		const auto obj = m_objects.at(i);
+		mrpt::containers::yaml de = mrpt::containers::yaml::Map();
+
+		de["index"] = i;  // type for "i" must be a stdint type
+		if (!obj)
+		{
+			de["class"] = "nullptr";
+			continue;
+		}
+		de["class"] = obj->GetRuntimeClass()->className;
+		de["name"] = obj->m_name;
+		de["location"] = obj->getPose().asString();
+
+		// Single obj:
+		if (obj->GetRuntimeClass() ==
+			CLASS_ID_NAMESPACE(CSetOfObjects, mrpt::opengl))
+		{
+			de["obj_children"] =
+				dynamic_cast<CSetOfObjects*>(obj.get())->asYAML();
+		}
+		d.asSequence().at(i) = std::move(de);
+	}
+	return d;
 }
 
 /*--------------------------------------------------------------
@@ -179,25 +209,29 @@ bool CSetOfObjects::contains(const CRenderizable::Ptr& obj) const
 
 CRenderizable& CSetOfObjects::setColorR_u8(const uint8_t r)
 {
-	for (auto& m_object : m_objects) m_object->setColorR_u8(m_color.R = r);
+	for (auto& m_object : m_objects)
+		m_object->setColorR_u8(m_color.R = r);
 	return *this;
 }
 
 CRenderizable& CSetOfObjects::setColorG_u8(const uint8_t g)
 {
-	for (auto& m_object : m_objects) m_object->setColorG_u8(m_color.G = g);
+	for (auto& m_object : m_objects)
+		m_object->setColorG_u8(m_color.G = g);
 	return *this;
 }
 
 CRenderizable& CSetOfObjects::setColorB_u8(const uint8_t b)
 {
-	for (auto& m_object : m_objects) m_object->setColorB_u8(m_color.B = b);
+	for (auto& m_object : m_objects)
+		m_object->setColorB_u8(m_color.B = b);
 	return *this;
 }
 
 CRenderizable& CSetOfObjects::setColorA_u8(const uint8_t a)
 {
-	for (auto& m_object : m_objects) m_object->setColorA_u8(m_color.A = a);
+	for (auto& m_object : m_objects)
+		m_object->setColorA_u8(m_color.A = a);
 	return *this;
 }
 
@@ -208,8 +242,7 @@ CRenderizable::Ptr CSetOfObjects::getByName(const string& str)
 {
 	for (auto& m_object : m_objects)
 	{
-		if (m_object->m_name == str)
-			return m_object;
+		if (m_object->m_name == str) return m_object;
 		else if (
 			m_object->GetRuntimeClass() ==
 			CLASS_ID_NAMESPACE(CSetOfObjects, opengl))
@@ -224,39 +257,21 @@ CRenderizable::Ptr CSetOfObjects::getByName(const string& str)
 
 /** Evaluates the bounding box of this object (including possible children) in
  * the coordinate frame of the object parent. */
-void CSetOfObjects::getBoundingBox(
-	mrpt::math::TPoint3D& bb_min, mrpt::math::TPoint3D& bb_max) const
+auto CSetOfObjects::getBoundingBox() const -> mrpt::math::TBoundingBox
 {
-	bb_min = TPoint3D(
-		std::numeric_limits<double>::max(), std::numeric_limits<double>::max(),
-		std::numeric_limits<double>::max());
-	bb_max = TPoint3D(
-		-std::numeric_limits<double>::max(),
-		-std::numeric_limits<double>::max(),
-		-std::numeric_limits<double>::max());
+	mrpt::math::TBoundingBox bb;
+	bool first = true;
 
-	for (const auto& m_object : m_objects)
+	for (const auto& o : m_objects)
 	{
-		TPoint3D child_bbmin(
-			std::numeric_limits<double>::max(),
-			std::numeric_limits<double>::max(),
-			std::numeric_limits<double>::max());
-		TPoint3D child_bbmax(
-			-std::numeric_limits<double>::max(),
-			-std::numeric_limits<double>::max(),
-			-std::numeric_limits<double>::max());
-		m_object->getBoundingBox(child_bbmin, child_bbmax);
-
-		keep_min(bb_min.x, child_bbmin.x);
-		keep_min(bb_min.y, child_bbmin.y);
-		keep_min(bb_min.z, child_bbmin.z);
-
-		keep_max(bb_max.x, child_bbmax.x);
-		keep_max(bb_max.y, child_bbmax.y);
-		keep_max(bb_max.z, child_bbmax.z);
+		if (first)
+		{
+			bb = o->getBoundingBox();
+			first = false;
+		}
+		else
+			bb.unionWith(o->getBoundingBox());
 	}
 
-	// Convert to coordinates of my parent:
-	m_pose.composePoint(bb_min, bb_min);
-	m_pose.composePoint(bb_max, bb_max);
+	return bb.compose(m_pose);
 }

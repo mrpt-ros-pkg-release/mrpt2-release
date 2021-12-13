@@ -2,12 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "holonomic_navigator_demoMain.h"
+
 #include <mrpt/gui/about_box.h>
 #include <wx/msgdlg.h>
 
@@ -29,10 +30,10 @@
 #include <mrpt/poses/CPoint2D.h>
 #include <mrpt/poses/CPose2D.h>
 #include <mrpt/serialization/CArchive.h>
-#include "../wx-common/mrpt_logo.xpm"
-#include "imgs/main_icon.xpm"
 
 #include "../ReactiveNavigationDemo/DEFAULT_GRIDMAP_DATA.h"
+#include "../wx-common/mrpt_logo.xpm"
+#include "imgs/main_icon.xpm"
 
 // A custom Art provider for customizing the icons:
 class MyArtProvider : public wxArtProvider
@@ -247,8 +248,8 @@ holonomic_navigator_demoFrame::holonomic_navigator_demoFrame(
 	FlexGridSizer7 = new wxFlexGridSizer(1, 2, 0, 0);
 	FlexGridSizer7->AddGrowableCol(1);
 	FlexGridSizer7->AddGrowableRow(0);
-	wxString __wxRadioBoxChoices_1[2] = {_("VFF (Virtual Force Field)"),
-										 _("ND (Nearness  Diagram)")};
+	wxString __wxRadioBoxChoices_1[2] = {
+		_("VFF (Virtual Force Field)"), _("ND (Nearness  Diagram)")};
 	rbHoloMethod = new wxRadioBox(
 		Panel1, ID_RADIOBOX1, _(" Holonomic method "), wxDefaultPosition,
 		wxDefaultSize, 2, __wxRadioBoxChoices_1, 1, wxRA_HORIZONTAL,
@@ -263,8 +264,7 @@ holonomic_navigator_demoFrame::holonomic_navigator_demoFrame(
 		wxDefaultValidator, _T("ID_TEXTCTRL1"));
 	edHoloParams->SetMinSize(wxSize(-1, 100));
 	wxFont edHoloParamsFont(
-		8, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, wxNORMAL, false,
-		wxEmptyString, wxFONTENCODING_DEFAULT);
+		8, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, wxNORMAL);
 	edHoloParams->SetFont(edHoloParamsFont);
 	FlexGridSizer7->Add(
 		edHoloParams, 1, wxALL | wxEXPAND | wxALIGN_LEFT | wxALIGN_TOP, 2);
@@ -318,8 +318,7 @@ holonomic_navigator_demoFrame::holonomic_navigator_demoFrame(
 	edInfoLocalView->SetBackgroundColour(
 		wxSystemSettings::GetColour(wxSYS_COLOUR_BTNFACE));
 	wxFont edInfoLocalViewFont(
-		8, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, wxNORMAL, false,
-		wxEmptyString, wxFONTENCODING_DEFAULT);
+		8, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, wxNORMAL);
 	edInfoLocalView->SetFont(edInfoLocalViewFont);
 	FlexGridSizer5->Add(
 		edInfoLocalView, 1, wxALL | wxEXPAND | wxALIGN_LEFT | wxALIGN_TOP, 2);
@@ -485,7 +484,7 @@ holonomic_navigator_demoFrame::holonomic_navigator_demoFrame(
 			0, -1, 0, 0, -0.2f, 0, 0.4f, 0.05f, 0.15f);
 		obj->setColor_u8(TColor(0, 0, 255));
 		m_gl_placing_nav_target->insert(obj);
-		m_gl_placing_nav_target->setVisibility(false);  // Start invisible.
+		m_gl_placing_nav_target->setVisibility(false);	// Start invisible.
 		openGLSceneRef->insert(m_gl_placing_nav_target);
 	}
 	{  // Sign of "replacing the robot":
@@ -588,8 +587,7 @@ void holonomic_navigator_demoFrame::OnAbout(wxCommandEvent&)
 
 void holonomic_navigator_demoFrame::updateMap3DView()
 {
-	gl_grid->clear();
-	m_gridMap.getAs3DObject(gl_grid);
+	m_gridMap.getVisualizationInto(*gl_grid);
 }
 
 void holonomic_navigator_demoFrame::OnbtnPlaceRobotClick(wxCommandEvent& event)
@@ -654,9 +652,7 @@ void holonomic_navigator_demoFrame::OntimRunSimulTrigger(wxTimerEvent& event)
 	try
 	{
 		if (btnStop->IsEnabled())
-		{
-			simulateOneStep(event.GetInterval() * 1e-3);
-		}
+		{ simulateOneStep(event.GetInterval() * 1e-3); }
 		updateViewsDynamicObjects();
 	}
 	catch (const std::exception& e)
@@ -683,8 +679,7 @@ void holonomic_navigator_demoFrame::reinitSimulator()
 		case 1:
 			m_holonomicMethod = std::make_unique<mrpt::nav::CHolonomicND>();
 			break;
-		default:
-			throw std::runtime_error("Invalid holonomic method selected!");
+		default: throw std::runtime_error("Invalid holonomic method selected!");
 	};
 
 	// Load params:
@@ -719,14 +714,14 @@ void holonomic_navigator_demoFrame::simulateOneStep(double time_step)
 		m_simul_options.SENSOR_NUM_RANGES,
 		m_simul_options.SENSOR_RANGE_NOISE_STD);
 
-	gl_scan3D->setScan(simulatedScan);  // Draw real scan in 3D view
+	gl_scan3D->setScan(simulatedScan);	// Draw real scan in 3D view
 
 	// Normalize:
 	for (size_t j = 0; j < simulatedScan.getScanSize(); j++)
 		simulatedScan.setScanRange(
 			j, simulatedScan.getScanRange(j) / simulatedScan.maxRange);
 
-	gl_scan2D->setScan(simulatedScan);  // Draw scaled scan in right-hand view
+	gl_scan2D->setScan(simulatedScan);	// Draw scaled scan in right-hand view
 
 	// Navigate:
 	mrpt::math::TPoint2D relTargetPose = (mrpt::poses::CPoint2D(m_targetPoint) -
@@ -758,8 +753,7 @@ void holonomic_navigator_demoFrame::simulateOneStep(double time_step)
 	// Update path graph:
 	const TPoint3D cur_pt(m_robotPose.x, m_robotPose.y, 0.01);
 
-	if (gl_robot_path->empty())
-		gl_robot_path->appendLine(cur_pt, cur_pt);
+	if (gl_robot_path->empty()) gl_robot_path->appendLine(cur_pt, cur_pt);
 	else
 		gl_robot_path->appendLineStrip(cur_pt);
 
@@ -794,10 +788,9 @@ void holonomic_navigator_demoFrame::simulateOneStep(double time_step)
 			for (size_t j = 0; j < N_STEPS; j++)
 			{
 				const double sec = log->gaps_ini[i] +
-								   j * (log->gaps_end[i] - log->gaps_ini[i]) /
-									   static_cast<double>(N_STEPS - 1);
-				const double ang =
-					M_PI *
+					j * (log->gaps_end[i] - log->gaps_ini[i]) /
+						static_cast<double>(N_STEPS - 1);
+				const double ang = M_PI *
 					(-1 + 2 * sec / ((float)simulatedScan.getScanSize()));
 				const double d = simulatedScan.getScanRange(sec) - 0.05;
 				gl_nd_gaps->appendLineStrip(d * cos(ang), d * sin(ang), 0);
@@ -918,8 +911,7 @@ void holonomic_navigator_demoFrame::Onplot3DMouseClick(wxMouseEvent& event)
 			m_gl_placing_robot->setVisibility(false);
 			break;
 		}
-		default:
-			break;
+		default: break;
 	}
 
 	m_plot3D->SetCursor(*wxSTANDARD_CURSOR);  // End of cross cursor
@@ -1030,8 +1022,8 @@ void holonomic_navigator_demoFrame::OnbtnLoadMapClick(wxCommandEvent& event)
 				  "center:"),
 				_("Grid parameters"), _("-1"), this);
 
-			if (sCellSize.ToDouble(&cell_size) && sCX.ToDouble(&cx) &&
-				sCY.ToDouble(&cy))
+			if (sCellSize.ToCDouble(&cell_size) && sCX.ToCDouble(&cx) &&
+				sCY.ToCDouble(&cy))
 			{
 				if (!m_gridMap.loadFromBitmap(img, cell_size, {cx, cy}))
 					wxMessageBox(

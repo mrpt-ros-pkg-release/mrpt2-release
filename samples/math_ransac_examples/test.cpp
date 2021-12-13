@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -18,6 +18,7 @@
 #include <mrpt/poses/CPose3D.h>
 #include <mrpt/random.h>
 #include <mrpt/system/CTicTac.h>
+
 #include <iostream>
 
 using namespace mrpt;
@@ -159,8 +160,7 @@ void TestRANSACLines()
 		for (size_t i = 0; i < N_line; i++)
 		{
 			const double xx = getRandomGenerator().drawUniform(-10, 10);
-			const double yy =
-				getRandomGenerator().drawGaussian1D(0, 0.05) -
+			const double yy = getRandomGenerator().drawGaussian1D(0, 0.05) -
 				(LINE_EQ[p][2] + LINE_EQ[p][0] * xx) / LINE_EQ[p][1];
 			xs.push_back(xx);
 			ys.push_back(yy);
@@ -202,7 +202,7 @@ void TestRANSACLines()
 		lx[1] = 15;
 		for (CVectorDouble::Index q = 0; q < lx.size(); q++)
 			ly[q] = -(p->second.coefs[2] + p->second.coefs[0] * lx[q]) /
-					p->second.coefs[1];
+				p->second.coefs[1];
 		win2.plot(lx, ly, "r-1", format("line_%u", n++));
 	}
 

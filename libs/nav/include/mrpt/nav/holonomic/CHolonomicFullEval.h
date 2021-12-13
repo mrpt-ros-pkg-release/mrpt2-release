@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -10,6 +10,7 @@
 
 #include <mrpt/config/CLoadableOptions.h>
 #include <mrpt/obs/CSinCosLookUpTableFor2DScans.h>
+
 #include "CAbstractHolonomicReactiveMethod.h"
 
 namespace mrpt::nav
@@ -67,7 +68,7 @@ class CHolonomicFullEval : public CAbstractHolonomicReactiveMethod
 	void initialize(const mrpt::config::CConfigFileBase& INI_FILE)
 		override;  // See base class docs
 	void saveConfigFile(mrpt::config::CConfigFileBase& c)
-		const override;  // See base class docs
+		const override;	 // See base class docs
 
 	/** Algorithm options */
 	struct TOptions : public mrpt::config::CLoadableOptions
@@ -112,7 +113,7 @@ class CHolonomicFullEval : public CAbstractHolonomicReactiveMethod
 			const std::string& section) override;  // See base docs
 		void saveToConfigFile(
 			mrpt::config::CConfigFileBase& cfg,
-			const std::string& section) const override;  // See base docs
+			const std::string& section) const override;	 // See base docs
 	};
 
 	/** Parameters of the algorithm (can be set manually or loaded from
@@ -153,7 +154,7 @@ class CHolonomicFullEval : public CAbstractHolonomicReactiveMethod
 		unsigned int target_idx, const NavInput& ni, EvalOutput& eo);
 
 	mrpt::obs::CSinCosLookUpTableFor2DScans m_sincos_lut;
-};  // end of CHolonomicFullEval
+};	// end of CHolonomicFullEval
 
 /** A class for storing extra information about the execution of
  * CHolonomicFullEval navigation.

@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -12,6 +12,7 @@
 #include <mrpt/math/CMatrixDynamic.h>
 #include <mrpt/math/CVectorDynamic.h>
 #include <mrpt/math/math_frwds.h>
+
 #include <cmath>
 #include <cstdarg>
 #include <cstdio>
@@ -19,12 +20,7 @@
 #include <limits>  // numeric_limits
 #include <vector>
 
-namespace mrpt
-{
-/** This base provides a set of functions for maths stuff.
- * \ingroup mrpt_math_grp
- */
-namespace math
+namespace mrpt::math
 {
 /**\brief Compare 2 floats and determine whether they are equal
  * \return True if equal, false otherwise
@@ -93,8 +89,21 @@ void linspace(T first, T last, size_t count, VECTOR& out_vector)
 		out_vector.resize(count);
 		const T incr = (last - first) / T(count - 1);
 		T c = first;
-		for (size_t i = 0; i < count; i++, c += incr) out_vector[i] = c;
+		for (size_t i = 0; i < count; i++, c += incr)
+			out_vector[i] = c;
 	}
+}
+
+/** Generates an equidistant sequence of numbers given the first one, the last
+ * one and the desired number of points. \sa sequence
+ * \note [New in MRPT 2.1.4]
+ */
+template <typename T, typename VECTOR = std::vector<T>>
+VECTOR linspace(T first, T last, size_t count)
+{
+	VECTOR v;
+	linspace(first, last, count, v);
+	return v;
 }
 
 /** Generates a sequence of values [first,first+STEP,first+2*STEP,...]   \sa
@@ -121,7 +130,8 @@ void normalize(const VEC1& v, VEC2& out_v)
 {
 	typename VEC1::Scalar total = 0;
 	const size_t N = v.size();
-	for (size_t i = 0; i < N; i++) total += square(v[i]);
+	for (size_t i = 0; i < N; i++)
+		total += square(v[i]);
 	total = std::sqrt(total);
 	if (total)
 	{
@@ -148,7 +158,8 @@ inline void extractColumnFromVectorOfVectors(
 {
 	const size_t N = data.size();
 	out_column.resize(N);
-	for (size_t i = 0; i < N; i++) out_column[i] = data[i][colIndex];
+	for (size_t i = 0; i < N; i++)
+		out_column[i] = data[i][colIndex];
 }
 
 /** Computes the factorial of an integer number and returns it as a 64-bit
@@ -213,11 +224,12 @@ std::vector<T>& loadVector(std::vector<T>& v, At (&theArray)[N])
 {
 	static_assert(N != 0, "N!=0");
 	v.resize(N);
-	for (size_t i = 0; i < N; i++) v[i] = static_cast<T>(theArray[i]);
+	for (size_t i = 0; i < N; i++)
+		v[i] = static_cast<T>(theArray[i]);
 	return v;
 }
 
-/**  @} */  // end of grouping container_ops_grp
+/**  @} */	// end of grouping container_ops_grp
 
 /** \defgroup mrpt_math_io Custom I/O for math containers
  * \ingroup mrpt_math_grp */
@@ -234,8 +246,8 @@ template <class TRIPLET>
 bool saveEigenSparseTripletsToFile(
 	const std::string& sFile, std::vector<TRIPLET>& tri)
 {
-#if defined(_MSC_VER) && \
-	(_MSC_VER >= 1400)  // Use a secure version in Visual Studio 2005+
+#if defined(_MSC_VER) &&                                                       \
+	(_MSC_VER >= 1400)	// Use a secure version in Visual Studio 2005+
 	FILE* f;
 	if (0 != ::fopen_s(&f, sFile.c_str(), "wt")) f = nullptr;
 #else
@@ -255,6 +267,4 @@ bool saveEigenSparseTripletsToFile(
 
 /** @} */  // End of mrpt_math_io
 
-}  // namespace math
-
-}  // namespace mrpt
+}  // namespace mrpt::math

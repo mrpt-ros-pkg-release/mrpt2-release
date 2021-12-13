@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -47,7 +47,7 @@ struct RobustKernel<rkLeastSquares, T>
 	{
 		out_1st_deriv = 1;
 		out_2nd_deriv = 0;
-		return r2;  // return: 2*cost;  cost: 0.5* |r|^2
+		return r2;	// return: 2*cost;  cost: 0.5* |r|^2
 	}
 };
 

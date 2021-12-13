@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -82,7 +82,8 @@ double stub_kmeans(
 		{
 			TInnerVectorCenters c;
 			c.resize(dims);
-			for (size_t j = 0; j < dims; j++) c[j] = *center_ptr++;
+			for (size_t j = 0; j < dims; j++)
+				c[j] = *center_ptr++;
 			out_centers->push_back(c);
 		}
 	}

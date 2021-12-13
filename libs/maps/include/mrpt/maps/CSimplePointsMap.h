@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -55,7 +55,7 @@ class CSimplePointsMap : public CPointsMap
 	   from CPointsMap
 		@{ */
 	void reserve(size_t newLength) override;  // See base class docs
-	void resize(size_t newLength) override;  // See base class docs
+	void resize(size_t newLength) override;	 // See base class docs
 	void setSize(size_t newLength) override;  // See base class docs
 	/** The virtual method for \a insertPoint() *without* calling
 	 * mark_as_modified()   */
@@ -90,11 +90,13 @@ class CSimplePointsMap : public CPointsMap
 	// See CPointsMap::loadFromRangeScan()
 	void loadFromRangeScan(
 		const mrpt::obs::CObservation2DRangeScan& rangeScan,
-		const mrpt::poses::CPose3D* robotPose = nullptr) override;
+		const std::optional<const mrpt::poses::CPose3D>& robotPose =
+			std::nullopt) override;
 	// See CPointsMap::loadFromRangeScan()
 	void loadFromRangeScan(
 		const mrpt::obs::CObservation3DRangeScan& rangeScan,
-		const mrpt::poses::CPose3D* robotPose = nullptr) override;
+		const std::optional<const mrpt::poses::CPose3D>& robotPose =
+			std::nullopt) override;
 
    protected:
 	void impl_copyFrom(const CPointsMap& obj) override;
@@ -140,7 +142,7 @@ class CSimplePointsMap : public CPointsMap
 	/** Rendering as 3D object options */
 	mrpt::maps::CPointsMap::TRenderOptions renderOpts;
 	MAP_DEFINITION_END(CSimplePointsMap)
-};  // End of class def.
+};	// End of class def.
 }  // namespace maps
 
 namespace opengl
@@ -192,7 +194,7 @@ class PointCloudAdapter<mrpt::maps::CSimplePointsMap>
 	{
 		m_obj.setPointFast(idx, 0, 0, 0);
 	}
-};  // end of PointCloudAdapter<mrpt::maps::CPointsMap>
+};	// end of PointCloudAdapter<mrpt::maps::CPointsMap>
 }  // namespace opengl
 
 }  // namespace mrpt

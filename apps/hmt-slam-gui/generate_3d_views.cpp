@@ -2,15 +2,15 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include <mrpt/opengl.h>
-#include "hmt_slam_guiMain.h"
-
 #include <wx/msgdlg.h>
+
+#include "hmt_slam_guiMain.h"
 
 //(*InternalHeaders(hmt_slam_guiFrame)
 #include <wx/artprov.h>
@@ -78,7 +78,7 @@ void hmt_slam_guiFrame::updateLocalMapView()
 				std::make_shared<opengl::CGridPlaneXY>(
 					-100, 100, -100, 100, 0, 5);
 			grid->setColor(0.4f, 0.4f, 0.4f);
-			objs->insert(grid);  // it will free the memory
+			objs->insert(grid);	 // it will free the memory
 		}
 
 		// Two passes: 1st draw the map on the ground, then the rest.
@@ -99,10 +99,7 @@ void hmt_slam_guiFrame::updateLocalMapView()
 				if (!area) continue;
 
 				// Is this the first rendered area??
-				if (!firstArea)
-				{
-					firstArea = area;
-				}
+				if (!firstArea) { firstArea = area; }
 				else
 				{
 					// Compute the translation btw. ref. and current area:
@@ -136,9 +133,7 @@ void hmt_slam_guiFrame::updateLocalMapView()
 				// ---------------------------------------------------------
 				if (nRound == 0)
 				{
-					opengl::CSetOfObjects::Ptr objMap =
-						std::make_shared<opengl::CSetOfObjects>();
-					obj_mmap->getAs3DObject(objMap);
+					auto objMap = obj_mmap->getVisualization();
 					objMap->setPose(refPoseThisArea.mean);
 					objs->insert(objMap);
 				}
@@ -198,8 +193,7 @@ void hmt_slam_guiFrame::updateLocalMapView()
 
 						CMatrixDouble C = CMatrixDouble(refPoseThisArea.cov);
 
-						if (C(2, 2) < 1e6)
-							C.setSize(2, 2);
+						if (C(2, 2) < 1e6) C.setSize(2, 2);
 						else
 							C.setSize(3, 3);
 
@@ -219,8 +213,7 @@ void hmt_slam_guiFrame::updateLocalMapView()
 					// ---------------------------------------------------------
 					for (auto it = obj_robposes->begin();
 						 it != obj_robposes->end(); ++it)
-					{
-					}
+					{}
 				}
 
 			}  // end for nSelItem

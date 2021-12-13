@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -12,7 +12,8 @@
 #include <mrpt/config/CLoadableOptions.h>
 #include <mrpt/maps/TMetricMapTypesRegistry.h>
 #include <mrpt/maps/metric_map_types.h>
-#include <mrpt/rtti/CObject.h>  // For TRuntimeClassId
+#include <mrpt/rtti/CObject.h>	// For TRuntimeClassId
+
 #include <deque>
 
 namespace mrpt::maps
@@ -23,7 +24,7 @@ class TSetOfMetricMapInitializers;
  * be inserted into mrpt::maps::CMultiMetricMap)
  *  See `mrpt::maps::TSetOfMetricMapInitializers::loadFromConfigFile()` as an
  * easy way of initialize this object, or
- *  construct with the factory methods `<metric_map_class>::MapDefinition()`
+ *  construct with the factory methods `MetricMapClass::MapDefinition()`
  * and `TMetricMapInitializer::factory()`
  *
  * \sa TSetOfMetricMapInitializers, mrpt::maps::CMultiMetricMap
@@ -48,7 +49,7 @@ struct TMetricMapInitializer : public mrpt::config::CLoadableOptions
 	 */
 	void loadFromConfigFile(
 		const mrpt::config::CConfigFileBase& source,
-		const std::string& sectionNamePrefix) override;  // See base docs
+		const std::string& sectionNamePrefix) override;	 // See base docs
 	void saveToConfigFile(
 		mrpt::config::CConfigFileBase& target,
 		const std::string& section) const override;
@@ -76,7 +77,7 @@ struct TMetricMapInitializer : public mrpt::config::CLoadableOptions
 		const mrpt::config::CConfigFileBase& source,
 		const std::string& sectionNamePrefix) = 0;
 	virtual void dumpToTextStream_map_specific(std::ostream& out) const = 0;
-};  // end TMetricMapInitializer
+};	// end TMetricMapInitializer
 
 /** A set of TMetricMapInitializer structures, passed to the constructor
  * CMultiMetricMap::CMultiMetricMap

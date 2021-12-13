@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
-#include "opengl-precomp.h"  // Precompiled header
-
+#include "opengl-precomp.h"	 // Precompiled header
+//
 #include <mrpt/opengl/CText3D.h>
 #include <mrpt/serialization/CArchive.h>
 
@@ -50,7 +50,8 @@ void CText3D::onUpdateBuffers_Text()
 
 	// All lines & triangles, the same color:
 	cbd.assign(vbd.size(), m_color);
-	for (auto& tri : m_triangles) tri.setColor(m_color);
+	for (auto& tri : m_triangles)
+		tri.setColor(m_color);
 }
 
 uint8_t CText3D::serializeGetVersion() const { return 0; }
@@ -75,24 +76,14 @@ void CText3D::serializeFrom(mrpt::serialization::CArchive& in, uint8_t version)
 			m_text_style = TOpenGLFontStyle(i);
 		}
 		break;
-		default:
-			MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
 	};
 	CRenderizable::notifyChange();
 }
 
-void CText3D::getBoundingBox(
-	mrpt::math::TPoint3D& bb_min, mrpt::math::TPoint3D& bb_max) const
+auto CText3D::getBoundingBox() const -> mrpt::math::TBoundingBox
 {
-	bb_min.x = 0;
-	bb_min.y = 0;
-	bb_min.z = 0;
-
-	bb_max.x = m_str.size() * m_scale_x;
-	bb_max.y = 1;
-	bb_max.z = 0;
-
-	// Convert to coordinates of my parent:
-	m_pose.composePoint(bb_min, bb_min);
-	m_pose.composePoint(bb_max, bb_max);
+	return mrpt::math::TBoundingBox(
+			   {0, 0, 0}, {m_str.size() * m_scale_x, 1.0 * m_scale_y, 0})
+		.compose(m_pose);
 }

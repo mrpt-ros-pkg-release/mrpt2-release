@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -14,6 +14,7 @@
 #include <mrpt/opengl/CPlanarLaserScan.h>
 #include <mrpt/random.h>
 #include <mrpt/system/filesystem.h>
+
 #include <iostream>
 
 using namespace std;
@@ -35,11 +36,6 @@ void TestOpenGLObjects()
 	COpenGLScene::Ptr& theScene = win.get3DSceneAndLock();
 
 	auto& rng = mrpt::random::getRandomGenerator();
-
-	// Lights:
-	mrpt::opengl::TLightParameters& lights =
-		theScene->getViewport()->lightParameters();
-	lights.direction = mrpt::math::TVector3Df(-1, -1, -1).unitarize();
 
 	// Objects:
 	double off_x = 0;
@@ -152,6 +148,17 @@ void TestOpenGLObjects()
 		obj2->setColor_u8(0xff, 0x00, 0x00, 0x80);
 		theScene->insert(obj2);
 
+		// Default camera params:
+		mrpt::img::TCamera c;
+		c.nrows = 800;
+		c.ncols = 600;
+		c.setIntrinsicParamsFromValues(700, 700, 400, 300);
+
+		auto obj3 = opengl::CFrustum::Create(c);
+		obj3->setLocation(off_x, 12, 0);
+		obj3->setColor_u8(0xff, 0x00, 0x00, 0x80);
+		theScene->insert(obj3);
+
 		auto gl_txt = opengl::CText::Create("CFrustum");
 		gl_txt->setLocation(off_x, off_y_label, 0);
 		theScene->insert(gl_txt);
@@ -205,7 +212,7 @@ void TestOpenGLObjects()
 
 	// CEllipsoid3D
 	{
-		const double cov3d_dat[] = {0.9,  0.7,  -0.4, 0.7, 1.6,
+		const double cov3d_dat[] = {0.9,  0.7,	-0.4, 0.7, 1.6,
 									-0.6, -0.4, -0.6, 1.5};
 		const double cov2d_dat[] = {0.9, 0.7, 0.7, 1.6};
 		mrpt::math::CMatrixDouble22 cov2d(cov2d_dat);
@@ -302,8 +309,8 @@ void TestOpenGLObjects()
 		const double rho_mean = 0.5 * (1. / min_dist + 1. / max_dist);
 		const double rho_std = (1. / 6.) * (1. / min_dist - 1. / max_dist);
 
-		const double cov_params_dat[] = {square(rho_std), 0, 0,
-										 square(2.0_deg)};
+		const double cov_params_dat[] = {
+			square(rho_std), 0, 0, square(2.0_deg)};
 		const double mean_params_dat[] = {rho_mean, 70.0_deg};
 		mrpt::math::CMatrixFixed<double, 2, 2> cov_params(cov_params_dat);
 		mrpt::math::CMatrixFixed<double, 2, 1> mean_params(mean_params_dat);
@@ -402,11 +409,9 @@ void TestOpenGLObjects()
 				const unsigned int vert_ind = v + u * (rows + 1);
 
 				vert_coords[3 * vert_ind] = (2.f - 0.01f * u) *
-											(2.f + cos(0.01f * M_PI * v)) *
-											cos(0.01f * M_PI * u);
+					(2.f + cos(0.01f * M_PI * v)) * cos(0.01f * M_PI * u);
 				vert_coords[3 * vert_ind + 1] = (2.f - 0.01f * u) *
-												(2.f + cos(0.01f * M_PI * v)) *
-												sin(0.01f * M_PI * u);
+					(2.f + cos(0.01f * M_PI * v)) * sin(0.01f * M_PI * u);
 				vert_coords[3 * vert_ind + 2] =
 					3.f * 0.01f * u + (2.f - 0.01f * u) * sin(0.01f * M_PI * v);
 			}
@@ -440,7 +445,7 @@ void TestOpenGLObjects()
 				Z(r, c) = sin(0.05 * (c + r) - 0.5) * cos(0.9 - 0.03 * r);
 
 		const std::string texture_file = mrpt::system::getShareMRPTDir() +
-										 "datasets/sample-texture-terrain.jpg"s;
+			"datasets/sample-texture-terrain.jpg"s;
 
 		mrpt::img::CImage im;
 
@@ -472,6 +477,7 @@ void TestOpenGLObjects()
 		obj3->enableColorFromZ(true, mrpt::img::cmJET);
 		obj3->enableWireFrame(true);
 		obj3->setLocation(off_x, 0, 0);
+		obj3->cullFaces(mrpt::opengl::TCullFace::BACK);
 		theScene->insert(obj3);
 
 		// obj 4:
@@ -479,6 +485,7 @@ void TestOpenGLObjects()
 		{
 			obj4->assignImageAndZ(im, Z);
 			obj4->setLocation(off_x, 3, 0);
+			obj4->cullFaces(mrpt::opengl::TCullFace::BACK);
 			theScene->insert(obj4);
 		}
 
@@ -701,7 +708,7 @@ void TestOpenGLObjects()
 			const unsigned int num = 20;
 			const float scale = 0.8 * STEP_X / num;
 			auto obj = opengl::CVectorField3D::Create();
-			obj->setLocation(off_x, -0.5 * scale * num, 0);  //
+			obj->setLocation(off_x, -0.5 * scale * num, 0);	 //
 
 			CMatrixFloat x(num, num), y(num, num), z(num, num);
 			CMatrixFloat vx(num, num), vy(num, num), vz(num, num);
@@ -907,6 +914,20 @@ void TestOpenGLObjects()
 			theScene->insert(obj);
 		}
 
+		// a plane w/o a texture is a plain color plane:
+		{
+			opengl::CTexturedPlane::Ptr obj = opengl::CTexturedPlane::Create();
+			obj->setPose(mrpt::poses::CPose3D(off_x, 8.0, 0, 0, 90.0_deg, 0));
+			obj->setColor_u8(0xff, 0x00, 0x00, 0xff);
+			theScene->insert(obj);
+		}
+		{
+			opengl::CTexturedPlane::Ptr obj = opengl::CTexturedPlane::Create();
+			obj->setPose(mrpt::poses::CPose3D(off_x, 12.0, 0, 0, 90.0_deg, 0));
+			obj->setColor_u8(0xff, 0x00, 0x00, 0x40);
+			theScene->insert(obj);
+		}
+
 		auto gl_txt = opengl::CText::Create("CTexturedPlane");
 		gl_txt->setLocation(off_x, off_y_label, 0);
 		theScene->insert(gl_txt);
@@ -956,10 +977,19 @@ void TestOpenGLObjects()
 	}
 	off_x += STEP_X;
 
+	// Arrow to show the light direction:
+	auto glLightArrow = opengl::CArrow::Create(
+		mrpt::math::TPoint3Df(0, 0, 0), mrpt::math::TPoint3Df(1, 0, 0));
+	glLightArrow->setLocation(off_x / 2, 0, 10.0);
+	glLightArrow->setColor(0, 1, 0);
+	glLightArrow->setName("Light");
+	glLightArrow->enableShowName();
+	theScene->insert(glLightArrow);
+
 	// Add image-mode viewport:
 	{
 		const std::string img_file = mrpt::system::getShareMRPTDir() +
-									 "datasets/stereo-calib/0_left.jpg"s;
+			"datasets/stereo-calib/0_left.jpg"s;
 
 		mrpt::img::CImage im;
 		if (im.loadFromFile(img_file))
@@ -986,8 +1016,25 @@ void TestOpenGLObjects()
 	fp.draw_shadow = true;
 	win.addTextMessage(5, 5, "", 0 /*id*/, fp);
 
+	mrpt::opengl::TLightParameters& lights =
+		theScene->getViewport()->lightParameters();
+
+	lights.ambient = {0.2, 0.2, 0.2, 1};
+
 	while (win.isOpen())
 	{
+		// Lights:
+		const double t = mrpt::Clock::nowDouble();
+		const auto lightDir = mrpt::poses::CPose3D::FromXYZYawPitchRoll(
+			glLightArrow->getPoseX(), glLightArrow->getPoseY(),
+			glLightArrow->getPoseZ(), t * 10.0_deg, 45.0_deg, 0.0_deg);
+
+		glLightArrow->setPose(lightDir);
+
+		lights.direction =
+			lightDir.getRotationMatrix().extractColumn<mrpt::math::TVector3Df>(
+				0);
+
 		win.updateTextMessage(
 			0 /*id*/,
 			format("Render time=%.03fms", 1e3 / win.getRenderingFPS()));

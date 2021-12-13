@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "hmtslam-precomp.h"  // Precomp header
-
+//
 #include <mrpt/io/CFileStream.h>
 #include <mrpt/random.h>
 #include <mrpt/system/CTicTac.h>
@@ -48,7 +48,7 @@ void CHMTSLAM::thread_3D_viewer()
 		while (!obj->m_terminateThreads)
 		{
 			std::this_thread::sleep_for(100ms);
-		};  // end while execute thread
+		};	// end while execute thread
 
 		// Finish thread:
 		// -------------------------

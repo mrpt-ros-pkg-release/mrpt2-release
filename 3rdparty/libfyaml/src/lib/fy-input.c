@@ -20,6 +20,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
+#include <errno.h>
 
 #include <libfyaml.h>
 
@@ -76,32 +77,6 @@ void fy_input_free(struct fy_input *fyi)
 	free(fyi);
 }
 
-struct fy_input *fy_input_ref(struct fy_input *fyi)
-{
-	if (!fyi)
-		return NULL;
-
-
-	assert(fyi->refs + 1 > 0);
-
-	fyi->refs++;
-
-	return fyi;
-}
-
-void fy_input_unref(struct fy_input *fyi)
-{
-	if (!fyi)
-		return;
-
-	assert(fyi->refs > 0);
-
-	if (fyi->refs == 1)
-		fy_input_free(fyi);
-	else
-		fyi->refs--;
-}
-
 const char *fy_input_get_filename(struct fy_input *fyi)
 {
 	if (!fyi)
@@ -127,8 +102,14 @@ static void fy_input_from_data_setup(struct fy_input *fyi,
 	fyi->chunk = 0;
 	fyi->fp = NULL;
 
+	if (!handle)
+		goto out;
+
+	memset(handle, 0, sizeof(*handle));
+
 	if (size > 0)
-		aflags = fy_analyze_scalar_content(fyi, data, size);
+		aflags = fy_analyze_scalar_content(data, size,
+				false, fylb_cr_nl, fyfws_space_tab);	/* hardcoded yaml mode */
 	else
 		aflags = FYACF_EMPTY | FYACF_FLOW_PLAIN | FYACF_BLOCK_PLAIN;
 
@@ -164,8 +145,12 @@ static void fy_input_from_data_setup(struct fy_input *fyi,
 	handle->chomp = FYAC_STRIP;
 	handle->increment = 0;
 	handle->fyi = fyi;
+	handle->fyi_generation = fyi->generation;
 	handle->tabsize = 0;
-
+	handle->json_mode = false;	/* XXX hardcoded */
+	handle->lb_mode = fylb_cr_nl;
+	handle->fws_mode = fyfws_space_tab;
+out:
 	fyi->state = FYIS_PARSED;
 }
 
@@ -224,9 +209,9 @@ void fy_input_close(struct fy_input *fyi)
 			close(fyi->file.fd);
 			fyi->file.fd = -1;
 		}
-		if (fyi->file.addr && fyi->file.addr && fyi->file.addr != MAP_FAILED) {
-			munmap(fyi->file.addr, fyi->file.length);
-			fyi->file.addr = NULL;
+		if (fyi->addr && fyi->addr != MAP_FAILED) {
+			munmap(fyi->addr, fyi->file.length);
+			fyi->addr = NULL;
 		}
 		if (fyi->buffer) {
 			free(fyi->buffer);
@@ -239,11 +224,11 @@ void fy_input_close(struct fy_input *fyi)
 		break;
 
 	case fyit_stream:
+	case fyit_callback:
 		if (fyi->buffer) {
 			free(fyi->buffer);
 			fyi->buffer = NULL;
 		}
-		memset(&fyi->stream, 0, sizeof(fyi->stream));
 		break;
 
 	case fyit_memory:
@@ -259,69 +244,69 @@ void fy_input_close(struct fy_input *fyi)
 	}
 }
 
-/* open a file for reading respecting the search path */
-static int fy_path_open(struct fy_parser *fyp, const char *name, char **fullpathp)
+struct fy_diag *fy_reader_get_diag(struct fy_reader *fyr)
 {
-	char *sp, *s, *e, *t, *newp;
-	size_t len, maxlen;
-	int fd;
+	if (fyr && fyr->ops && fyr->ops->get_diag)
+		return fyr->ops->get_diag(fyr);
 
-	if (!fyp || !name || name[0] == '\0')
-		return -1;
-
-	/* for a full path, or no search path, open directly */
-	if (name[0] == '/' || !fyp->cfg.search_path || !fyp->cfg.search_path[0])
-		return open(name, O_RDONLY);
-
-	len = strlen(fyp->cfg.search_path);
-	sp = alloca(len + 1);
-	memcpy(sp, fyp->cfg.search_path, len + 1);
-
-	/* allocate the maximum possible so that we don't deal with reallocations */
-	maxlen = len + 1 + strlen(name);
-	newp = malloc(maxlen + 1);
-	if (!newp)
-		return -1;
-
-	s = sp;
-	e = sp + strlen(s);
-	while (s < e) {
-		/* skip completely empty */
-		if (*s == ':') {
-			s++;
-			continue;
-		}
-
-		t = strchr(s, ':');
-		if (t)
-			*t++ = '\0';
-		else
-			t = e;
-
-		len = strlen(s) + 1 + strlen(name) + 1;
-		snprintf(newp, maxlen, "%s/%s", s, name);
-
-		/* try opening */
-		fd = open(newp, O_RDONLY);
-		if (fd != -1) {
-			fyp_scan_debug(fyp, "opened file %s at %s", name, newp);
-
-			if (fullpathp)
-				*fullpathp = newp;
-			else
-				free(newp);
-			return fd;
-		}
-
-		s = t;
-	}
-
-	if (newp)
-		free(newp);
-	return -1;
+	return NULL;
 }
 
-int fy_parse_input_open(struct fy_parser *fyp, struct fy_input *fyi)
+int fy_reader_file_open(struct fy_reader *fyr, const char *filename)
+{
+	if (!fyr || !filename)
+		return -1;
+
+	if (fyr->ops && fyr->ops->file_open)
+		return fyr->ops->file_open(fyr, filename);
+
+	return open(filename, O_RDONLY);
+}
+
+void fy_reader_reset(struct fy_reader *fyr)
+{
+	const struct fy_reader_ops *ops;
+	struct fy_diag *diag;
+
+	if (!fyr)
+		return;
+
+	ops = fyr->ops;
+	diag = fyr->diag;
+
+	fy_input_unref(fyr->current_input);
+
+	memset(fyr, 0, sizeof(*fyr));
+
+	/* by default we're always in yaml mode */
+	fyr->mode = fyrm_yaml;
+	fyr->ops = ops;
+	fyr->diag = diag;
+	fyr->current_c = -1;
+}
+
+void fy_reader_setup(struct fy_reader *fyr, const struct fy_reader_ops *ops)
+{
+	if (!fyr)
+		return;
+
+	fyr->ops = ops;
+	fyr->diag = fy_reader_get_diag(fyr);
+	fyr->current_input = NULL;
+	fy_reader_reset(fyr);
+}
+
+void fy_reader_cleanup(struct fy_reader *fyr)
+{
+	if (!fyr)
+		return;
+
+	fy_input_unref(fyr->current_input);
+	fyr->current_input = NULL;
+	fy_reader_reset(fyr);
+}
+
+int fy_reader_input_open(struct fy_reader *fyr, struct fy_input *fyi, const struct fy_reader_input_cfg *icfg)
 {
 	struct stat sb;
 	int rc;
@@ -329,7 +314,16 @@ int fy_parse_input_open(struct fy_parser *fyp, struct fy_input *fyi)
 	if (!fyi)
 		return -1;
 
-	assert(fyi->state == FYIS_QUEUED);
+	/* unref any previous input */
+	fy_input_unref(fyr->current_input);
+	fyr->current_input = fy_input_ref(fyi);
+
+	fy_reader_apply_mode_to_input(fyr);
+
+	if (!icfg)
+		memset(&fyr->current_input_cfg, 0, sizeof(fyr->current_input_cfg));
+	else
+		fyr->current_input_cfg = *icfg;
 
 	/* reset common data */
 	fyi->buffer = NULL;
@@ -341,34 +335,37 @@ int fy_parse_input_open(struct fy_parser *fyp, struct fy_input *fyi)
 	switch (fyi->cfg.type) {
 	case fyit_file:
 		memset(&fyi->file, 0, sizeof(fyi->file));
-		fyi->file.fd = fy_path_open(fyp, fyi->cfg.file.filename, NULL);
-		fyp_error_check(fyp, fyi->file.fd != -1, err_out,
+		fyi->file.fd = fy_reader_file_open(fyr, fyi->cfg.file.filename);
+		fyr_error_check(fyr, fyi->file.fd != -1, err_out,
 				"failed to open %s",  fyi->cfg.file.filename);
 
 		rc = fstat(fyi->file.fd, &sb);
-		fyp_error_check(fyp, rc != -1, err_out,
+		fyr_error_check(fyr, rc != -1, err_out,
 				"failed to fstat %s", fyi->cfg.file.filename);
 
 		fyi->file.length = sb.st_size;
 
 		/* only map if not zero (and is not disabled) */
-		if (sb.st_size > 0 && !(fyp->cfg.flags & FYPCF_DISABLE_MMAP_OPT)) {
-			fyi->file.addr = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE,
+		if (sb.st_size > 0 && !fyr->current_input_cfg.disable_mmap_opt) {
+			fyi->addr = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE,
 					fyi->file.fd, 0);
 
 			/* convert from MAP_FAILED to NULL */
-			if (fyi->file.addr == MAP_FAILED)
-				fyi->file.addr = NULL;
+			if (fyi->addr == MAP_FAILED) {
+				fyr_debug(fyr, "mmap failed for file %s",
+						fyi->cfg.file.filename);
+				fyi->addr = NULL;
+			}
 		}
 		/* if we've managed to mmap, we' good */
-		if (fyi->file.addr)
+		if (fyi->addr)
 			break;
 
-		fyp_scan_debug(fyp, "direct mmap mode unavailable for file %s, switching to stream mode",
+		fyr_debug(fyr, "direct mmap mode unavailable for file %s, switching to stream mode",
 				fyi->cfg.file.filename);
 
 		fyi->fp = fdopen(fyi->file.fd, "r");
-		fyp_error_check(fyp, rc != -1, err_out,
+		fyr_error_check(fyr, rc != -1, err_out,
 				"failed to fdopen %s", fyi->cfg.file.filename);
 
 		/* fd ownership assigned to file */
@@ -377,18 +374,17 @@ int fy_parse_input_open(struct fy_parser *fyp, struct fy_input *fyi)
 		/* switch to stream mode */
 		fyi->chunk = sysconf(_SC_PAGESIZE);
 		fyi->buffer = malloc(fyi->chunk);
-		fyp_error_check(fyp, fyi->buffer, err_out,
+		fyr_error_check(fyr, fyi->buffer, err_out,
 				"fy_alloc() failed");
 		fyi->allocated = fyi->chunk;
 		break;
 
 	case fyit_stream:
-		memset(&fyi->stream, 0, sizeof(fyi->stream));
 		fyi->chunk = fyi->cfg.stream.chunk;
 		if (!fyi->chunk)
 			fyi->chunk = sysconf(_SC_PAGESIZE);
 		fyi->buffer = malloc(fyi->chunk);
-		fyp_error_check(fyp, fyi->buffer, err_out,
+		fyr_error_check(fyr, fyi->buffer, err_out,
 				"fy_alloc() failed");
 		fyi->allocated = fyi->chunk;
 		fyi->fp = fyi->cfg.stream.fp;
@@ -402,10 +398,26 @@ int fy_parse_input_open(struct fy_parser *fyp, struct fy_input *fyi)
 		/* nothing to do for memory */
 		break;
 
+	case fyit_callback:
+		fyi->chunk = sysconf(_SC_PAGESIZE);
+		fyi->buffer = malloc(fyi->chunk);
+		fyr_error_check(fyr, fyi->buffer, err_out,
+				"fy_alloc() failed");
+		fyi->allocated = fyi->chunk;
+		break;
+
 	default:
 		assert(0);
 		break;
 	}
+
+	fyr->current_input_pos = 0;
+	fyr->line = 0;
+	fyr->column = 0;
+	fyr->current_c = -1;
+	fyr->current_ptr = NULL;
+	fyr->current_w = 0;
+	fyr->current_left = 0;
 
 	fyi->state = FYIS_PARSE_IN_PROGRESS;
 
@@ -416,47 +428,46 @@ err_out:
 	return -1;
 }
 
-int fy_parse_input_done(struct fy_parser *fyp)
+int fy_reader_input_done(struct fy_reader *fyr)
 {
 	struct fy_input *fyi;
 	void *buf;
 
-	if (!fyp)
+	if (!fyr)
 		return -1;
 
-	fyi = fyp->current_input;
+	fyi = fyr->current_input;
 	if (!fyi)
 		return 0;
 
 	switch (fyi->cfg.type) {
 	case fyit_file:
-		if (fyi->file.addr)
+		if (fyi->addr)
 			break;
 
 		/* fall-through */
 
 	case fyit_stream:
-		fyp_error_check(fyp, fyp, err_out,
-				"no parser associated with input");
+	case fyit_callback:
 		/* chop extra buffer */
-		buf = realloc(fyi->buffer, fyp->current_input_pos);
-		fyp_error_check(fyp, buf || !fyp->current_input_pos, err_out,
+		buf = realloc(fyi->buffer, fyr->current_input_pos);
+		fyr_error_check(fyr, buf || !fyr->current_input_pos, err_out,
 				"realloc() failed");
 
 		fyi->buffer = buf;
-		fyi->allocated = fyp->current_input_pos;
+		fyi->allocated = fyr->current_input_pos;
+		/* increate input generation; required for direct input to work */
+		fyi->generation++;
 		break;
+
 	default:
 		break;
 
 	}
 
-	fyp_scan_debug(fyp, "moving current input to parsed inputs");
-
 	fyi->state = FYIS_PARSED;
 	fy_input_unref(fyi);
-
-	fyp->current_input = NULL;
+	fyr->current_input = NULL;
 
 	return 0;
 
@@ -464,15 +475,77 @@ err_out:
 	return -1;
 }
 
-const void *fy_parse_input_try_pull(struct fy_parser *fyp, struct fy_input *fyi,
-				    size_t pull, size_t *leftp)
+const void *fy_reader_ptr_slow_path(struct fy_reader *fyr, size_t *leftp)
+{
+	struct fy_input *fyi;
+	const void *p;
+	int left;
+
+	if (fyr->current_ptr) {
+		if (leftp)
+			*leftp = fyr->current_left;
+		return fyr->current_ptr;
+	}
+
+	fyi = fyr->current_input;
+	if (!fyi)
+		return NULL;
+
+	/* tokens cannot cross boundaries */
+	switch (fyi->cfg.type) {
+	case fyit_file:
+		if (fyi->addr) {
+			left = fyi->file.length - fyr->current_input_pos;
+			p = fyi->addr + fyr->current_input_pos;
+			break;
+		}
+
+		/* fall-through */
+
+	case fyit_stream:
+	case fyit_callback:
+		left = fyi->read - fyr->current_input_pos;
+		p = fyi->buffer + fyr->current_input_pos;
+		break;
+
+	case fyit_memory:
+		left = fyi->cfg.memory.size - fyr->current_input_pos;
+		p = fyi->cfg.memory.data + fyr->current_input_pos;
+		break;
+
+	case fyit_alloc:
+		left = fyi->cfg.alloc.size - fyr->current_input_pos;
+		p = fyi->cfg.alloc.data + fyr->current_input_pos;
+		break;
+
+
+	default:
+		assert(0);	/* no streams */
+		p = NULL;
+		left = 0;
+		break;
+	}
+
+	if (leftp)
+		*leftp = left;
+
+	fyr->current_ptr = p;
+	fyr->current_left = left;
+	fyr->current_c = fy_utf8_get(fyr->current_ptr, fyr->current_left, &fyr->current_w);
+
+	return p;
+}
+
+const void *fy_reader_input_try_pull(struct fy_reader *fyr, struct fy_input *fyi,
+				     size_t pull, size_t *leftp)
 {
 	const void *p;
 	size_t left, pos, size, nread, nreadreq, missing;
+	ssize_t snread;
 	size_t space __FY_DEBUG_UNUSED__;
 	void *buf;
 
-	if (!fyp || !fyi) {
+	if (!fyr || !fyi) {
 		if (leftp)
 			*leftp = 0;
 		return NULL;
@@ -480,26 +553,27 @@ const void *fy_parse_input_try_pull(struct fy_parser *fyp, struct fy_input *fyi,
 
 	p = NULL;
 	left = 0;
-	pos = fyp->current_input_pos;
+	pos = fyr->current_input_pos;
 
 	switch (fyi->cfg.type) {
 	case fyit_file:
 
-		if (fyi->file.addr) {
+		if (fyi->addr) {
 			assert(fyi->file.length >= pos);
 
 			left = fyi->file.length - pos;
 			if (!left) {
-				fyp_scan_debug(fyp, "file input exhausted");
+				fyr_debug(fyr, "file input exhausted");
 				break;
 			}
-			p = fyi->file.addr + pos;
+			p = fyi->addr + pos;
 			break;
 		}
 
 		/* fall-through */
 
 	case fyit_stream:
+	case fyit_callback:
 
 		assert(fyi->read >= pos);
 
@@ -511,9 +585,9 @@ const void *fy_parse_input_try_pull(struct fy_parser *fyp, struct fy_input *fyi,
 			break;
 
 		/* no more */
-		if (feof(fyi->fp) || ferror(fyi->fp)) {
+		if (fyi->eof) {
 			if (!left) {
-				fyp_scan_debug(fyp, "input exhausted (EOF)");
+				fyr_debug(fyr, "input exhausted (EOF)");
 				p = NULL;
 			}
 			break;
@@ -524,25 +598,28 @@ const void *fy_parse_input_try_pull(struct fy_parser *fyp, struct fy_input *fyi,
 		/* if we're missing more than the buffer space */
 		missing = pull - left;
 
-		fyp_scan_debug(fyp, "input: space=%zu missing=%zu", space, missing);
+		fyr_debug(fyr, "input: allocated=%zu read=%zu pos=%zu pull=%zu left=%zu space=%zu missing=%zu",
+				fyi->allocated, fyi->read, pos, pull, left, space, missing);
 
-		if (missing > 0) {
+		if (pos + pull > fyi->allocated) {
 
 			/* align size to chunk */
 			size = fyi->allocated + missing + fyi->chunk - 1;
 			size = size - size % fyi->chunk;
 
-			fyp_scan_debug(fyp, "input buffer missing %zu bytes (pull=%zu)",
-					missing, pull);
-			buf = realloc(fyi->buffer, size);
-			fyp_error_check(fyp, buf, err_out,
-					"realloc() failed");
+			fyr_debug(fyr, "input buffer missing %zu bytes (pull=%zu)", missing, pull);
 
-			fyp_scan_debug(fyp, "stream read allocated=%zu new-size=%zu",
-					fyi->allocated, size);
+			buf = realloc(fyi->buffer, size);
+			if (!buf) {
+				fyr_error(fyr, "realloc() failed");
+				goto err_out;
+			}
+
+			fyr_debug(fyr, "input read allocated=%zu new-size=%zu", fyi->allocated, size);
 
 			fyi->buffer = buf;
 			fyi->allocated = size;
+			fyi->generation++;
 
 			space = fyi->allocated - pos;
 			p = fyi->buffer + pos;
@@ -551,23 +628,89 @@ const void *fy_parse_input_try_pull(struct fy_parser *fyp, struct fy_input *fyi,
 		/* always try to read up to the allocated space */
 		do {
 			nreadreq = fyi->allocated - fyi->read;
+			assert(nreadreq > 0);
 
-			fyp_scan_debug(fyp, "performing read request of %zu", nreadreq);
+			if (fyi->cfg.type == fyit_callback) {
 
-			nread = fread(fyi->buffer + fyi->read, 1, nreadreq, fyi->fp);
+				fyr_debug(fyr, "performing callback request of %zu", nreadreq);
 
-			fyp_scan_debug(fyp, "read returned %zu", nread);
+				nread = fyi->cfg.callback.input(fyi->cfg.userdata, fyi->buffer + fyi->read, nreadreq);
 
-			if (!nread)
-				break;
+				fyr_debug(fyr, "callback returned %zu", nread);
+
+				if (nread <= 0) {
+					if (!nread) {
+						fyi->eof = true;
+						fyr_debug(fyr, "callback got EOF");
+					} else {
+						fyi->err = true;
+						fyr_debug(fyr, "callback got error");
+					}
+					break;
+				}
+
+			} else {
+				if (!fyi->cfg.stream.ignore_stdio) {
+
+					fyr_debug(fyr, "performing fread request of %zu", nreadreq);
+
+					nread = fread(fyi->buffer + fyi->read, 1, nreadreq, fyi->fp);
+
+					fyr_debug(fyr, "fread returned %zu", nread);
+
+					if (nread <= 0) {
+						fyi->err = ferror(fyi->fp);
+						if (fyi->err) {
+							fyi->eof = true;
+							fyr_debug(fyr, "fread got ERROR");
+							goto err_out;
+						}
+
+						fyi->eof = feof(fyi->fp);
+						if (fyi->eof)
+							fyr_debug(fyr, "fread got EOF");
+						nread = 0;
+						break;
+					}
+
+				} else {
+
+					fyr_debug(fyr, "performing read request of %zu", nreadreq);
+
+					do {
+						snread = read(fileno(fyi->fp), fyi->buffer + fyi->read, nreadreq);
+					} while (snread == -1 && errno == EAGAIN);
+
+					fyr_debug(fyr, "read returned %zd", snread);
+
+					if (snread == -1) {
+						fyi->err = true;
+						fyi->eof = true;
+						fyr_error(fyr, "read() failed");
+						goto err_out;
+					}
+
+					if (!snread) {
+						fyi->eof = true;
+						fyr_error(fyr, "read() failed");
+						nread = 0;
+						break;
+					}
+
+					nread = snread;
+				}
+			}
+
+			assert(nread > 0);
 
 			fyi->read += nread;
 			left = fyi->read - pos;
+
 		} while (left < pull);
 
 		/* no more, move it to parsed input chunk list */
 		if (!left) {
-			fyp_scan_debug(fyp, "input exhausted (can't read enough)");
+			fyr_debug(fyr, "input exhausted");
 			p = NULL;
 		}
 		break;
@@ -577,7 +720,7 @@ const void *fy_parse_input_try_pull(struct fy_parser *fyp, struct fy_input *fyi,
 
 		left = fyi->cfg.memory.size - pos;
 		if (!left) {
-			fyp_scan_debug(fyp, "memory input exhausted");
+			fyr_debug(fyr, "memory input exhausted");
 			break;
 		}
 		p = fyi->cfg.memory.data + pos;
@@ -588,7 +731,7 @@ const void *fy_parse_input_try_pull(struct fy_parser *fyp, struct fy_input *fyi,
 
 		left = fyi->cfg.alloc.size - pos;
 		if (!left) {
-			fyp_scan_debug(fyp, "alloc input exhausted");
+			fyr_debug(fyr, "alloc input exhausted");
 			break;
 		}
 		p = fyi->cfg.alloc.data + pos;
@@ -598,7 +741,6 @@ const void *fy_parse_input_try_pull(struct fy_parser *fyp, struct fy_input *fyi,
 	default:
 		assert(0);
 		break;
-
 	}
 
 	if (leftp)
@@ -611,15 +753,40 @@ err_out:
 	return NULL;
 }
 
-int fy_parse_input_append(struct fy_parser *fyp, const struct fy_input_cfg *fyic)
+void
+fy_reader_advance_slow_path(struct fy_reader *fyr, int c)
+{
+	bool is_line_break = false;
+	size_t w;
+
+	/* skip this character (optimize case of being the current) */
+	w = c == fyr->current_c ? (size_t)fyr->current_w : fy_utf8_width(c);
+	fy_reader_advance_octets(fyr, w);
+
+	/* first check for CR/LF */
+	if (c == '\r' && fy_reader_peek(fyr) == '\n') {
+		fy_reader_advance_octets(fyr, 1);
+		is_line_break = true;
+	} else if (fy_reader_is_lb(fyr, c))
+		is_line_break = true;
+
+	if (is_line_break) {
+		fyr->column = 0;
+		fyr->line++;
+	} else if (fyr->tabsize && fy_is_tab(c))
+		fyr->column += (fyr->tabsize - (fyr->column % fyr->tabsize));
+	else
+		fyr->column++;
+}
+
+struct fy_input *fy_input_create(const struct fy_input_cfg *fyic)
 {
 	struct fy_input *fyi = NULL;
 	int ret;
 
 	fyi = fy_input_alloc();
-	fyp_error_check(fyp, fyp != NULL, err_out,
-			"fy_input_alloc() failed!");
-
+	if (!fyi)
+		return NULL;
 	fyi->cfg = *fyic;
 
 	/* copy filename pointers and switch */
@@ -651,12 +818,17 @@ int fy_parse_input_append(struct fy_parser *fyp, const struct fy_input_cfg *fyic
 		if (ret == -1)
 			fyi->name = NULL;
 		break;
+	case fyit_callback:
+		ret = asprintf(&fyi->name, "<callback>");
+		if (ret == -1)
+			fyi->name = NULL;
+		break;
 	default:
 		assert(0);
 		break;
 	}
-	fyp_error_check(fyp, fyi->name, err_out,
-			"fyi->name alloc() failed!");
+	if (!fyi->name)
+		goto err_out;
 
 	fyi->buffer = NULL;
 	fyi->allocated = 0;
@@ -668,12 +840,11 @@ int fy_parse_input_append(struct fy_parser *fyp, const struct fy_input_cfg *fyic
 	case fyit_file:
 		memset(&fyi->file, 0, sizeof(fyi->file));
 		fyi->file.fd = -1;
-		fyi->file.addr = MAP_FAILED;
+		fyi->addr = MAP_FAILED;
 		break;
 
 		/* nothing for those two */
 	case fyit_stream:
-		memset(&fyi->stream, 0, sizeof(fyi->stream));
 		break;
 
 	case fyit_memory:
@@ -684,17 +855,51 @@ int fy_parse_input_append(struct fy_parser *fyp, const struct fy_input_cfg *fyic
 		/* nothing to do for memory */
 		break;
 
+	case fyit_callback:
+		/* nothing to do for callback */
+		break;
+
 	default:
 		assert(0);
 		break;
 	}
 
-	fyi->state = FYIS_QUEUED;
-	fy_input_list_add_tail(&fyp->queued_inputs, fyi);
+	/* default modes */
+	fyi->lb_mode = fylb_cr_nl;
+	fyi->fws_mode = fyfws_space_tab;
 
-	return 0;
+	return fyi;
 
 err_out:
 	fy_input_unref(fyi);
-	return -1;
+	return NULL;
 }
+
+/* ensure that there are at least size octets available */
+const void *fy_reader_ensure_lookahead_slow_path(struct fy_reader *fyr, size_t size, size_t *leftp)
+{
+	const void *p;
+	size_t left;
+
+	if (!leftp)
+		leftp = &left;
+
+	p = fy_reader_ptr(fyr, leftp);
+	if (!p || *leftp < size) {
+
+		fyr_debug(fyr, "ensure lookahead size=%zd left=%zd (%s - %zu)",
+				size, *leftp,
+				fy_input_get_filename(fyr->current_input),
+				fyr->current_input_pos);
+
+		p = fy_reader_input_try_pull(fyr, fyr->current_input, size, leftp);
+		if (!p || *leftp < size)
+			return NULL;
+
+		fyr->current_ptr = p;
+		fyr->current_left = *leftp;
+		fyr->current_c = fy_utf8_get(fyr->current_ptr, fyr->current_left, &fyr->current_w);
+	}
+	return p;
+}
+

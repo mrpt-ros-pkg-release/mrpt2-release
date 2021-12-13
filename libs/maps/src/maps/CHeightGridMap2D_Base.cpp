@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "maps-precomp.h"  // Precomp header
-
+//
 #include <mrpt/core/round.h>
 #include <mrpt/maps/CHeightGridMap2D_Base.h>
 #include <mrpt/maps/CSimplePointsMap.h>
@@ -111,7 +111,7 @@ bool CHeightGridMap2D_Base::intersectLine3D(
 			{
 				// yes:
 				TPoint3D colPt(testPt.x, testPt.y, pt_z);
-				obj = TObject3D(colPt);
+				obj = TObject3D::From(colPt);
 				return true;
 			}
 		}
@@ -126,7 +126,8 @@ bool CHeightGridMap2D_Base::intersectLine3D(
 }
 
 bool CHeightGridMap2D_Base::dem_internal_insertObservation(
-	const mrpt::obs::CObservation& obs, const mrpt::poses::CPose3D* robotPose)
+	const mrpt::obs::CObservation& obs,
+	const std::optional<const mrpt::poses::CPose3D>& robotPose)
 {
 	using namespace mrpt::poses;
 	using namespace mrpt::obs;
@@ -163,7 +164,7 @@ bool CHeightGridMap2D_Base::dem_internal_insertObservation(
 		const auto& o = static_cast<const CObservationVelodyneScan&>(obs);
 
 		// Create points map, if not created yet:
-		thePointsMoved.loadFromVelodyneScan(o, &robotPose3D);
+		thePointsMoved.loadFromVelodyneScan(o, robotPose3D);
 	}
 
 	// Factorized insertion of points, for different observation classes:
@@ -171,7 +172,7 @@ bool CHeightGridMap2D_Base::dem_internal_insertObservation(
 	{
 		TPointInsertParams pt_params;
 		pt_params.update_map_after_insertion =
-			false;  // update only once at end
+			false;	// update only once at end
 
 		const size_t N = thePointsMoved.size();
 		for (size_t i = 0; i < N; i++)

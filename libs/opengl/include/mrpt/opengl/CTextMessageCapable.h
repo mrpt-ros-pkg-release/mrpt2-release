@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -11,6 +11,7 @@
 #include <mrpt/opengl/CRenderizable.h>
 #include <mrpt/opengl/CText.h>
 #include <mrpt/opengl/opengl_fonts.h>
+
 #include <map>
 
 namespace mrpt::opengl
@@ -75,6 +76,6 @@ class CTextMessageCapable
    protected:
 	TListTextMessages m_2D_texts;
 
-};  // end of CTextMessageCapable
+};	// end of CTextMessageCapable
 
 }  // namespace mrpt::opengl

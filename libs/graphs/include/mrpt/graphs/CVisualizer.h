@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -19,7 +19,7 @@
 
 namespace mrpt::graphs::detail
 {
-/**\brief Base class for C*Visualizer classes.
+/** \brief Base class for C*Visualizer classes.
  *
  * By default provides visualization for a CNetowrkOfPoses containing nodes and
  * edges as constructed by a single agent/robot. Derived classes can inherit
@@ -27,7 +27,7 @@ namespace mrpt::graphs::detail
  */
 template <
 	class CPOSE,  // Type of edges
-	class MAPS_IMPLEMENTATION,  // Use std::map<> vs. std::vector<>
+	class MAPS_IMPLEMENTATION,	// Use std::map<> vs. std::vector<>
 	class NODE_ANNOTATIONS = mrpt::graphs::detail::TNodeAnnotations,
 	class EDGE_ANNOTATIONS = mrpt::graphs::detail::edge_annotations_empty>
 class CVisualizer

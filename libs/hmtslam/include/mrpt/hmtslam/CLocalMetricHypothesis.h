@@ -2,14 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 #pragma once
 
 #include <mrpt/bayes/CParticleFilterCapable.h>
-
 #include <mrpt/bayes/CParticleFilterData.h>
 #include <mrpt/hmtslam/CHMHMapNode.h>
 #include <mrpt/hmtslam/HMT_SLAM_common.h>
@@ -17,9 +16,9 @@
 #include <mrpt/obs/CActionRobotMovement2D.h>
 #include <mrpt/opengl/opengl_frwds.h>
 #include <mrpt/slam/CIncrementalMapPartitioner.h>
-#include <map>
 
 #include <list>
+#include <map>
 #include <mutex>
 
 namespace mrpt
@@ -274,7 +273,7 @@ class CLocalMetricHypothesis
 	/** Auxiliary variable used in the "pfAuxiliaryPFOptimal" algorithm. */
 	mutable std::vector<mrpt::poses::CPose2D> m_movementDrawMaximumLikelihood;
 
-};  // End of class def.
+};	// End of class def.
 
 }  // namespace hmtslam
 }  // namespace mrpt

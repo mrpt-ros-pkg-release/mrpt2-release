@@ -2,20 +2,21 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 #pragma once
 
 #include <mrpt/bayes/CParticleFilter.h>
+
 #include <cstdint>
 #include <cstdlib>
 #include <vector>
 
 namespace mrpt::bayes
 {
-#define INVALID_LIKELIHOOD_VALUE \
+#define INVALID_LIKELIHOOD_VALUE                                               \
 	(-1e300)  // An invalid log-likelihood value, used to signal non-initialized
 // likelihood variables.
 
@@ -281,6 +282,6 @@ class CParticleFilterCapable
 	 */
 	mutable TFastDrawAuxVars m_fastDrawAuxiliary;
 
-};  // End of class def.
+};	// End of class def.
 
 }  // namespace mrpt::bayes

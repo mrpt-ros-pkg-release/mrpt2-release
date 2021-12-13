@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -14,9 +14,11 @@
 #include <mrpt/maps/CSimpleMap.h>
 #include <mrpt/maps/CSimplePointsMap.h>
 #include <mrpt/math/CMatrixD.h>
+#include <mrpt/opengl/CSetOfObjects.h>
 #include <mrpt/poses/poses_frwds.h>
 #include <mrpt/system/COutputLogger.h>
 #include <mrpt/typemeta/TEnumType.h>
+
 #include <functional>
 #include <limits>
 
@@ -221,7 +223,7 @@ class CIncrementalMapPartitioner : public mrpt::system::COutputLogger,
 
 	similarity_func_t m_sim_func;
 
-};  // End of class def.
+};	// End of class def.
 }  // namespace mrpt::slam
 MRPT_ENUM_TYPE_BEGIN(mrpt::slam::similarity_method_t)
 MRPT_FILL_ENUM_MEMBER(mrpt::slam, smMETRIC_MAP_MATCHING);

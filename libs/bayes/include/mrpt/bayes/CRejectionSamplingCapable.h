@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -24,8 +24,9 @@ namespace bayes
  * \ingroup mrpt_bayes_grp
  */
 template <
-	class TStateSpace, mrpt::bayes::particle_storage_mode STORAGE =
-						   mrpt::bayes::particle_storage_mode::POINTER>
+	class TStateSpace,
+	mrpt::bayes::particle_storage_mode STORAGE =
+		mrpt::bayes::particle_storage_mode::POINTER>
 class CRejectionSamplingCapable
 {
    public:
@@ -96,7 +97,7 @@ class CRejectionSamplingCapable
 			}
 			else
 			{
-				it->log_w = 0;  // log(1.0);
+				it->log_w = 0;	// log(1.0);
 			}
 		}  // end for it
 
@@ -114,7 +115,7 @@ class CRejectionSamplingCapable
 	 */
 	virtual double RS_observationLikelihood(const TStateSpace& x) = 0;
 
-};  // End of class def.
+};	// End of class def.
 
 }  // namespace bayes
 }  // namespace mrpt

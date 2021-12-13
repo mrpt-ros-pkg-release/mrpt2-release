@@ -2,13 +2,16 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 #include "bindings.h"
 
 /* MRPT */
+#include <mrpt/io/CStream.h>
+#include <mrpt/maps/CPointsMap.h>
+#include <mrpt/maps/CSimpleMap.h>
 #include <mrpt/obs/CAction.h>
 #include <mrpt/obs/CActionCollection.h>
 #include <mrpt/obs/CActionRobotMovement3D.h>
@@ -19,11 +22,6 @@
 #include <mrpt/obs/CObservationOdometry.h>
 #include <mrpt/obs/CObservationRange.h>
 #include <mrpt/obs/CRawlog.h>
-
-#include <mrpt/maps/CPointsMap.h>
-#include <mrpt/maps/CSimpleMap.h>
-
-#include <mrpt/io/CStream.h>
 #include <mrpt/serialization/CArchive.h>
 
 /* STD */
@@ -39,74 +37,74 @@ using namespace mrpt::serialization;
 
 // CActionCollection
 void CActionCollection_insert1(
-	CActionCollection& self, CActionRobotMovement2D& action)
+	CActionCollection& me, CActionRobotMovement2D& action)
 {
-	self.insert(action);
+	me.insert(action);
 }
 
 void CActionCollection_insert2(
-	CActionCollection& self, CActionRobotMovement3D& action)
+	CActionCollection& me, CActionRobotMovement3D& action)
 {
-	self.insert(action);
+	me.insert(action);
 }
 // end of CActionCollection
 
 // CSensoryFrame
-const CPointsMap* CSensoryFrame_getAuxPointsMap(CSensoryFrame& self)
+const CPointsMap* CSensoryFrame_getAuxPointsMap(CSensoryFrame& me)
 {
-	return self.getAuxPointsMap<CPointsMap>();
+	return me.getAuxPointsMap<CPointsMap>();
 }
 
-const CPointsMap* CSensoryFrame_buildAuxPointsMap(CSensoryFrame& self)
+const CPointsMap* CSensoryFrame_buildAuxPointsMap(CSensoryFrame& me)
 {
-	return self.buildAuxPointsMap<CPointsMap>();
+	return me.buildAuxPointsMap<CPointsMap>();
 }
 // end of CSensoryFrame
 
 // CObservation
-long_ CObservation_get_timestamp(CObservation& self)
+long_ CObservation_get_timestamp(CObservation& me)
 {
-	return long_(self.timestamp);
+	return long_(me.timestamp);
 }
 
-void CObservation_set_timestamp(CObservation& self, long_ timestamp)
+void CObservation_set_timestamp(CObservation& me, long_ timestamp)
 {
 	auto t = mrpt::Clock::fromDouble(extract<uint64_t>(timestamp));
-	self.timestamp = t;
+	me.timestamp = t;
 }
 
-CPose3D CObservation_getSensorPose1(CObservation& self)
+CPose3D CObservation_getSensorPose1(CObservation& me)
 {
 	CPose3D sensorPose;
-	self.getSensorPose(sensorPose);
+	me.getSensorPose(sensorPose);
 	return sensorPose;
 }
 
-void CObservation_getSensorPose2(CObservation& self, CPose3D& sensorPose)
+void CObservation_getSensorPose2(CObservation& me, CPose3D& sensorPose)
 {
-	self.getSensorPose(sensorPose);
+	me.getSensorPose(sensorPose);
 }
 
-void CObservation_getSensorPose3(CObservation& self, TPose3D& sensorPose)
+void CObservation_getSensorPose3(CObservation& me, TPose3D& sensorPose)
 {
-	self.getSensorPose(sensorPose);
+	me.getSensorPose(sensorPose);
 }
 
-void CObservation_setSensorPose1(CObservation& self, CPose3D& sensorPose)
+void CObservation_setSensorPose1(CObservation& me, CPose3D& sensorPose)
 {
-	self.setSensorPose(sensorPose);
+	me.setSensorPose(sensorPose);
 }
 
-void CObservation_setSensorPose2(CObservation& self, TPose3D& sensorPose)
+void CObservation_setSensorPose2(CObservation& me, TPose3D& sensorPose)
 {
-	self.setSensorPose(sensorPose);
+	me.setSensorPose(sensorPose);
 }
 // end of CObservation
 
 // CObservationOdometry
 #ifdef ROS_EXTENSIONS
 object CObservationOdometry_to_ROS_RawOdometry_msg(
-	CObservationOdometry& self, str frame_id)
+	CObservationOdometry& me, str frame_id)
 {
 	// import msg
 	dict locals;
@@ -118,38 +116,37 @@ object CObservationOdometry_to_ROS_RawOdometry_msg(
 	// set info
 	raw_odometry_msg.attr("header").attr("frame_id") = frame_id;
 	raw_odometry_msg.attr("header").attr("stamp") =
-		TTimeStamp_to_ROS_Time(long_(self.timestamp));
-	raw_odometry_msg.attr("has_encoders_info") = self.hasEncodersInfo;
-	raw_odometry_msg.attr("has_velocities") = self.hasVelocities;
+		TTimeStamp_to_ROS_Time(long_(me.timestamp));
+	raw_odometry_msg.attr("has_encoders_info") = me.hasEncodersInfo;
+	raw_odometry_msg.attr("has_velocities") = me.hasVelocities;
 	// set data
-	raw_odometry_msg.attr("encoder_left_ticks") = self.encoderLeftTicks;
-	raw_odometry_msg.attr("encoder_right_ticks") = self.encoderRightTicks;
-	raw_odometry_msg.attr("velocity_lin") = self.velocityLocal.vx;
-	raw_odometry_msg.attr("velocity_ang") = self.velocityLocal.omega;
+	raw_odometry_msg.attr("encoder_left_ticks") = me.encoderLeftTicks;
+	raw_odometry_msg.attr("encoder_right_ticks") = me.encoderRightTicks;
+	raw_odometry_msg.attr("velocity_lin") = me.velocityLocal.vx;
+	raw_odometry_msg.attr("velocity_ang") = me.velocityLocal.omega;
 	return raw_odometry_msg;
 }
 
 void CObservationOdometry_from_ROS_RawOdometry_msg(
-	CObservationOdometry& self, object raw_odometry_msg)
+	CObservationOdometry& me, object raw_odometry_msg)
 {
 	// set info
-	self.sensorLabel =
+	me.sensorLabel =
 		extract<std::string>(raw_odometry_msg.attr("header").attr("frame_id"));
 	auto t = mrpt::Clock::fromDouble(extract<uint64_t>(TTimeStamp_from_ROS_Time(
 		raw_odometry_msg.attr("header").attr("stamp"))));
-	self.timestamp = t;
-	self.hasEncodersInfo =
+	me.timestamp = t;
+	me.hasEncodersInfo =
 		extract<bool>(raw_odometry_msg.attr("has_encoders_info"));
-	self.hasVelocities = extract<bool>(raw_odometry_msg.attr("has_velocities"));
+	me.hasVelocities = extract<bool>(raw_odometry_msg.attr("has_velocities"));
 	// set data
-	self.encoderLeftTicks =
+	me.encoderLeftTicks =
 		extract<int>(raw_odometry_msg.attr("encoder_left_ticks"));
-	self.encoderRightTicks =
+	me.encoderRightTicks =
 		extract<int>(raw_odometry_msg.attr("encoder_right_ticks"));
-	self.velocityLocal.vx =
-		extract<float>(raw_odometry_msg.attr("velocity_lin"));
-	self.velocityLocal.vy = 0;
-	self.velocityLocal.omega =
+	me.velocityLocal.vx = extract<float>(raw_odometry_msg.attr("velocity_lin"));
+	me.velocityLocal.vy = 0;
+	me.velocityLocal.omega =
 		extract<float>(raw_odometry_msg.attr("velocity_ang"));
 }
 #endif
@@ -157,7 +154,7 @@ void CObservationOdometry_from_ROS_RawOdometry_msg(
 
 // CObservationRange
 #ifdef ROS_EXTENSIONS
-object CObservationRange_to_ROS_Range_msg(CObservationRange& self, str frame_id)
+object CObservationRange_to_ROS_Range_msg(CObservationRange& me, str frame_id)
 {
 	// import msg
 	dict locals;
@@ -169,32 +166,32 @@ object CObservationRange_to_ROS_Range_msg(CObservationRange& self, str frame_id)
 	// set info
 	range_msg.attr("header").attr("frame_id") = frame_id;
 	range_msg.attr("header").attr("stamp") =
-		TTimeStamp_to_ROS_Time(long_(self.timestamp));
-	range_msg.attr("min_range") = self.minSensorDistance;
-	range_msg.attr("max_range") = self.maxSensorDistance;
-	range_msg.attr("field_of_view") = self.sensorConeApperture;
+		TTimeStamp_to_ROS_Time(long_(me.timestamp));
+	range_msg.attr("min_range") = me.minSensorDistance;
+	range_msg.attr("max_range") = me.maxSensorDistance;
+	range_msg.attr("field_of_view") = me.sensorConeApperture;
 	// set range
-	range_msg.attr("range") = self.sensedData[0].sensedDistance;
+	range_msg.attr("range") = me.sensedData[0].sensedDistance;
 	return range_msg;
 }
 
 void CObservationRange_from_ROS_Range_msg(
-	CObservationRange& self, object range_msg)
+	CObservationRange& me, object range_msg)
 {
 	// set info
-	self.sensorLabel =
+	me.sensorLabel =
 		extract<std::string>(range_msg.attr("header").attr("frame_id"));
 	auto t = mrpt::Clock::fromDouble(extract<uint64_t>(
 		TTimeStamp_from_ROS_Time(range_msg.attr("header").attr("stamp"))));
-	self.timestamp = t;
-	self.minSensorDistance = extract<float>(range_msg.attr("min_range"));
-	self.maxSensorDistance = extract<float>(range_msg.attr("max_range"));
-	self.sensorConeApperture = extract<float>(range_msg.attr("field_of_view"));
+	me.timestamp = t;
+	me.minSensorDistance = extract<float>(range_msg.attr("min_range"));
+	me.maxSensorDistance = extract<float>(range_msg.attr("max_range"));
+	me.sensorConeApperture = extract<float>(range_msg.attr("field_of_view"));
 	// set range
 	CObservationRange::TMeasurement data;
 	data.sensedDistance = extract<float>(range_msg.attr("range"));
-	self.sensedData.clear();
-	self.sensedData.push_back(data);
+	me.sensedData.clear();
+	me.sensedData.push_back(data);
 }
 #endif
 // end of CObservationRange
@@ -202,7 +199,7 @@ void CObservationRange_from_ROS_Range_msg(
 // CObservation2DRangeScan
 #ifdef ROS_EXTENSIONS
 object CObservation2DRangeScan_to_ROS_LaserScan_msg(
-	CObservation2DRangeScan& self, str frame_id)
+	CObservation2DRangeScan& me, str frame_id)
 {
 	// import msg
 	dict locals;
@@ -214,43 +211,43 @@ object CObservation2DRangeScan_to_ROS_LaserScan_msg(
 	// set info
 	scan_msg.attr("header").attr("frame_id") = frame_id;
 	scan_msg.attr("header").attr("stamp") =
-		TTimeStamp_to_ROS_Time(long_(self.timestamp));
+		TTimeStamp_to_ROS_Time(long_(me.timestamp));
 	scan_msg.attr("range_min") = 0.0;
-	scan_msg.attr("range_max") = self.maxRange;
-	scan_msg.attr("angle_min") = -self.aperture / 2.0;
-	scan_msg.attr("angle_max") = self.aperture / 2.0;
-	scan_msg.attr("angle_increment") = self.beamAperture;
+	scan_msg.attr("range_max") = me.maxRange;
+	scan_msg.attr("angle_min") = -me.aperture / 2.0;
+	scan_msg.attr("angle_max") = me.aperture / 2.0;
+	scan_msg.attr("angle_increment") = me.beamAperture;
 	// set ranges (no intensities given in mrpt)
 	list ranges;
-	for (size_t i = 0; i < self.getScanSize(); i++)
-		ranges.append(self.getScanRange(i));
+	for (size_t i = 0; i < me.getScanSize(); i++)
+		ranges.append(me.getScanRange(i));
 	scan_msg.attr("ranges") = ranges;
 	return scan_msg;
 }
 
 void CObservation2DRangeScan_from_ROS_LaserScan_msg(
-	CObservation2DRangeScan& self, object scan_msg, CPose3D pose)
+	CObservation2DRangeScan& me, object scan_msg, CPose3D pose)
 {
 	// set info
-	self.sensorLabel =
+	me.sensorLabel =
 		extract<std::string>(scan_msg.attr("header").attr("frame_id"));
 	auto t = mrpt::Clock::fromDouble(extract<uint64_t>(
 		TTimeStamp_from_ROS_Time(scan_msg.attr("header").attr("stamp"))));
-	self.timestamp = t;
-	self.maxRange = extract<float>(scan_msg.attr("range_max"));
-	self.aperture = extract<float>(scan_msg.attr("angle_max")) -
-					extract<float>(scan_msg.attr("angle_min"));
-	self.beamAperture = extract<float>(scan_msg.attr("angle_increment"));
-	self.sensorPose = pose;
+	me.timestamp = t;
+	me.maxRange = extract<float>(scan_msg.attr("range_max"));
+	me.aperture = extract<float>(scan_msg.attr("angle_max")) -
+		extract<float>(scan_msg.attr("angle_min"));
+	me.beamAperture = extract<float>(scan_msg.attr("angle_increment"));
+	me.sensorPose = pose;
 	// set ranges
 	tuple ranges = extract<tuple>(scan_msg.attr("ranges"));
 	const size_t N = len(ranges);
-	self.resizeScan(N);
+	me.resizeScan(N);
 	for (int i = 0; i < len(ranges); ++i)
 	{
 		float range = extract<float>(ranges[i]);
-		self.setScanRange(i, range);
-		self.setScanRangeValidity(i, (range < self.maxRange - 0.01));
+		me.setScanRange(i, range);
+		me.setScanRangeValidity(i, (range < me.maxRange - 0.01));
 	}
 }
 #endif
@@ -396,42 +393,49 @@ void export_obs()
 
 		{
 			// TMotionModelOptions
-			scope s2 =
-				class_<CActionRobotMovement2D::TMotionModelOptions>(
-					"TMotionModelOptions", init<>())
-					.def_readwrite(
-						"modelSelection",
-						&CActionRobotMovement2D::TMotionModelOptions::
-							modelSelection)
-					.def_readwrite(
-						"gaussianModel", &CActionRobotMovement2D::
-											 TMotionModelOptions::gaussianModel)
-					.def_readwrite(
-						"thrunModel", &CActionRobotMovement2D::
-										  TMotionModelOptions::thrunModel);
+			scope s2 = class_<CActionRobotMovement2D::TMotionModelOptions>(
+						   "TMotionModelOptions", init<>())
+						   .def_readwrite(
+							   "modelSelection",
+							   &CActionRobotMovement2D::TMotionModelOptions::
+								   modelSelection)
+						   .def_readwrite(
+							   "gaussianModel",
+							   &CActionRobotMovement2D::TMotionModelOptions::
+								   gaussianModel)
+						   .def_readwrite(
+							   "thrunModel",
+							   &CActionRobotMovement2D::TMotionModelOptions::
+								   thrunModel);
 
 			// TOptions_GaussianModel
 			class_<CActionRobotMovement2D::TMotionModelOptions::
 					   TOptions_GaussianModel>(
 				"TOptions_GaussianModel", init<>())
 				.def_readwrite(
-					"a1", &CActionRobotMovement2D::TMotionModelOptions::
-							  TOptions_GaussianModel::a1)
+					"a1",
+					&CActionRobotMovement2D::TMotionModelOptions::
+						TOptions_GaussianModel::a1)
 				.def_readwrite(
-					"a2", &CActionRobotMovement2D::TMotionModelOptions::
-							  TOptions_GaussianModel::a2)
+					"a2",
+					&CActionRobotMovement2D::TMotionModelOptions::
+						TOptions_GaussianModel::a2)
 				.def_readwrite(
-					"a3", &CActionRobotMovement2D::TMotionModelOptions::
-							  TOptions_GaussianModel::a3)
+					"a3",
+					&CActionRobotMovement2D::TMotionModelOptions::
+						TOptions_GaussianModel::a3)
 				.def_readwrite(
-					"a4", &CActionRobotMovement2D::TMotionModelOptions::
-							  TOptions_GaussianModel::a4)
+					"a4",
+					&CActionRobotMovement2D::TMotionModelOptions::
+						TOptions_GaussianModel::a4)
 				.def_readwrite(
-					"minStdXY", &CActionRobotMovement2D::TMotionModelOptions::
-									TOptions_GaussianModel::minStdXY)
+					"minStdXY",
+					&CActionRobotMovement2D::TMotionModelOptions::
+						TOptions_GaussianModel::minStdXY)
 				.def_readwrite(
-					"minStdPHI", &CActionRobotMovement2D::TMotionModelOptions::
-									 TOptions_GaussianModel::minStdPHI);
+					"minStdPHI",
+					&CActionRobotMovement2D::TMotionModelOptions::
+						TOptions_GaussianModel::minStdPHI);
 
 			// TOptions_ThrunModel
 			class_<CActionRobotMovement2D::TMotionModelOptions::

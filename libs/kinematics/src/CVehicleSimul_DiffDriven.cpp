@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
-#include "kinematics-precomp.h"  // Precompiled header
-
+#include "kinematics-precomp.h"	 // Precompiled header
+//
 #include <mrpt/kinematics/CVehicleSimul_DiffDriven.h>
 
 using namespace mrpt::kinematics;
@@ -43,9 +43,9 @@ void CVehicleSimul_DiffDriven::internal_simulControlStep(const double AAt)
 	else
 	{
 		m_v = Command_v0 +
-			  (Command_v - Command_v0) * (1 - exp(-elapsed_time / cTAU));
+			(Command_v - Command_v0) * (1 - exp(-elapsed_time / cTAU));
 		m_w = Command_w0 +
-			  (Command_w - Command_w0) * (1 - exp(-elapsed_time / cTAU));
+			(Command_w - Command_w0) * (1 - exp(-elapsed_time / cTAU));
 	}
 
 	// Local to global frame:

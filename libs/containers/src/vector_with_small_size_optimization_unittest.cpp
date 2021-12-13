@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -57,8 +57,10 @@ TEST(vector_with_small_size_optimization, ResizeWriteRead)
 		vwsso_t v;
 		v.resize(n);
 
-		for (size_t i = 0; i < n; i++) v[i] = i;
-		for (size_t i = 0; i < n; i++) EXPECT_EQ(v[i], i);
+		for (size_t i = 0; i < n; i++)
+			v[i] = i;
+		for (size_t i = 0; i < n; i++)
+			EXPECT_EQ(v[i], i);
 	}
 
 	// Reusing object:
@@ -66,8 +68,10 @@ TEST(vector_with_small_size_optimization, ResizeWriteRead)
 	for (size_t n = 1; n < SMALL_LEN * 2; n++)
 	{
 		v.resize(n);
-		for (size_t i = 0; i < n; i++) v[i] = i;
-		for (size_t i = 0; i < n; i++) EXPECT_EQ(v[i], i);
+		for (size_t i = 0; i < n; i++)
+			v[i] = i;
+		for (size_t i = 0; i < n; i++)
+			EXPECT_EQ(v[i], i);
 	}
 }
 
@@ -79,7 +83,8 @@ TEST(vector_with_small_size_optimization, ResizeWriteReadIterators)
 		vwsso_t v;
 		v.resize(n);
 
-		for (size_t i = 0; i < n; i++) v[i] = i;
+		for (size_t i = 0; i < n; i++)
+			v[i] = i;
 
 		size_t i = 0;
 		for (const auto& val : v)
@@ -94,7 +99,8 @@ TEST(vector_with_small_size_optimization, ResizeWriteReadIterators)
 	for (size_t n = 1; n < SMALL_LEN * 2; n++)
 	{
 		v.resize(n);
-		for (size_t i = 0; i < n; i++) v[i] = i;
+		for (size_t i = 0; i < n; i++)
+			v[i] = i;
 		size_t i = 0;
 		for (const auto& val : v)
 		{
@@ -112,7 +118,8 @@ TEST(vector_with_small_size_optimization, GrowCheckContents)
 		v.resize(n);
 		v[n - 1] = n - 1;
 
-		for (size_t i = 0; i < n; i++) EXPECT_EQ(v[i], i) << "n=" << n;
+		for (size_t i = 0; i < n; i++)
+			EXPECT_EQ(v[i], i) << "n=" << n;
 	}
 }
 
@@ -120,7 +127,8 @@ TEST(vector_with_small_size_optimization, ShrinkCheckContents)
 {
 	vwsso_t v;
 	v.resize(SMALL_LEN * 2);
-	for (size_t i = 0; i < v.size(); i++) v[i] = i;
+	for (size_t i = 0; i < v.size(); i++)
+		v[i] = i;
 
 	while (!v.empty())
 	{
@@ -139,5 +147,22 @@ TEST(vector_with_small_size_optimization, GrowCheckFrontBack)
 		v.resize(n);
 		EXPECT_EQ(&v[0], &v.front()) << "n=" << n;
 		EXPECT_EQ(&v[n - 1], &v.back()) << "n=" << n;
+	}
+}
+TEST(vector_with_small_size_optimization, push_back)
+{
+	vwsso_t v;
+	EXPECT_EQ(v.size(), 0U);
+
+	for (size_t i = 0; i < 2 * SMALL_LEN; i++)
+	{
+		v.push_back(100 + i);
+		EXPECT_EQ(v.size(), i + 1);
+
+		for (size_t j = 0; j <= i; j++)
+		{
+			EXPECT_EQ(v.at(j), 100 + j);
+			EXPECT_EQ(v[j], 100 + j);
+		}
 	}
 }

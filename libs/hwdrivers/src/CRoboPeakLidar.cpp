@@ -2,12 +2,12 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
-#include "hwdrivers-precomp.h"  // Precompiled headers
+#include "hwdrivers-precomp.h"	// Precompiled headers
 //
 #include <mrpt/comms/CClientTCPSocket.h>
 #include <mrpt/comms/CSerialPort.h>
@@ -292,10 +292,7 @@ bool CRoboPeakLidar::checkCOMMs()
 	}
 
 	rplidar_response_device_info_t devinfo;
-	if (IS_FAIL(RPLIDAR_DRV->getDeviceInfo(devinfo)))
-	{
-		return false;
-	}
+	if (IS_FAIL(RPLIDAR_DRV->getDeviceInfo(devinfo))) { return false; }
 
 	if (m_verbose)
 	{
@@ -309,7 +306,8 @@ bool CRoboPeakLidar::checkCOMMs()
 			(unsigned int)devinfo.hardware_version,
 			(unsigned int)devinfo.model);
 
-		for (unsigned char i : devinfo.serialnum) printf("%02X", i);
+		for (unsigned char i : devinfo.serialnum)
+			printf("%02X", i);
 		printf("\n");
 	}
 

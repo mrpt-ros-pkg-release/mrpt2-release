@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -44,12 +44,12 @@ typedef std::deque<CProbabilityParticle<TPose3D, particle_storage_mode::VALUE>>
 
 // CParticleFilter
 CParticleFilter::TParticleFilterStats CParticleFilter_executeOn(
-	CParticleFilter& self, CParticleFilterCapable& obj,
+	CParticleFilter& me, CParticleFilterCapable& obj,
 	const mrpt::obs::CActionCollection::Ptr action,
 	const mrpt::obs::CSensoryFrame::Ptr observation)
 {
 	CParticleFilter::TParticleFilterStats stats;
-	self.executeOn(obj, action.get(), observation.get(), &stats);
+	me.executeOn(obj, action.get(), observation.get(), &stats);
 	return stats;
 }
 // end of CParticleFilter

@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -12,6 +12,7 @@
 #include <mrpt/io/vector_loadsave.h>
 #include <mrpt/io/zip.h>
 #include <mrpt/system/CTicTac.h>
+
 #include <cstdio>
 #include <iostream>
 
@@ -42,10 +43,7 @@ int main(int argc, char** argv)
 
 		string gzfile = format("%s.gz", argv[1]);
 		int compress_level = 9;
-		if (argc >= 3)
-		{
-			compress_level = atoi(argv[2]);
-		}
+		if (argc >= 3) { compress_level = atoi(argv[2]); }
 		mrpt::system::CTicTac tictac;
 
 		tictac.Tic();

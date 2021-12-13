@@ -2,41 +2,49 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
-#include "system-precomp.h"  // Precompiled headers
-
+#include "system-precomp.h"	 // Precompiled headers
+//
 #ifdef _WIN32
 #ifdef _MSC_VER
 #include <sys/utime.h>
 #endif
-#include <windows.h>
-
 #include <direct.h>
 #include <io.h>
+#include <windows.h>
 #else
 #include <dirent.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <utime.h>
+
 #include <cerrno>
 #include <cstring>
 #include <ctime>
 #endif
 
+#include <mrpt/core/exceptions.h>
+#include <mrpt/system/CDirectoryExplorer.h>
+#include <mrpt/system/filesystem.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+
 #include <algorithm>
 #include <cstdio>
 #include <iostream>
 #include <queue>
 
-#include <mrpt/core/exceptions.h>
-#include <mrpt/system/CDirectoryExplorer.h>
-#include <mrpt/system/filesystem.h>
+#if STD_FS_IS_EXPERIMENTAL
+#include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
+#else
+#include <filesystem>
+namespace fs = std::filesystem;
+#endif
 
 using namespace mrpt::system;
 using namespace std;
@@ -44,14 +52,14 @@ using namespace std;
 /*---------------------------------------------------------------
 		explore
  ---------------------------------------------------------------*/
-void CDirectoryExplorer::explore(
-	const string& path, const unsigned long in_mask, TFileInfoList& outList)
+CDirectoryExplorer::TFileInfoList CDirectoryExplorer::explore(
+	const string& path, const unsigned long in_mask)
 {
 	MRPT_START
 
 	unsigned long mask = in_mask;
 
-	outList.clear();
+	CDirectoryExplorer::TFileInfoList outList;
 
 	// The path terminated in "/" or "\\"
 	string searchPath(path);
@@ -98,7 +106,7 @@ void CDirectoryExplorer::explore(
 
 			// File size:
 			newEntry.fileSize = ((uint64_t)f.nFileSizeLow) +
-								(((uint64_t)f.nFileSizeHigh) << 32);
+				(((uint64_t)f.nFileSizeHigh) << 32);
 
 			// File times:
 			struct stat statDat;
@@ -116,7 +124,7 @@ void CDirectoryExplorer::explore(
 			// Flags:
 			newEntry.isDir = 0 != (statDat.st_mode & _S_IFDIR);
 			newEntry.isSymLink =
-				false;  // (We donnot look for this in Windows, by now...)
+				false;	// (We donnot look for this in Windows, by now...)
 
 			// Save:
 			outList.push_back(newEntry);
@@ -146,9 +154,9 @@ void CDirectoryExplorer::explore(
 			// File name:
 			newEntry.name = string(ent->d_name);
 
-			// Complete file path:
-			newEntry.wholePath = searchPath;
-			newEntry.wholePath += newEntry.name;
+			// Complete absolute file path:
+			newEntry.wholePath =
+				fs::absolute(fs::path(searchPath + newEntry.name));
 
 			// File times:
 			struct stat statDat
@@ -176,9 +184,7 @@ void CDirectoryExplorer::explore(
 
 				// Is it a symbolic link?? Need to call "lstat":
 				if (!lstat(newEntry.wholePath.c_str(), &lstatDat))
-				{
-					newEntry.isSymLink = S_ISLNK(lstatDat.st_mode);
-				}
+				{ newEntry.isSymLink = S_ISLNK(lstatDat.st_mode); }
 				else
 					newEntry.isSymLink = false;
 
@@ -192,6 +198,8 @@ void CDirectoryExplorer::explore(
 
 // Done
 #endif
+
+	return outList;
 
 	MRPT_END
 }

@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -11,8 +11,6 @@
  * icp3d
  * Execute an Iterative Closest Point algorithm using two 3D point clouds.
  */
-
-#include <mrpt/slam/CICP.h>
 
 #include <mrpt/gui/CDisplayWindow3D.h>
 #include <mrpt/maps/CSimplePointsMap.h>
@@ -23,6 +21,8 @@
 #include <mrpt/opengl/CSphere.h>
 #include <mrpt/opengl/stock_objects.h>
 #include <mrpt/poses/CPose3DPDF.h>
+#include <mrpt/slam/CICP.h>
+
 #include <iostream>
 
 using namespace std;
@@ -136,17 +136,11 @@ void test_icp3D()
 	M2_noisy = M2;
 	M2_noisy.changeCoordinatesReference(SCAN2_POSE_ERROR);
 
-	CSetOfObjects::Ptr PTNS1 = CSetOfObjects::Create();
-	CSetOfObjects::Ptr PTNS2 = CSetOfObjects::Create();
-
 	M1.renderOptions.color = mrpt::img::TColorf(1, 0, 0);
-	M1.getAs3DObject(PTNS1);
-
 	M2_noisy.renderOptions.color = mrpt::img::TColorf(0, 0, 1);
-	M2_noisy.getAs3DObject(PTNS2);
 
-	scene2->insert(PTNS1);
-	scene2->insert(PTNS2);
+	scene2->insert(M1.getVisualization());
+	scene2->insert(M2_noisy.getVisualization());
 
 	// --------------------------------------
 	// Do the ICP-3D
@@ -164,9 +158,9 @@ void test_icp3D()
 	cout << "Size of  xs in M2: " << xs.size() << endl;
 
 	CPose3DPDF::Ptr pdf = icp.Align3D(
-		&M2_noisy,  // Map to align
+		&M2_noisy,	// Map to align
 		&M1,  // Reference map
-		CPose3D(),  // Initial gross estimate
+		CPose3D(),	// Initial gross estimate
 		icp_info);
 
 	CPose3D mean = pdf->getMeanVal();
@@ -179,13 +173,10 @@ void test_icp3D()
 	cout << "Real displacement: " << SCAN2_POSE_ERROR << endl;
 
 	// Aligned maps:
-	CSetOfObjects::Ptr PTNS2_ALIGN = CSetOfObjects::Create();
-
 	M2_noisy.changeCoordinatesReference(CPose3D() - mean);
-	M2_noisy.getAs3DObject(PTNS2_ALIGN);
 
-	scene3->insert(PTNS1);
-	scene3->insert(PTNS2_ALIGN);
+	scene3->insert(M1.getVisualization());
+	scene3->insert(M2_noisy.getVisualization());
 
 	// Show in Windows:
 	CDisplayWindow3D window("ICP-3D demo: scene", 500, 500);

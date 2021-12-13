@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "maps-precomp.h"  // Precompiled headers
-
+//
 #include <mrpt/config/CConfigFile.h>
 #include <mrpt/io/CMemoryStream.h>
 #include <mrpt/maps/CMultiMetricMap.h>
@@ -55,7 +55,7 @@ struct MapExecutor
 		std::for_each(mmm.maps.begin(), mmm.maps.end(), op);
 		MRPT_END
 	}
-};  // end of MapExecutor
+};	// end of MapExecutor
 
 // ------------------- Begin of map-operations helper templates
 
@@ -77,7 +77,7 @@ struct MapCanComputeLikelihood
 		can = can || ptr->canComputeObservationLikelihood(obs);
 	}
 
-};  // end of MapCanComputeLikelihood
+};	// end of MapCanComputeLikelihood
 
 struct MapAuxPFCleanup
 {
@@ -87,7 +87,7 @@ struct MapAuxPFCleanup
 	{
 		if (ptr) ptr->auxParticleFilterCleanUp();
 	}
-};  // end of MapAuxPFCleanup
+};	// end of MapAuxPFCleanup
 
 struct MapIsEmpty
 {
@@ -99,7 +99,7 @@ struct MapIsEmpty
 	{
 		if (ptr) is_empty = is_empty && ptr->isEmpty();
 	}
-};  // end of MapIsEmpty
+};	// end of MapIsEmpty
 
 // ---- End of map-operations helper templates
 
@@ -143,7 +143,8 @@ void CMultiMetricMap::serializeTo(mrpt::serialization::CArchive& out) const
 {
 	const auto n = static_cast<uint32_t>(maps.size());
 	out << n;
-	for (uint32_t i = 0; i < n; i++) out << *maps[i];
+	for (uint32_t i = 0; i < n; i++)
+		out << *maps[i];
 }
 
 void CMultiMetricMap::serializeFrom(
@@ -170,14 +171,13 @@ void CMultiMetricMap::serializeFrom(
 				ObjectReadFromStreamToPtrs<mrpt::maps::CMetricMap::Ptr>(&in));
 		}
 		break;
-		default:
-			MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
 	};
 }
 
 // Read docs in base class
 double CMultiMetricMap::internal_computeObservationLikelihood(
-	const CObservation& obs, const CPose3D& takenFrom)
+	const CObservation& obs, const CPose3D& takenFrom) const
 {
 	MRPT_START
 	double ret_log_lik = 0;
@@ -202,7 +202,8 @@ bool CMultiMetricMap::internal_canComputeObservationLikelihood(
 }
 
 bool CMultiMetricMap::internal_insertObservation(
-	const CObservation& obs, const CPose3D* robotPose)
+	const CObservation& obs,
+	const std::optional<const mrpt::poses::CPose3D>& robotPose)
 {
 	int total_insert = 0;
 
@@ -232,7 +233,7 @@ void CMultiMetricMap::determineMatching2D(
 bool CMultiMetricMap::isEmpty() const
 {
 	bool is_empty;
-	MapIsEmpty op_insert_obs(is_empty);  //-V614
+	MapIsEmpty op_insert_obs(is_empty);	 //-V614
 	MapExecutor::run(*this, op_insert_obs);
 	return is_empty;
 }
@@ -259,12 +260,11 @@ void CMultiMetricMap::saveMetricMapRepresentationToFile(
 	MRPT_END
 }
 
-void CMultiMetricMap::getAs3DObject(
-	mrpt::opengl::CSetOfObjects::Ptr& outObj) const
+void CMultiMetricMap::getVisualizationInto(mrpt::opengl::CSetOfObjects& o) const
 {
 	MRPT_START
 	std::for_each(maps.begin(), maps.end(), [&](auto& ptr) {
-		ptr->getAs3DObject(outObj);
+		ptr->getVisualizationInto(o);
 	});
 	MRPT_END
 }
@@ -309,8 +309,7 @@ const CSimplePointsMap* CMultiMetricMap::getAsSimplePointsMap() const
 	MRPT_START
 	const auto numPointsMaps = countMapsByClass<CSimplePointsMap>();
 	ASSERT_(numPointsMaps == 1 || numPointsMaps == 0);
-	if (!numPointsMaps)
-		return nullptr;
+	if (!numPointsMaps) return nullptr;
 	else
 		return this->mapByClass<CSimplePointsMap>(0).get();
 	MRPT_END

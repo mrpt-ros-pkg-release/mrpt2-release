@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -11,10 +11,10 @@
 
 #include <mrpt/comms/CInterfaceFTDI.h>
 #include <mrpt/comms/CSerialPort.h>
-#include <mrpt/hwdrivers/CGenericSensor.h>
-
 #include <mrpt/config/CConfigFileBase.h>
+#include <mrpt/hwdrivers/CGenericSensor.h>
 #include <mrpt/obs/CObservationGasSensors.h>
+
 #include <memory>  // unique_ptr
 
 namespace mrpt::hwdrivers
@@ -138,5 +138,5 @@ class CBoardENoses : public mrpt::hwdrivers::CGenericSensor
 	/** Set the serial port baud rate (default: 115200) */
 	inline void setSerialPortBaud(unsigned int baud) { m_COM_baud = baud; }
 	inline unsigned int getSerialPortBaud() const { return m_COM_baud; }
-};  // end of class
+};	// end of class
 }  // namespace mrpt::hwdrivers

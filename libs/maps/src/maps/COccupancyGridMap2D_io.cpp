@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "maps-precomp.h"  // Precomp header
-
+//
 #include <mrpt/config.h>
 #include <mrpt/core/round.h>  // round()
 #include <mrpt/img/CEnhancedMetaFile.h>
@@ -17,6 +17,7 @@
 #include <mrpt/random.h>
 #include <mrpt/serialization/CArchive.h>
 #include <mrpt/system/os.h>
+
 #include <iostream>
 
 using namespace mrpt;
@@ -131,11 +132,10 @@ void COccupancyGridMap2D::serializeFrom(
 			uint8_t bitsPerCellStream;
 
 			// Version 2: OCCUPANCY_GRIDMAP_CELL_SIZE_8BITS/16BITS
-			if (version >= 2)
-				in >> bitsPerCellStream;
+			if (version >= 2) in >> bitsPerCellStream;
 			else
 				bitsPerCellStream =
-					MyBitsPerCell;  // Old versinons: hope it's the same...
+					MyBitsPerCell;	// Old versinons: hope it's the same...
 
 			uint32_t new_size_x, new_size_y;
 			float new_x_min, new_x_max, new_y_min, new_y_max;
@@ -171,7 +171,8 @@ void COccupancyGridMap2D::serializeFrom(
 				size_t i, N = map.size();
 				auto* ptrTrg = (uint8_t*)&map[0];
 				const auto* ptrSrc = (const uint16_t*)&auxMap[0];
-				for (i = 0; i < N; i++) *ptrTrg++ = (*ptrSrc++) >> 8;
+				for (i = 0; i < N; i++)
+					*ptrTrg++ = (*ptrSrc++) >> 8;
 #else
 				// We are 16-bit, stream is 8-bit
 				ASSERT_(bitsPerCellStream == 8);
@@ -181,7 +182,8 @@ void COccupancyGridMap2D::serializeFrom(
 				size_t i, N = map.size();
 				uint16_t* ptrTrg = (uint16_t*)&map[0];
 				const uint8_t* ptrSrc = (const uint8_t*)&auxMap[0];
-				for (i = 0; i < N; i++) *ptrTrg++ = (*ptrSrc++) << 8;
+				for (i = 0; i < N; i++)
+					*ptrTrg++ = (*ptrSrc++) << 8;
 #endif
 			}
 
@@ -237,8 +239,7 @@ void COccupancyGridMap2D::serializeFrom(
 					likelihoodOptions.enableLikelihoodCache;
 
 				// Insertion as 3D:
-				if (version >= 6)
-					in >> genericMapParams;
+				if (version >= 6) in >> genericMapParams;
 				else
 				{
 					bool disableSaveAs3DObject;
@@ -255,13 +256,10 @@ void COccupancyGridMap2D::serializeFrom(
 			}
 
 			if (version >= 5)
-			{
-				in >> insertionOptions.wideningBeamsWithDistance;
-			}
+			{ in >> insertionOptions.wideningBeamsWithDistance; }
 		}
 		break;
-		default:
-			MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
 	};
 }
 
@@ -377,14 +375,14 @@ bool COccupancyGridMap2D::saveAsBitmapTwoMapsWithCorrespondences(
 	for (i = 0; i < n; i++)
 	{
 		// In M1:
-		px = m1->x2idx(corrs[i].this_x);
-		py = Ay1 + ly1 - 1 - m1->y2idx(corrs[i].this_y);
+		px = m1->x2idx(corrs[i].global.x);
+		py = Ay1 + ly1 - 1 - m1->y2idx(corrs[i].global.y);
 		img.rectangle(px - 10, py - 10, px + 10, py + 10, lineColor);
 		img.rectangle(px - 11, py - 11, px + 11, py + 11, lineColor);
 
 		// In M2:
-		px = lx1 + 1 + m2->x2idx(corrs[i].other_x);
-		py = Ay2 + ly2 - 1 - m2->y2idx(corrs[i].other_y);
+		px = lx1 + 1 + m2->x2idx(corrs[i].local.x);
+		py = Ay2 + ly2 - 1 - m2->y2idx(corrs[i].local.y);
 		img.rectangle(px - 10, py - 10, px + 10, py + 10, lineColor);
 		img.rectangle(px - 11, py - 11, px + 11, py + 11, lineColor);
 	}
@@ -399,11 +397,11 @@ bool COccupancyGridMap2D::saveAsBitmapTwoMapsWithCorrespondences(
 			static_cast<long>(getRandomGenerator().drawUniform(0, 255.0f)));
 
 		img.line(
-			m1->x2idx(corrs[i].this_x),
-			//				lx1+1+ m1->x2idx( corrs[i].this_x ),
-			Ay1 + ly1 - 1 - m1->y2idx(corrs[i].this_y),
-			lx1 + 1 + m2->x2idx(corrs[i].other_x),
-			Ay2 + ly2 - 1 - m2->y2idx(corrs[i].other_y), lineColor);
+			m1->x2idx(corrs[i].global.x),
+			//				lx1+1+ m1->x2idx( corrs[i].global.x ),
+			Ay1 + ly1 - 1 - m1->y2idx(corrs[i].global.y),
+			lx1 + 1 + m2->x2idx(corrs[i].local.x),
+			Ay2 + ly2 - 1 - m2->y2idx(corrs[i].local.y), lineColor);
 	}  // i
 
 	return img.saveToFile(fileName.c_str());
@@ -466,14 +464,14 @@ bool COccupancyGridMap2D::saveAsEMFTwoMapsWithCorrespondences(
 	for (i = 0; i < n; i++)
 	{
 		// In M1:
-		px = m1->x2idx(corrs[i].this_x);
-		py = Ay1 + ly1 - 1 - m1->y2idx(corrs[i].this_y);
+		px = m1->x2idx(corrs[i].global.x);
+		py = Ay1 + ly1 - 1 - m1->y2idx(corrs[i].global.y);
 		emf.rectangle(px - 10, py - 10, px + 10, py + 10, lineColor);
 		emf.rectangle(px - 11, py - 11, px + 11, py + 11, lineColor);
 
 		// In M2:
-		px = lx1 + 1 + m2->x2idx(corrs[i].other_x);
-		py = Ay2 + ly2 - 1 - m2->y2idx(corrs[i].other_y);
+		px = lx1 + 1 + m2->x2idx(corrs[i].local.x);
+		py = Ay2 + ly2 - 1 - m2->y2idx(corrs[i].local.y);
 		emf.rectangle(px - 10, py - 10, px + 10, py + 10, lineColor);
 		emf.rectangle(px - 11, py - 11, px + 11, py + 11, lineColor);
 	}
@@ -489,10 +487,10 @@ bool COccupancyGridMap2D::saveAsEMFTwoMapsWithCorrespondences(
 				(((unsigned long)RandomUni(0,255.0f)) << 16 );
 
 			emf.line(
-				m1->x2idx( corrs[i].this_x ),
-				Ay1+ly1-1- m1->y2idx( corrs[i].this_y ),
-				lx1+1+ m2->x2idx( corrs[i].other_x ),
-				Ay2+ly2-1-m2->y2idx( corrs[i].other_y ),
+				m1->x2idx( corrs[i].global.x ),
+				Ay1+ly1-1- m1->y2idx( corrs[i].global.y ),
+				lx1+1+ m2->x2idx( corrs[i].local.x ),
+				Ay2+ly2-1-m2->y2idx( corrs[i].local.y ),
 				lineColor);
 		} // i
 	/ **/
@@ -505,13 +503,13 @@ bool COccupancyGridMap2D::saveAsEMFTwoMapsWithCorrespondences(
 		os::sprintf(str, 100, "%i", i);
 
 		emf.textOut(
-			m1->x2idx(corrs[i].this_x) - 10,
-			Ay1 + ly1 - 1 - m1->y2idx(corrs[i].this_y) - 25, str,
+			m1->x2idx(corrs[i].global.x) - 10,
+			Ay1 + ly1 - 1 - m1->y2idx(corrs[i].global.y) - 25, str,
 			TColor::black());
 
 		emf.textOut(
-			lx1 + 1 + m2->x2idx(corrs[i].other_x) - 10,
-			Ay2 + ly2 - 1 - m2->y2idx(corrs[i].other_y) - 25, str,
+			lx1 + 1 + m2->x2idx(corrs[i].local.x) - 10,
+			Ay2 + ly2 - 1 - m2->y2idx(corrs[i].local.y) - 25, str,
 			TColor::black());
 	}  // i
 

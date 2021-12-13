@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -36,7 +36,8 @@ bool toROS(
 	long num_range = obj.sensedData.size();
 
 	// 1) sensor_msgs::Range:: header
-	for (long i = 0; i < num_range; i++) msg[i].header = msg_header;
+	for (long i = 0; i < num_range; i++)
+		msg[i].header = msg_header;
 
 	// 2) sensor_msg::Range parameters
 	for (long i = 0; i < num_range; i++)

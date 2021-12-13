@@ -2,20 +2,21 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
-#include "tfest-precomp.h"  // Precompiled headers
-
-#include <mrpt/tfest/se3.h>
-
+#include "tfest-precomp.h"	// Precompiled headers
+//
 #include <mrpt/core/round.h>
 #include <mrpt/math/utils.h>  // linspace()
 #include <mrpt/poses/CPose3D.h>
 #include <mrpt/poses/CPose3DQuat.h>
+#include <mrpt/poses/Lie/SO.h>
 #include <mrpt/random.h>
+#include <mrpt/tfest/se3.h>
+
 #include <iostream>
 #include <numeric>
 
@@ -35,34 +36,22 @@ bool tfest::se3_l2_robust(
 {
 	MRPT_START
 
-	const size_t N = in_correspondences.size();
-
-	// -------------------------------------------
-	// Thresholds
-	// -------------------------------------------
-	CVectorFixedDouble<7> th;
-	// x,y,z [m]
-	th[0] = th[1] = th[2] = params.ransac_threshold_lin;
-	// yaw,pitch, roll [deg]
-	th[3] = th[4] = th[5] = params.ransac_threshold_ang;
-	// scale:
-	th[6] = params.ransac_threshold_scale;
+	const size_t nCorrs = in_correspondences.size();
 
 	// -------------------------------------------
 	// RANSAC parameters
 	// -------------------------------------------
-	double min_err =
-		std::numeric_limits<double>::max();  // Minimum error achieved so far
+	// Minimum error achieved so far
+	double min_err = std::numeric_limits<double>::max();
 	size_t max_size = 0;  // Maximum size of the consensus set so far
 	double scale;  // Output scale
 
-	const size_t n =
-		params.ransac_minSetSize;  // Minimum number of points to fit the model
-	const size_t d = mrpt::round(
-		N * params.ransac_maxSetSizePct);  // Minimum number of points to be
-	// considered a good set
-	const size_t max_it =
-		params.ransac_nmaxSimulations;  // Maximum number of iterations
+	// Minimum number of points to fit the model
+	const size_t n = params.ransac_minSetSize;
+	// Minimum number of points to be considered a good set
+	const size_t d = mrpt::round(nCorrs * params.ransac_maxSetSizePct);
+	// Maximum number of iterations
+	const size_t maxIters = params.ransac_nmaxSimulations;
 
 	ASSERTMSG_(
 		d >= n,
@@ -72,19 +61,22 @@ bool tfest::se3_l2_robust(
 	// -------------------------------------------
 	// MAIN loop
 	// -------------------------------------------
-	for (size_t iterations = 0; iterations < max_it; iterations++)
+	for (size_t iterations = 0; iterations < maxIters; iterations++)
 	{
-		// printf("Iteration %2u of %u", iterations+1, max_it );
+		if (params.verbose)
+			std::cout << "[tfest::se3_l2_robust] Iteration " << (iterations + 1)
+					  << "/" << maxIters << "\n";
 
 		// Generate maybe inliers
-		std::vector<uint32_t> rub, mbSet, cSet;
-		mrpt::math::linspace((int)0, (int)N - 1, (int)N, rub);
-		getRandomGenerator().permuteVector(rub, mbSet);
+		const auto rub = mrpt::math::linspace<uint32_t>(0, nCorrs - 1, nCorrs);
+		const auto mbSet = getRandomGenerator().permuteVector(rub);
+
+		std::vector<uint32_t> cSet;	 // consensus set
 
 		// Compute first inliers output
 		TMatchingPairList mbInliers;
 		mbInliers.reserve(n);
-		for (size_t i = 0; mbInliers.size() < n && i < N; i++)
+		for (size_t i = 0; mbInliers.size() < n && i < nCorrs; i++)
 		{
 			const size_t idx = mbSet[i];
 
@@ -92,8 +84,8 @@ bool tfest::se3_l2_robust(
 			if (params.user_individual_compat_callback)
 			{
 				mrpt::tfest::TPotentialMatch pm;
-				pm.idx_this = in_correspondences[idx].this_idx;
-				pm.idx_other = in_correspondences[idx].other_idx;
+				pm.idx_this = in_correspondences[idx].globalIdx;
+				pm.idx_other = in_correspondences[idx].localIdx;
 				if (!params.user_individual_compat_callback(pm))
 					continue;  // Skip this one!
 			}
@@ -137,7 +129,7 @@ bool tfest::se3_l2_robust(
 		mbOut_vec[6] = scale;
 
 		// Inner loop: for each point NOT in the maybe inliers
-		for (size_t k = n; k < N; k++)
+		for (size_t k = n; k < nCorrs; k++)
 		{
 			const size_t idx = mbSet[k];
 
@@ -145,8 +137,8 @@ bool tfest::se3_l2_robust(
 			if (params.user_individual_compat_callback)
 			{
 				mrpt::tfest::TPotentialMatch pm;
-				pm.idx_this = in_correspondences[idx].this_idx;
-				pm.idx_other = in_correspondences[idx].other_idx;
+				pm.idx_this = in_correspondences[idx].globalIdx;
+				pm.idx_other = in_correspondences[idx].localIdx;
 				if (!params.user_individual_compat_callback(pm))
 					continue;  // Skip this one!
 			}
@@ -169,17 +161,19 @@ bool tfest::se3_l2_robust(
 			// Is this point a supporter of the initial inlier group?
 			const CPose3D csOut = CPose3D(csOutQuat);
 
-			if (fabs(mbOut_vec[0] - csOut.x()) < th[0] &&
-				fabs(mbOut_vec[1] - csOut.y()) < th[1] &&
-				fabs(mbOut_vec[2] - csOut.z()) < th[2] &&
-				fabs(mbOut_vec[3] - csOut.yaw()) < th[3] &&
-				fabs(mbOut_vec[4] - csOut.pitch()) < th[4] &&
-				fabs(mbOut_vec[5] - csOut.roll()) < th[5] &&
-				fabs(mbOut_vec[6] - scale) < th[6])
+			const double linDist = mbOut.distanceTo(csOut);
+			const double angDist = mrpt::poses::Lie::SO<3>::log(
+									   (csOut - mbOut).getRotationMatrix())
+									   .norm();
+			const double scaleDist = std::abs(mbOut_vec[6] - scale);
+
+			if (linDist < params.ransac_threshold_lin &&
+				angDist < params.ransac_threshold_ang &&
+				scaleDist < params.ransac_threshold_scale)
 			{
 				// Inlier detected -> add to the inlier list
 				cSet.push_back(idx);
-			}  // end if INLIERS
+			}
 			else
 			{
 				// cout << " It " << iterations << " - RANSAC Outlier Detected:
@@ -200,7 +194,7 @@ bool tfest::se3_l2_robust(
 			CPose3DQuat cIOutQuat;
 			res = mrpt::tfest::se3_l2(
 				cSetInliers, cIOutQuat, scale,
-				params.forceScaleToUnity);  // Compute output
+				params.forceScaleToUnity);	// Compute output
 			ASSERTMSG_(
 				res,
 				"tfest::se3_l2() returned false for tentative subset during "
@@ -225,7 +219,7 @@ bool tfest::se3_l2_robust(
 				results.transformation = cIOutQuat;
 				results.scale = scale;
 				results.inliers_idx = cSet;
-			}  // end if SCALE ERROR
+			}
 			// printf(" - Consensus set size: %u - Error: %.6f\n", (unsigned
 			// int)cSet.size(), err );
 		}  // end if cSet.size() > d
@@ -238,12 +232,12 @@ bool tfest::se3_l2_robust(
 
 	if (max_size == 0)
 	{
-		std::cerr << "[se3_l2_robust] maximum size is == 0!\n";
+		if (params.verbose)
+			std::cerr
+				<< "[se3_l2_robust] No solution found, maximum size is == 0!\n";
 		return false;
 	}
 
-	MRPT_END
-
 	return true;
-
-}  // end se3_l2_robust()
+	MRPT_END
+}

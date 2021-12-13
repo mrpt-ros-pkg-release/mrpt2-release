@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -52,18 +52,12 @@ enum predefined_voxel_sets_t
  *			- showVoxels()
  *			- push_back_Voxel()
  *
- *  Several coloring schemes can be selected with setVisualizationMode(). See
+ * Several coloring schemes can be selected with setVisualizationMode(). See
  *COctoMapVoxels::visualization_mode_t
  *
- *  <div align="center">
- *  <table border="0" cellspan="4" cellspacing="4" style="border-width: 1px;
- *border-style: solid;">
- *   <tr> <td> mrpt::opengl::COctoMapVoxels </td> <td> \image html
- *preview_COctoMapVoxels.png </td> </tr>
- *  </table>
- *  </div>
+ * ![mrpt::opengl::COctoMapVoxels](preview_COctoMapVoxels.png)
  *
- *  \sa opengl::COpenGLScene
+ * \sa opengl::COpenGLScene
  * \ingroup mrpt_opengl_grp
  */
 class COctoMapVoxels : public CRenderizableShaderTriangles,
@@ -159,8 +153,9 @@ class COctoMapVoxels : public CRenderizableShaderTriangles,
 	virtual shader_list_t requiredShaders() const override
 	{
 		// May use up to two shaders (triangles and lines):
-		return {DefaultShaderID::WIREFRAME, DefaultShaderID::POINTS,
-				DefaultShaderID::TRIANGLES};
+		return {
+			DefaultShaderID::WIREFRAME, DefaultShaderID::POINTS,
+			DefaultShaderID::TRIANGLES};
 	}
 	void onUpdateBuffers_Points() override;
 	void onUpdateBuffers_Wireframe() override;
@@ -353,9 +348,7 @@ class COctoMapVoxels : public CRenderizableShaderTriangles,
 
 	void sort_voxels_by_z();
 
-	void getBoundingBox(
-		mrpt::math::TPoint3D& bb_min,
-		mrpt::math::TPoint3D& bb_max) const override;
+	mrpt::math::TBoundingBox getBoundingBox() const override;
 
 	/** Sets the contents of the object from a mrpt::maps::COctoMap object.
 	 * \tparam Typically, an mrpt::maps::COctoMap object

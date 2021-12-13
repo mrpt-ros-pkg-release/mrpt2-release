@@ -2,19 +2,22 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "math-precomp.h"  // Precompiled headers
-
+//
 #include <mrpt/math/TLine2D.h>
 #include <mrpt/math/TPolygon2D.h>
 #include <mrpt/math/TPolygon3D.h>
 #include <mrpt/math/TPose2D.h>
 #include <mrpt/math/TSegment2D.h>
 #include <mrpt/math/epsilon.h>
+
+#include <iostream>
+
 #include "polygons_utils.h"
 
 using namespace mrpt::math;
@@ -68,26 +71,30 @@ inline double isLeft(
 
 bool TPolygon2D::contains(const TPoint2D& P) const
 {
-	int wn = 0;  // the  winding number counter
+	// References:
+	// - http://geomalgorithms.com/a03-_inclusion.html
+	// - https://en.wikipedia.org/wiki/Point_in_polygon#Winding_number_algorithm
+
+	int wn = 0;	 // the  winding number counter
 
 	// loop through all edges of the polygon
 	const size_t n = this->size();
-	for (size_t i = 0; i < n; i++)  // edge from V[i] to  V[i+1]
+	for (size_t i = 0; i < n; i++)	// edge from V[i] to  V[i+1]
 	{
 		if ((*this)[i].y <= P.y)
 		{
 			// start y <= P.y
 			if ((*this)[(i + 1) % n].y > P.y)  // an upward crossing
 				if (isLeft((*this)[i], (*this)[(i + 1) % n], P) >
-					0)  // P left of  edge
+					0)	// P left of  edge
 					++wn;  // have  a valid up intersect
 		}
 		else
 		{
 			// start y > P.y (no test needed)
-			if ((*this)[(i + 1) % n].y <= P.y)  // a downward crossing
+			if ((*this)[(i + 1) % n].y <= P.y)	// a downward crossing
 				if (isLeft((*this)[i], (*this)[(i + 1) % n], P) <
-					0)  // P right of  edge
+					0)	// P right of  edge
 					--wn;  // have  a valid down intersect
 		}
 	}
@@ -127,8 +134,7 @@ bool TPolygon2D::isConvex() const
 		for (size_t j = 0; j < N; j++)
 		{
 			double d = l.evaluatePoint(operator[](j));
-			if (std::abs(d) < getEpsilon())
-				continue;
+			if (std::abs(d) < getEpsilon()) continue;
 			else if (!s)
 				s = (d > 0) ? 1 : -1;
 			else if (s != ((d > 0) ? 1 : -1))
@@ -161,7 +167,8 @@ TPolygon2D::TPolygon2D(const TPolygon3D& p) : std::vector<TPoint2D>()
 {
 	size_t N = p.size();
 	resize(N);
-	for (size_t i = 0; i < N; i++) operator[](i) = TPoint2D(p[i]);
+	for (size_t i = 0; i < N; i++)
+		operator[](i) = TPoint2D(p[i]);
 }
 void TPolygon2D::createRegularPolygon(
 	size_t numEdges, double radius, TPolygon2D& poly)
@@ -181,5 +188,14 @@ inline void TPolygon2D::createRegularPolygon(
 	size_t numEdges, double radius, TPolygon2D& poly, const TPose2D& pose)
 {
 	createRegularPolygon(numEdges, radius, poly);
-	for (size_t i = 0; i < numEdges; i++) poly[i] = pose.composePoint(poly[i]);
+	for (size_t i = 0; i < numEdges; i++)
+		poly[i] = pose.composePoint(poly[i]);
+}
+
+std::ostream& mrpt::math::operator<<(std::ostream& o, const TPolygon2D& p)
+{
+	o << "mrpt::math::TPolygon2D vertices:\n";
+	for (const auto& v : p)
+		o << " - " << v << "\n";
+	return o;
 }

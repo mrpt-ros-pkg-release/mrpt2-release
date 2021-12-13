@@ -2,16 +2,15 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "apps-precomp.h"  // Precompiled headers
-
-#include <mrpt/apps/CGridMapAlignerApp.h>
-
+//
 #include <mrpt/3rdparty/tclap/CmdLine.h>
+#include <mrpt/apps/CGridMapAlignerApp.h>
 #include <mrpt/config/CConfigFile.h>
 #include <mrpt/gui.h>
 #include <mrpt/io/CFileGZInputStream.h>
@@ -644,13 +643,8 @@ void CGridMapAlignerApp::run()
 
 							// Save as 3D scene:
 							COpenGLScene scene;
-							CSetOfObjects::Ptr obj1 =
-								std::make_shared<CSetOfObjects>();
-							the_map1.getAs3DObject(obj1);
-							CSetOfObjects::Ptr obj2 =
-								std::make_shared<CSetOfObjects>();
-							the_map2.getAs3DObject(obj2);
-
+							auto obj1 = the_map1.getVisualization();
+							auto obj2 = the_map2.getVisualization();
 							obj2->setPose(x);
 
 							scene.insert(obj1);
@@ -749,8 +743,10 @@ void CGridMapAlignerApp::run()
 				const CPose2D GT_Ap(GT_Ax, GT_Ay, GT_Aphi_rad);
 				TMatchingPairList gt_corrs;
 
-				CFileOutputStream fout_CORR("GT_EXP_CORR.txt", true);
-				CFileOutputStream fout_NCORR("GT_EXP_NCORR.txt", true);
+				CFileOutputStream fout_CORR(
+					"GT_EXP_CORR.txt", OpenMode::APPEND);
+				CFileOutputStream fout_NCORR(
+					"GT_EXP_NCORR.txt", OpenMode::APPEND);
 
 				// Compute the distances:
 				for (size_t i1 = 0; i1 < lmap1->landmarks.size(); i1++)

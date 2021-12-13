@@ -2,20 +2,20 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
-#include "io-precomp.h"  // Precompiled headers
-
+#include "io-precomp.h"	 // Precompiled headers
+//
 #include <mrpt/core/exceptions.h>
 #include <mrpt/io/CFileGZInputStream.h>
 #include <mrpt/system/filesystem.h>
-#include <cerrno>
-#include <cstring>  // strerror
-
 #include <zlib.h>
+
+#include <cerrno>
+#include <cstring>	// strerror
 
 using namespace mrpt::io;
 using namespace std;
@@ -27,7 +27,8 @@ static_assert(
 
 struct CFileGZInputStream::Impl
 {
-	gzFile f{nullptr};
+	gzFile f = nullptr;
+	std::string filename;
 };
 
 CFileGZInputStream::CFileGZInputStream()
@@ -65,6 +66,8 @@ bool CFileGZInputStream::open(
 	if (m_f->f == nullptr && error_msg)
 		error_msg.value().get() = std::string(strerror(errno));
 
+	m_f->filename = fileName;
+
 	return m_f->f != nullptr;
 	MRPT_END
 }
@@ -81,10 +84,7 @@ void CFileGZInputStream::close()
 CFileGZInputStream::~CFileGZInputStream() { close(); }
 size_t CFileGZInputStream::Read(void* Buffer, size_t Count)
 {
-	if (!m_f->f)
-	{
-		THROW_EXCEPTION("File is not open.");
-	}
+	if (!m_f->f) { THROW_EXCEPTION("File is not open."); }
 
 	return gzread(m_f->f, Buffer, Count);
 }
@@ -97,27 +97,20 @@ size_t CFileGZInputStream::Write(
 
 uint64_t CFileGZInputStream::getTotalBytesCount() const
 {
-	if (!m_f->f)
-	{
-		THROW_EXCEPTION("File is not open.");
-	}
+	if (!m_f->f) { THROW_EXCEPTION("File is not open."); }
 	return m_file_size;
 }
 
 uint64_t CFileGZInputStream::getPosition() const
 {
-	if (!m_f->f)
-	{
-		THROW_EXCEPTION("File is not open.");
-	}
+	if (!m_f->f) { THROW_EXCEPTION("File is not open."); }
 	return gztell(m_f->f);
 }
 
 bool CFileGZInputStream::fileOpenCorrectly() const { return m_f->f != nullptr; }
 bool CFileGZInputStream::checkEOF()
 {
-	if (!m_f->f)
-		return true;
+	if (!m_f->f) return true;
 	else
 		return 0 != gzeof(m_f->f);
 }
@@ -125,4 +118,10 @@ bool CFileGZInputStream::checkEOF()
 uint64_t CFileGZInputStream::Seek(int64_t, CStream::TSeekOrigin)
 {
 	THROW_EXCEPTION("Method not available in this class.");
+}
+
+std::string CFileGZInputStream::getStreamDescription() const
+{
+	return mrpt::format(
+		"mrpt::io::CFileGZInputStream for file '%s'", m_f->filename.c_str());
 }

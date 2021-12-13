@@ -2,49 +2,43 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "nav-precomp.h"  // Precomp header
-
+//
 #include <mrpt/nav/reactive/TWaypoint.h>
 #include <mrpt/opengl/CArrow.h>
 #include <mrpt/opengl/CDisk.h>
 #include <mrpt/opengl/CSetOfObjects.h>
+
 #include <limits>
 
 using namespace mrpt::nav;
 using namespace std;
 
 // TWaypoint  ==========
-TWaypoint::TWaypoint()
-	: target(INVALID_NUM, INVALID_NUM),
-	  target_heading(INVALID_NUM),
-	  target_frame_id("map"),
-	  allowed_distance(INVALID_NUM),
-	  speed_ratio(1.0)
-
-{
-}
-
 TWaypoint::TWaypoint(
 	double target_x, double target_y, double allowed_distance_,
-	bool allow_skip_, double target_heading_, double speed_ratio_)
+	bool allow_skip_, std::optional<double> target_heading_,
+	double speed_ratio_)
 	: target(target_x, target_y),
 	  target_heading(target_heading_),
-	  target_frame_id("map"),
 	  allowed_distance(allowed_distance_),
 	  speed_ratio(speed_ratio_),
 	  allow_skip(allow_skip_)
 {
+	// Backwards-compatibility:
+	if (target_heading.has_value() && *target_heading == TWaypoint::INVALID_NUM)
+		target_heading.reset();
 }
 
 bool TWaypoint::isValid() const
 {
 	return (target.x != INVALID_NUM) && (target.y != INVALID_NUM) &&
-		   (allowed_distance != INVALID_NUM);
+		(allowed_distance != INVALID_NUM);
 }
 
 std::string TWaypoint::getAsText() const
@@ -55,8 +49,9 @@ std::string TWaypoint::getAsText() const
 	else
 		s += "target=(**Coordinates not set!!**) ";
 
-	if (target_heading != INVALID_NUM)
-		s += mrpt::format("phi=%8.03f deg ", mrpt::RAD2DEG(target_heading));
+	if (target_heading.has_value())
+		s += mrpt::format(
+			"phi=%8.03f deg ", mrpt::RAD2DEG(target_heading.value()));
 	else
 		s += " (heading: any) ";
 
@@ -90,7 +85,6 @@ std::string TWaypointSequence::getAsText() const
 }
 
 // TWaypointStatus ==========
-TWaypointStatus::TWaypointStatus() : timestamp_reach(INVALID_TIMESTAMP) {}
 TWaypointStatus& TWaypointStatus::operator=(const TWaypoint& wp)
 {
 	TWaypoint::operator=(wp);
@@ -100,21 +94,10 @@ std::string TWaypointStatus::getAsText() const
 {
 	std::string s = TWaypoint::getAsText();
 	s += mrpt::format(" reached=%s", (reached ? "YES" : "NO "));
-	;
 	return s;
 }
 
 // TWaypointStatusSequence ======
-TWaypointStatusSequence::TWaypointStatusSequence()
-	: waypoints(),
-	  timestamp_nav_started(INVALID_TIMESTAMP),
-
-	  last_robot_pose(
-		  TWaypoint::INVALID_NUM, TWaypoint::INVALID_NUM,
-		  TWaypoint::INVALID_NUM)
-{
-}
-
 std::string TWaypointStatusSequence::getAsText() const
 {
 	string s;
@@ -165,12 +148,12 @@ void TWaypointSequence::getAsOpenglVisualization(
 		}
 		obj.insert(gl_pt);
 
-		if (p.target_heading != TWaypoint::INVALID_NUM)
+		if (p.target_heading.has_value())
 		{
 			auto o = mrpt::opengl::CArrow::Create(
 				0, 0, 0, params.heading_arrow_len, 0.0f, 0.0f);
 			o->setPose(mrpt::poses::CPose3D(
-				p.target.x, p.target.y, 0.02, p.target_heading, 0, 0));
+				p.target.x, p.target.y, 0.02, p.target_heading.value(), 0, 0));
 			obj.insert(o);
 		}
 		++idx;
@@ -209,12 +192,13 @@ void TWaypointStatusSequence::getAsOpenglVisualization(
 										 : params.color_regular));
 			obj.insert(gl_pt);
 
-			if (p.target_heading != TWaypoint::INVALID_NUM)
+			if (p.target_heading.has_value())
 			{
 				auto o = mrpt::opengl::CArrow::Create(
 					0, 0, 0, params.heading_arrow_len, 0.0f, 0.0f);
 				o->setPose(mrpt::poses::CPose3D(
-					p.target.x, p.target.y, 0.02, p.target_heading, 0, 0));
+					p.target.x, p.target.y, 0.02, p.target_heading.value(), 0,
+					0));
 				obj.insert(o);
 			}
 			++idx;
@@ -228,7 +212,7 @@ void TWaypointSequence::save(
 	const unsigned int N = waypoints.size();
 	c.write(s, "waypoint_count", N);
 
-	const int NP = 27;  // name padding
+	const int NP = 27;	// name padding
 
 	for (unsigned int i = 0; i < N; i++)
 	{
@@ -243,8 +227,10 @@ void TWaypointSequence::save(
 		c.write(
 			s, mrpt::format("wp%03u_target_frame_id", i), wp.target_frame_id,
 			NP);
-		c.write(
-			s, mrpt::format("wp%03u_target_heading", i), wp.target_heading, NP);
+		if (wp.target_heading.has_value())
+			c.write(
+				s, mrpt::format("wp%03u_target_heading", i), *wp.target_heading,
+				NP);
 		c.write(s, mrpt::format("wp%03u_speed_ratio", i), wp.speed_ratio, NP);
 	}
 }
@@ -271,10 +257,12 @@ void TWaypointSequence::load(
 			c.read_double(s, mrpt::format("wp%03u_target_y", i), 0, true);
 		wp.target_frame_id = c.read_string(
 			s, mrpt::format("wp%03u_target_frame_id", i), "map", false);
-		double hd = c.read_double(
-			s, mrpt::format("wp%03u_target_heading", i),
-			mrpt::nav::TWaypoint::INVALID_NUM);
-		wp.target_heading = (hd > 100) ? mrpt::nav::TWaypoint::INVALID_NUM : hd;
+
+		const auto sectHeading = mrpt::format("wp%03u_target_heading", i);
+		if (c.keyExists(s, sectHeading))
+			wp.target_heading = c.read_double(
+				s, sectHeading, mrpt::nav::TWaypoint::INVALID_NUM);
+
 		wp.speed_ratio =
 			c.read_double(s, mrpt::format("wp%03u_speed_ratio", i), 1.0, false);
 	}

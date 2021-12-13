@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -27,6 +27,7 @@ namespace mrpt::io { class CStream; }
 // Add for declaration of mexplus::from template specialization
 DECLARE_MEXPLUS_FROM(mrpt::img::CImage)
 
+/** Classes for image storage and manipulation \ingroup mrpt_img_grp */
 namespace mrpt::img
 {
 enum class PixelDepth : int32_t
@@ -201,11 +202,11 @@ class CImage : public mrpt::serialization::CSerializable, public CCanvas
 		}
 	}
 
-	/** Constructor from a cv::Mat image, making or not a deep copy of the data
+	/** Constructor from a cv::Mat image, making or not a deep copy of the data.
 	 */
 	CImage(const cv::Mat& img, copy_type_t copy_type);
 
-	/** Constructor from another CImage, making or not a deep copy of the data
+	/** Constructor from another CImage, making or not a deep copy of the data.
 	 */
 	CImage(const CImage& img, copy_type_t copy_type);
 
@@ -670,7 +671,10 @@ class CImage : public mrpt::serialization::CSerializable, public CCanvas
 	/** Returns true if the image is RGB or RGBA, false if it is grayscale */
 	bool isColor() const;
 
-	/** Returns true if the object is in the state after default constructor */
+	/** Returns true if the object is in the state after default constructor.
+	 * Returns false for delay-loaded images, disregarding whether the image is
+	 * actually on disk or memory.
+	 */
 	bool isEmpty() const;
 
 	/** Returns true (as of MRPT v2.0.0, it's fixed) */
@@ -777,8 +781,15 @@ class CImage : public mrpt::serialization::CSerializable, public CCanvas
 	 */
 	void setExternalStorage(const std::string& fileName) noexcept;
 
-	/** By default, "."  \sa setExternalStorage */
+	/** By default, "."  \sa setExternalStorage
+	 *  \note Since MRPT 2.3.3 this is a synonym
+	 *        with mrpt::io::getLazyLoadPathBase()
+	 */
 	static const std::string& getImagesPathBase();
+
+	/**  \note Since MRPT 2.3.3 this is a synonym
+	 *        with mrpt::io::setLazyLoadPathBase()
+	 */
 	static void setImagesPathBase(const std::string& path);
 
 	/** See setExternalStorage(). */
@@ -806,7 +817,7 @@ class CImage : public mrpt::serialization::CSerializable, public CCanvas
 	 * on first access and there's no need to call this.
 	 * \unload
 	 */
-	inline void forceLoad() const { makeSureImageIsLoaded(); }
+	inline void forceLoad() const { makeSureImageIsLoaded(true); }
 	/** For external storage image objects only, this method unloads the image
 	 * from memory (or does nothing if already unloaded).
 	 *  It does not need to be called explicitly, unless the user wants to save
@@ -925,11 +936,10 @@ class CImage : public mrpt::serialization::CSerializable, public CCanvas
 	 * (internally uses OpenCV).
 	 * \param fileName The file to read from.
 	 * \param isColor Specifies colorness of the loaded image:
-	 *  - if >0, the loaded image is forced to be color 3-channel image;
-	 *  - if 0, the loaded image is forced to be grayscale;
-	 *  - if <0, the loaded image will be loaded as is (with number of channels
-	 * depends on the file).
-	 * The supported formats are:
+	 *  - if ==1, the loaded image is forced to be color 3-channel image;
+	 *  - if ==0, the loaded image is forced to be grayscale;
+	 *  - if ==-1, the loaded image will be loaded as is (with number of
+	 * channels depends on the file). The supported formats are:
 	 *
 	 * - Windows bitmaps - BMP, DIB;
 	 * - JPEG files - JPEG, JPG, JPE;
@@ -937,6 +947,12 @@ class CImage : public mrpt::serialization::CSerializable, public CCanvas
 	 * - Portable image format - PBM, PGM, PPM;
 	 * - Sun rasters - SR, RAS;
 	 * - TIFF files - TIFF, TIF.
+	 *
+	 * MRPT also provides the special loaders loadFromXPM() and loadTGA().
+	 *
+	 * Note that this function uses cv::imdecode() internally to reuse the
+	 * memory buffer used by the image already loaded into this CImage, if
+	 * possible, minimizing the number of memory allocations.
 	 *
 	 * \return False on any error
 	 * \sa saveToFile, setExternalStorage,loadFromXPM, loadTGA
@@ -951,7 +967,7 @@ class CImage : public mrpt::serialization::CSerializable, public CCanvas
 		const std::string& fileName, mrpt::img::CImage& out_RGB,
 		mrpt::img::CImage& out_alpha);
 
-	/** Loads the image from an XPM array, as #include'd from a ".xpm" file.
+	/** Loads the image from an XPM array, as included from a ".xpm" file.
 	 * \param[in] swap_rb Swaps red/blue channels from loaded image. *Seems* to
 	 * be always needed, so it's enabled by default.
 	 * \sa loadFromFile
@@ -1043,8 +1059,8 @@ class CImage : public mrpt::serialization::CSerializable, public CCanvas
 	/** Checks if the image is of type "external storage", and if so and not
 	 * loaded yet, load it.
 	 * \exception CExceptionExternalImageNotFound */
-	void makeSureImageIsLoaded() const;
+	void makeSureImageIsLoaded(bool allowNonInitialized = false) const;
 	uint8_t* internal_get(int col, int row, uint8_t channel = 0) const;
 	void internal_fromIPL(const IplImage* iplImage, copy_type_t c);
-};  // End of class
+};	// End of class
 }  // namespace mrpt::img

@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -11,8 +11,9 @@
 #include <mrpt/core/exceptions.h>
 #include <mrpt/core/is_defined.h>
 #include <mrpt/core/optional_ref.h>
+
 #include <algorithm>  // fill()
-#include <cstddef>  // size_t
+#include <cstddef>	// size_t
 #include <iosfwd>
 #include <string>
 #include <vector>
@@ -262,7 +263,7 @@ class MatrixVectorBase
 		return mvbDerived().cols() == 0 && mvbDerived().rows() == 0;
 	}
 
-	/** Compute the norm-infinite of a vector ($f[ ||\mathbf{v}||_\infnty $f]),
+	/** Compute the norm-infinite of a vector (\f[ ||\mathbf{v}||_\infnty \f]),
 	 * ie the maximum absolute value of the elements. */
 	Scalar norm_inf() const;
 
@@ -281,9 +282,7 @@ class MatrixVectorBase
 		if constexpr (
 			Derived::RowsAtCompileTime == Derived::ColsAtCompileTime ||
 			Derived::ColsAtCompileTime == 1 || Derived::ColsAtCompileTime == -1)
-		{
-			return impl_op_add(m2);
-		}
+		{ return impl_op_add(m2); }
 		else
 		{
 			throw std::runtime_error(
@@ -296,9 +295,7 @@ class MatrixVectorBase
 		if constexpr (
 			Derived::RowsAtCompileTime == Derived::ColsAtCompileTime ||
 			Derived::ColsAtCompileTime == 1 || Derived::ColsAtCompileTime == -1)
-		{
-			impl_op_selfadd(m2);
-		}
+		{ impl_op_selfadd(m2); }
 		else
 		{
 			throw std::runtime_error(
@@ -311,9 +308,7 @@ class MatrixVectorBase
 		if constexpr (
 			Derived::RowsAtCompileTime == Derived::ColsAtCompileTime ||
 			Derived::ColsAtCompileTime == 1 || Derived::ColsAtCompileTime == -1)
-		{
-			return impl_op_subs(m2);
-		}
+		{ return impl_op_subs(m2); }
 		else
 		{
 			throw std::runtime_error(
@@ -326,9 +321,7 @@ class MatrixVectorBase
 		if constexpr (
 			Derived::RowsAtCompileTime == Derived::ColsAtCompileTime ||
 			Derived::ColsAtCompileTime == 1 || Derived::ColsAtCompileTime == -1)
-		{
-			impl_op_selfsubs(m2);
-		}
+		{ impl_op_selfsubs(m2); }
 		else
 		{
 			throw std::runtime_error(

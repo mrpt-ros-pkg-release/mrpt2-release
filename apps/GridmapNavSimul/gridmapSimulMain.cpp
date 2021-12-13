@@ -2,12 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "gridmapSimulMain.h"
+
 #include <wx/msgdlg.h>
 
 //(*InternalHeaders(gridmapSimulFrame)
@@ -19,6 +20,16 @@
 #include <wx/string.h>
 //*)
 
+#include <mrpt/gui/about_box.h>
+#include <mrpt/io/CFileGZInputStream.h>
+#include <mrpt/io/CFileGZOutputStream.h>
+#include <mrpt/io/CFileOutputStream.h>
+#include <mrpt/opengl/CGridPlaneXY.h>
+#include <mrpt/opengl/CPlanarLaserScan.h>
+#include <mrpt/opengl/CPointCloud.h>
+#include <mrpt/opengl/CSetOfObjects.h>
+#include <mrpt/system/CTimeLogger.h>
+#include <mrpt/system/filesystem.h>
 #include <wx/artprov.h>
 #include <wx/busyinfo.h>
 #include <wx/colordlg.h>
@@ -34,18 +45,6 @@
 
 #include "../wx-common/mrpt_logo.xpm"
 #include "imgs/app_icon_gridmapsimul.xpm"
-
-#include <mrpt/gui/about_box.h>
-
-#include <mrpt/io/CFileGZInputStream.h>
-#include <mrpt/io/CFileGZOutputStream.h>
-#include <mrpt/io/CFileOutputStream.h>
-#include <mrpt/opengl/CGridPlaneXY.h>
-#include <mrpt/opengl/CPlanarLaserScan.h>
-#include <mrpt/opengl/CPointCloud.h>
-#include <mrpt/opengl/CSetOfObjects.h>
-#include <mrpt/system/CTimeLogger.h>
-#include <mrpt/system/filesystem.h>
 
 //#define DO_SCAN_LIKELIHOOD_DEBUG
 
@@ -71,19 +70,19 @@ class MyArtProvider : public wxArtProvider
 		const wxSize& size) override;
 };
 
-#define RETURN_BITMAP(artid, xpm)                                        \
-	if (id == artid)                                                     \
-	{                                                                    \
-		if (client == wxART_MENU)                                        \
-		{                                                                \
-			wxBitmap b(xpm);                                             \
-			return wxBitmap(                                             \
-				b.ConvertToImage().Scale(16, 16, wxIMAGE_QUALITY_HIGH)); \
-		}                                                                \
-		else                                                             \
-		{                                                                \
-			return wxBitmap(xpm);                                        \
-		}                                                                \
+#define RETURN_BITMAP(artid, xpm)                                              \
+	if (id == artid)                                                           \
+	{                                                                          \
+		if (client == wxART_MENU)                                              \
+		{                                                                      \
+			wxBitmap b(xpm);                                                   \
+			return wxBitmap(                                                   \
+				b.ConvertToImage().Scale(16, 16, wxIMAGE_QUALITY_HIGH));       \
+		}                                                                      \
+		else                                                                   \
+		{                                                                      \
+			return wxBitmap(xpm);                                              \
+		}                                                                      \
 	}
 
 // CreateBitmap function
@@ -99,20 +98,18 @@ wxBitmap MyArtProvider::CreateBitmap(
 }
 
 #include <mrpt/gui/CWxGLCanvasBase.h>
-
+#include <mrpt/gui/WxUtils.h>
 #include <mrpt/hwdrivers/CJoystick.h>
 #include <mrpt/kinematics/CVehicleSimul_DiffDriven.h>
 #include <mrpt/maps/COccupancyGridMap2D.h>
 #include <mrpt/obs/CActionRobotMovement2D.h>
 #include <mrpt/obs/CObservationOdometry.h>
 #include <mrpt/obs/CRawlog.h>
-#include <mrpt/system/CTicTac.h>
-
 #include <mrpt/opengl/stock_objects.h>
 #include <mrpt/serialization/CArchive.h>
-#include <vector>
+#include <mrpt/system/CTicTac.h>
 
-#include <mrpt/gui/WxUtils.h>
+#include <vector>
 
 using namespace mrpt;
 using namespace mrpt::hwdrivers;
@@ -752,9 +749,7 @@ gridmapSimulFrame::~gridmapSimulFrame()
 
 void gridmapSimulFrame::update_grid_map_3d()
 {
-	if (!gl_grid) gl_grid = std::make_shared<CSetOfObjects>();
-	gl_grid->clear();
-	the_grid.getAs3DObject(gl_grid);
+	gl_grid = the_grid.getVisualization();
 }
 
 void gridmapSimulFrame::OnbtnQuitClick(wxCommandEvent& event)
@@ -826,18 +821,10 @@ void gridmapSimulFrame::OntimRunTrigger(wxTimerEvent& event)
 
 			switch (last_pressed_key)
 			{
-				case WXK_UP:
-					y = -1;
-					break;
-				case WXK_DOWN:
-					y = 1;
-					break;
-				case WXK_LEFT:
-					x = -1;
-					break;
-				case WXK_RIGHT:
-					x = 1;
-					break;
+				case WXK_UP: y = -1; break;
+				case WXK_DOWN: y = 1; break;
+				case WXK_LEFT: x = -1; break;
+				case WXK_RIGHT: x = 1; break;
 			}
 
 			if (x != 0 || y != 0)
@@ -862,7 +849,7 @@ void gridmapSimulFrame::OntimRunTrigger(wxTimerEvent& event)
 		mrpt::obs::CObservation2DRangeScan the_scan;
 		the_scan.sensorLabel = "LASER_SIM";
 		the_scan.sensorPose.setFromValues(0.20, 0, 0.10);
-		the_scan.maxRange = 80;  // LASER_MAX_RANGE;
+		the_scan.maxRange = 80;	 // LASER_MAX_RANGE;
 		the_scan.aperture = LASER_APERTURE;
 		the_scan.stdError = LASER_STD_ERROR;
 
@@ -893,15 +880,15 @@ void gridmapSimulFrame::OntimRunTrigger(wxTimerEvent& event)
 			win.plot(ssu_out.scanWithUncert.rangeScan.scan, "3k-", "mean");
 			win.plot(the_scan.scan, "r-", "obs");
 
-			Eigen::VectorXd ci1 =
-				ssu_out.scanWithUncert.rangesMean +
-				3 * ssu_out.scanWithUncert.rangesCovar.diagonal()
+			Eigen::VectorXd ci1 = ssu_out.scanWithUncert.rangesMean +
+				3 *
+					ssu_out.scanWithUncert.rangesCovar.diagonal()
 						.array()
 						.sqrt()
 						.matrix();
-			Eigen::VectorXd ci2 =
-				ssu_out.scanWithUncert.rangesMean -
-				3 * ssu_out.scanWithUncert.rangesCovar.diagonal()
+			Eigen::VectorXd ci2 = ssu_out.scanWithUncert.rangesMean -
+				3 *
+					ssu_out.scanWithUncert.rangesCovar.diagonal()
 						.array()
 						.sqrt()
 						.matrix();
@@ -927,7 +914,7 @@ void gridmapSimulFrame::OntimRunTrigger(wxTimerEvent& event)
 			// Recording
 			if (!outs.fileOpenCorrectly())
 			{
-				if (!outs.open(string(edOutFile->GetValue().mb_str())))
+				if (!outs.open(edOutFile->GetValue().ToStdString()))
 				{
 					wxCommandEvent dum;
 					OnbtnEndClick(dum);
@@ -936,7 +923,9 @@ void gridmapSimulFrame::OntimRunTrigger(wxTimerEvent& event)
 						this);
 				}
 
-				if (!out_GT.open(string(edOutGT->GetValue().mb_str())))
+				if (!out_GT.open(
+						edOutGT->GetValue().ToStdString(),
+						mrpt::io::OpenMode::TRUNCATE))
 				{
 					outs.close();
 					wxCommandEvent dum;
@@ -948,8 +937,8 @@ void gridmapSimulFrame::OntimRunTrigger(wxTimerEvent& event)
 
 				// Save also the gridmap:
 				CFileGZOutputStream out_grid;
-				string grid_file = string(edOutFile->GetValue().mb_str()) +
-								   string("_grid.gridmap.gz");
+				string grid_file = edOutFile->GetValue().ToStdString() +
+					string("_grid.gridmap.gz");
 				if (!out_grid.open(grid_file))
 				{
 					outs.close();
@@ -962,7 +951,7 @@ void gridmapSimulFrame::OntimRunTrigger(wxTimerEvent& event)
 						_("Error"), wxOK, this);
 				}
 
-				archiveFrom(out_grid) << the_grid;  // save it
+				archiveFrom(out_grid) << the_grid;	// save it
 			}
 
 			static long decimation_count = 0;
@@ -1058,10 +1047,10 @@ void gridmapSimulFrame::OntimRunTrigger(wxTimerEvent& event)
 
 		{
 			auto scene = m_canvas->getOpenGLSceneRef();
-			const mrpt::math::TPose2D p = the_robot.getCurrentGTPose();
 
 			scene->getViewport()->addTextMessage(
-				20, 20, string("Pose: ") + p.asString(), 0);
+				20, 20,
+				string("Pose: ") + the_robot.getCurrentGTPose().asString(), 0);
 
 			const mrpt::math::TTwist2D vel_local =
 				the_robot.getCurrentGTVelLocal();
@@ -1112,14 +1101,14 @@ void gridmapSimulFrame::OnbtnStartClick(wxCommandEvent& event)
 	double Aphi_err_bias;
 	double Aphi_err_std;
 
-	edAxb->GetValue().ToDouble(&Ax_err_bias);
-	edAxs->GetValue().ToDouble(&Ax_err_std);
+	edAxb->GetValue().ToCDouble(&Ax_err_bias);
+	edAxs->GetValue().ToCDouble(&Ax_err_std);
 
-	edAyb->GetValue().ToDouble(&Ay_err_bias);
-	edAys->GetValue().ToDouble(&Ay_err_std);
+	edAyb->GetValue().ToCDouble(&Ay_err_bias);
+	edAys->GetValue().ToCDouble(&Ay_err_std);
 
-	edApb->GetValue().ToDouble(&Aphi_err_bias);
-	edAps->GetValue().ToDouble(&Aphi_err_std);
+	edApb->GetValue().ToCDouble(&Aphi_err_bias);
+	edAps->GetValue().ToCDouble(&Aphi_err_std);
 	Aphi_err_bias = DEG2RAD(Aphi_err_bias);
 	Aphi_err_std = DEG2RAD(Aphi_err_std);
 
@@ -1189,8 +1178,8 @@ void gridmapSimulFrame::OnMenuLoadMap(wxCommandEvent& event)
 				  "center:"),
 				_("Grid parameters"), _("-1"), this);
 
-			if (sCellSize.ToDouble(&cell_size) && sCX.ToDouble(&cx) &&
-				sCY.ToDouble(&cy))
+			if (sCellSize.ToCDouble(&cell_size) && sCX.ToCDouble(&cx) &&
+				sCY.ToCDouble(&cy))
 			{
 				if (the_grid.loadFromBitmap(
 						img, cell_size, mrpt::math::TPoint2D(cx, cy)))
@@ -1228,14 +1217,14 @@ void gridmapSimulFrame::OnbtnExploreClick(wxCommandEvent& event)
 
 void gridmapSimulFrame::OnbtnSetLaserClick(wxCommandEvent& event)
 {
-	edSpan->GetValue().ToDouble(&LASER_APERTURE);
+	edSpan->GetValue().ToCDouble(&LASER_APERTURE);
 	LASER_APERTURE = DEG2RAD(LASER_APERTURE);
 
 	edCount->GetValue().ToLong(&LASER_N_RANGES);
 
-	edStdNoise->GetValue().ToDouble(&LASER_STD_ERROR);
+	edStdNoise->GetValue().ToCDouble(&LASER_STD_ERROR);
 
-	edStdNoiseAng->GetValue().ToDouble(&LASER_BEARING_STD_ERROR);
+	edStdNoiseAng->GetValue().ToCDouble(&LASER_BEARING_STD_ERROR);
 	LASER_BEARING_STD_ERROR = DEG2RAD(LASER_BEARING_STD_ERROR);
 }
 

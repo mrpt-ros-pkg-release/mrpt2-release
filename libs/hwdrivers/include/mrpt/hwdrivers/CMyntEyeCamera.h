@@ -2,14 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 #pragma once
 
 #include <mrpt/config.h>
-
 #include <mrpt/core/pimpl.h>
 #include <mrpt/core/safe_pointers.h>
 #include <mrpt/img/TCamera.h>
@@ -23,7 +22,7 @@ namespace mrpt::hwdrivers
  */
 struct TMyntEyeCameraParameters : public mrpt::config::CLoadableOptions
 {
-	std::uint8_t ir_intensity = 4;  //!< IR (Infrared), range [0,10], default 0.
+	std::uint8_t ir_intensity = 4;	//!< IR (Infrared), range [0,10], default 0.
 
 	void loadFromConfigFile(
 		const mrpt::config::CConfigFileBase& source,
@@ -62,6 +61,6 @@ class CMyntEyeCamera
 
 	mrpt::img::TCamera m_intrinsics_left, m_intrinsics_right;
 
-};  // End of class
+};	// End of class
 
 }  // namespace mrpt::hwdrivers

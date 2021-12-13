@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -15,6 +15,7 @@
   ---------------------------------------------------------------*/
 
 #include "tracker.h"
+
 #include <set>
 
 using mrpt::system::CTicTac;
@@ -33,7 +34,7 @@ Tracker::Tracker()
 	DO_HIST_EQUALIZE_IN_GRAYSCALE = false;
 
 	// "CFeatureTracker_KL" is by  far the most robust implementation for now:
-	tracker = CGenericFeatureTrackerAutoPtr(new CFeatureTracker_KL);
+	tracker = std::make_unique<mrpt::vision::CFeatureTracker_KL>();
 	// Dump feat_track_history to a file at the end
 	save_tracked_history = true;
 	curCamPoseId = 0;
@@ -43,9 +44,9 @@ Tracker::Tracker()
  *					    Track Them All tracker *
  ************************************************************************************************/
 cv::Mat Tracker::trackThemAll(
-	vector<string> files_fullpath_tracking, int tracking_image_counter,
-	int remove_lost_feats, int add_new_feats, int max_feats, int patch_size,
-	int window_width, int window_height)
+	std::vector<std::string> files_fullpath_tracking,
+	int tracking_image_counter, int remove_lost_feats, int add_new_feats,
+	int max_feats, int patch_size, int window_width, int window_height)
 {
 	tracker->enableTimeLogger(true);  // Do time profiling.
 
@@ -54,33 +55,33 @@ cv::Mat Tracker::trackThemAll(
 	// To see all the existing params and documentation, see
 	// mrpt::vision::CGenericFeatureTracker
 	tracker->extra_params["remove_lost_features"] =
-		remove_lost_feats;  //;1;   // automatically remove out-of-image and
+		remove_lost_feats;	//;1;   // automatically remove out-of-image and
 	// badly tracked features
 
 	tracker->extra_params["add_new_features"] =
-		add_new_feats;  // 1;   // track, AND ALSO, add new features
+		add_new_feats;	// 1;   // track, AND ALSO, add new features
 	tracker->extra_params["add_new_feat_min_separation"] = 32;
 	tracker->extra_params["minimum_KLT_response_to_add"] = 10;
-	tracker->extra_params["add_new_feat_max_features"] = max_feats;  // 350;
-	tracker->extra_params["add_new_feat_patch_size"] = patch_size;  // 11;
+	tracker->extra_params["add_new_feat_max_features"] = max_feats;	 // 350;
+	tracker->extra_params["add_new_feat_patch_size"] = patch_size;	// 11;
 
-	tracker->extra_params["update_patches_every"] = 0;  // Don't update patches.
+	tracker->extra_params["update_patches_every"] = 0;	// Don't update patches.
 
 	tracker->extra_params["check_KLT_response_every"] =
-		5;  // Re-check the KLT-response to assure features are in good points.
+		5;	// Re-check the KLT-response to assure features are in good points.
 	tracker->extra_params["minimum_KLT_response"] = 5;
 
 	// Specific params for "CFeatureTracker_KL"
 	// ------------------------------------------------------
 	tracker->extra_params["window_width"] = window_width;  // 5;
-	tracker->extra_params["window_height"] = window_height;  // 5;
+	tracker->extra_params["window_height"] = window_height;	 // 5;
 	// tracker->extra_params["LK_levels"] = 3;
 	// tracker->extra_params["LK_max_iters"] = 10;
 	// tracker->extra_params["LK_epsilon"] = 0.1;
 	// tracker->extra_params["LK_max_tracking_error"] = 150;
 
 	long current_num = tracking_image_counter % files_fullpath_tracking.size();
-	CImage theImg;  // The grabbed image:
+	CImage theImg;	// The grabbed image:
 	theImg.loadFromFile(files_fullpath_tracking.at(current_num));
 
 	// Take the resolution upon first valid frame.
@@ -108,15 +109,14 @@ cv::Mat Tracker::trackThemAll(
 
 	for (size_t i = 0; i < trackedFeats.size(); ++i)
 	{
-		TKeyPoint& f = trackedFeats[i];
+		auto& f = trackedFeats[i];
 
 		const TPixelCoordf pxRaw(f.pt.x, f.pt.y);
 		TPixelCoordf pxUndist;
 		// mrpt::vision::pinhole::undistort_point(pxRaw,pxUndist, cameraParams);
 		pxUndist = pxRaw;
 
-		feat_track_history.push_back(
-			TFeatureObservation(f.ID, curCamPoseId, pxUndist));
+		feat_track_history.emplace_back(f.ID, curCamPoseId, pxUndist);
 	}
 	curCamPoseId++;
 
@@ -148,12 +148,12 @@ cv::Mat Tracker::trackThemAll(
 		// Update new feature coords:
 		tracker->getProfiler().enter("drawFeatureTracks");
 
-		std::set<TFeatureID> observed_IDs;
+		std::set<mrpt::vision::TFeatureID> observed_IDs;
 
 		// cout << "tracked feats size" << trackedFeats.size() << endl;
 		for (size_t i = 0; i < trackedFeats.size(); ++i)
 		{
-			const TKeyPoint& ft = trackedFeats[i];
+			const auto& ft = trackedFeats[i];
 			std::list<TPixelCoord>& seq = feat_tracks[ft.ID];
 
 			// drawMarker(cvImg1, Point(trackedFeats.getFeatureX(i),

@@ -2,20 +2,21 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 #pragma once
 
 #include <mrpt/random/random_shuffle.h>
+
 #include <algorithm>
 #include <cstddef>
 #include <limits>
 #include <limits>  // numeric_limits
 #include <random>
 #include <stdexcept>
-#include <type_traits>  // remove_reference
+#include <type_traits>	// remove_reference
 #include <vector>
 
 // Frwd decl:
@@ -227,7 +228,7 @@ class CRandomGenerator
 		cov.resize(dim, dim);
 		cov.matProductOf_AAt(r);  // random semi-definite positive matrix:
 		for (size_t i = 0; i < dim; i++)
-			cov(i, i) += diagonal_epsilon;  // make sure it's definite-positive
+			cov(i, i) += diagonal_epsilon;	// make sure it's definite-positive
 		return cov;
 	}
 
@@ -279,10 +280,12 @@ class CRandomGenerator
 		for (size_t i = 0; i < dim; i++)
 		{
 			T rnd = this->drawGaussian1D_normalized();
-			for (size_t d = 0; d < dim; d++) out_result[d] += (Z(d, i) * rnd);
+			for (size_t d = 0; d < dim; d++)
+				out_result[d] += (Z(d, i) * rnd);
 		}
 		if (mean)
-			for (size_t d = 0; d < dim; d++) out_result[d] += (*mean)[d];
+			for (size_t d = 0; d < dim; d++)
+				out_result[d] += (*mean)[d];
 	}
 
 	/** Generate multidimensional random samples according to a given covariance
@@ -328,7 +331,8 @@ class CRandomGenerator
 				out_result[d] += eigVecs.coeff(d, i) * rnd;
 		}
 		if (mean)
-			for (size_t d = 0; d < N; d++) out_result[d] += (*mean)[d];
+			for (size_t d = 0; d < N; d++)
+				out_result[d] += (*mean)[d];
 	}
 
 	/** Generate a given number of multidimensional random samples according to
@@ -377,7 +381,8 @@ class CRandomGenerator
 					ret[k][d] += eigVecs.coeff(d, i) * rnd;
 			}
 			if (mean)
-				for (size_t d = 0; d < N; d++) ret[k][d] += (*mean)[d];
+				for (size_t d = 0; d < N; d++)
+					ret[k][d] += (*mean)[d];
 		}
 	}
 
@@ -397,9 +402,19 @@ class CRandomGenerator
 		if (N > 1) mrpt::random::shuffle(&out_result[0], &out_result[N - 1]);
 	}
 
+	/** \overload  \note [New in MRPT 2.1.4] */
+	template <class VEC>
+	VEC permuteVector(const VEC& in_vector)
+	{
+		VEC out_result = in_vector;
+		const size_t N = out_result.size();
+		if (N > 1) mrpt::random::shuffle(&out_result[0], &out_result[N - 1]);
+		return out_result;
+	}
+
 	/** @} */
 
-};  // end of CRandomGenerator
+};	// end of CRandomGenerator
 // --------------------------------------------------------------
 
 /** A static instance of a CRandomGenerator class, for use in single-thread

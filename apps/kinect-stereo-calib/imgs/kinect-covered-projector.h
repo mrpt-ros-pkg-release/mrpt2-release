@@ -2,10 +2,12 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
+
+// clang-format off
 static const unsigned char kinect_covered_projector_img_jpeg[] = {
 	255, 216, 255, 224, 0,   16,  74,  70,  73,  70,  0,   1,   1,   1,   0,
 	72,  0,   72,  0,   0,   255, 219, 0,   67,  0,   5,   4,   4,   5,   4,

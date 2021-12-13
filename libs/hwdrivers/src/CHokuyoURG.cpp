@@ -2,18 +2,19 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
-#include "hwdrivers-precomp.h"  // Precompiled headers
-
+#include "hwdrivers-precomp.h"	// Precompiled headers
+//
 #include <mrpt/comms/CClientTCPSocket.h>
 #include <mrpt/comms/CSerialPort.h>
 #include <mrpt/hwdrivers/CHokuyoURG.h>
 #include <mrpt/opengl/CAxis.h>
 #include <mrpt/opengl/CPlanarLaserScan.h>  // in library mrpt-maps
+#include <mrpt/system/CTimeLogger.h>
 #include <mrpt/system/os.h>
 
 IMPLEMENTS_GENERIC_SENSOR(CHokuyoURG, mrpt::hwdrivers)
@@ -70,6 +71,11 @@ void CHokuyoURG::doProcessSimple(
 	bool& outThereIsObservation,
 	mrpt::obs::CObservation2DRangeScan& outObservation, bool& hardwareError)
 {
+#if 0
+	static mrpt::system::CTimeLogger timLogger("CHokuyoURG");
+	mrpt::system::CTimeLoggerEntry tle(timLogger, "doProcessSimple");
+#endif
+
 	outThereIsObservation = false;
 	hardwareError = false;
 
@@ -92,7 +98,7 @@ void CHokuyoURG::doProcessSimple(
 	m_rcv_data.reserve(expectedSize + 1000);
 
 	m_state = ssWorking;
-	if (!parseResponse())
+	if (!parseResponse(false))
 	{
 		if (!internal_notifyNoScanReceived())
 		{
@@ -148,8 +154,8 @@ void CHokuyoURG::doProcessSimple(
 	{
 		// Extract the timestamp of the sensor:
 		uint32_t nowUI = ((m_rcv_data[0] - 0x30) << 18) +
-						 ((m_rcv_data[1] - 0x30) << 12) +
-						 ((m_rcv_data[2] - 0x30) << 6) + (m_rcv_data[3] - 0x30);
+			((m_rcv_data[1] - 0x30) << 12) + ((m_rcv_data[2] - 0x30) << 6) +
+			(m_rcv_data[3] - 0x30);
 
 		uint32_t AtUI = 0;
 		if (m_timeStartUI == 0)
@@ -190,8 +196,9 @@ void CHokuyoURG::doProcessSimple(
 
 		outObservation.setScanRange(i, range_mm * 0.001f);
 		outObservation.setScanRangeValidity(
-			i, range_mm >= 20 &&
-				   (outObservation.getScanRange(i) <= outObservation.maxRange));
+			i,
+			range_mm >= 20 &&
+				(outObservation.getScanRange(i) <= outObservation.maxRange));
 
 		if (m_intensity)
 		{
@@ -216,35 +223,28 @@ void CHokuyoURG::doProcessSimple(
 						loadConfig_sensorSpecific
 -------------------------------------------------------------*/
 void CHokuyoURG::loadConfig_sensorSpecific(
-	const mrpt::config::CConfigFileBase& configSource,
-	const std::string& iniSection)
+	const mrpt::config::CConfigFileBase& c, const std::string& s)
 {
-	m_reduced_fov =
-		DEG2RAD(configSource.read_float(iniSection, "reduced_fov", 0)),
+	m_reduced_fov = DEG2RAD(c.read_float(s, "reduced_fov", 0)),
 
-	m_motorSpeed_rpm =
-		configSource.read_int(iniSection, "HOKUYO_motorSpeed_rpm", 0);
+	m_motorSpeed_rpm = c.read_int(s, "HOKUYO_motorSpeed_rpm", 0);
 	m_sensorPose.setFromValues(
-		configSource.read_float(iniSection, "pose_x", 0),
-		configSource.read_float(iniSection, "pose_y", 0),
-		configSource.read_float(iniSection, "pose_z", 0),
-		DEG2RAD(configSource.read_float(iniSection, "pose_yaw", 0)),
-		DEG2RAD(configSource.read_float(iniSection, "pose_pitch", 0)),
-		DEG2RAD(configSource.read_float(iniSection, "pose_roll", 0)));
+		c.read_float(s, "pose_x", 0), c.read_float(s, "pose_y", 0),
+		c.read_float(s, "pose_z", 0), DEG2RAD(c.read_float(s, "pose_yaw", 0)),
+		DEG2RAD(c.read_float(s, "pose_pitch", 0)),
+		DEG2RAD(c.read_float(s, "pose_roll", 0)));
 
-	m_highSensMode =
-		configSource.read_bool(iniSection, "HOKUYO_HS_mode", m_highSensMode);
+	m_highSensMode = c.read_bool(s, "HOKUYO_HS_mode", m_highSensMode);
 
 #ifdef _WIN32
-	m_com_port =
-		configSource.read_string(iniSection, "COM_port_WIN", m_com_port);
+	const char* comVarName = "COM_port_WIN";
 #else
-	m_com_port =
-		configSource.read_string(iniSection, "COM_port_LIN", m_com_port);
+	const char* comVarName = "COM_port_LIN";
 #endif
 
-	m_ip_dir = configSource.read_string(iniSection, "IP_DIR", m_ip_dir);
-	m_port_dir = configSource.read_int(iniSection, "PORT_DIR", m_port_dir);
+	m_com_port = c.read_string(s, comVarName, m_com_port);
+	m_ip_dir = c.read_string(s, "IP_DIR", m_ip_dir);
+	m_port_dir = c.read_int(s, "PORT_DIR", m_port_dir);
 
 	ASSERTMSG_(
 		!m_com_port.empty() || !m_ip_dir.empty(),
@@ -260,15 +260,17 @@ void CHokuyoURG::loadConfig_sensorSpecific(
 			"connection");
 	}
 
-	m_disable_firmware_timestamp = configSource.read_bool(
-		iniSection, "disable_firmware_timestamp", m_disable_firmware_timestamp);
-	m_intensity = configSource.read_bool(iniSection, "intensity", m_intensity),
+	m_disable_firmware_timestamp = c.read_bool(
+		s, "disable_firmware_timestamp", m_disable_firmware_timestamp);
+	m_intensity = c.read_bool(s, "intensity", m_intensity),
 
+	MRPT_LOAD_HERE_CONFIG_VAR(scan_interval, int, m_scan_interval, c, s);
+	MRPT_LOAD_HERE_CONFIG_VAR(comms_timeout_ms, int, m_comms_timeout_ms, c, s);
 	MRPT_LOAD_HERE_CONFIG_VAR(
-		scan_interval, int, m_scan_interval, configSource, iniSection);
+		comms_between_timeout_ms, int, m_comms_between_timeout_ms, c, s);
 
 	// Parent options:
-	C2DRangeFinderAbstract::loadCommonParams(configSource, iniSection);
+	C2DRangeFinderAbstract::loadCommonParams(c, s);
 }
 
 /*-------------------------------------------------------------
@@ -290,7 +292,7 @@ bool CHokuyoURG::turnOn()
 		{
 			// It is a COM:
 			COM->setConfig(19200);
-			COM->setTimeouts(100, 0, 200, 0, 0);
+			COM->setTimeouts(m_comms_timeout_ms, 0, m_comms_timeout_ms, 0, 0);
 
 			// Assure the laser is off and quiet:
 			switchLaserOff();
@@ -360,7 +362,7 @@ bool CHokuyoURG::turnOn()
 		const int half_range = static_cast<int>(
 								   (m_sensor_info.scans_per_360deg / 360.0) *
 								   RAD2DEG(m_reduced_fov)) >>
-							   1;
+			1;
 		m_firstRange = center - half_range;
 		m_lastRange = center + half_range;
 		MRPT_LOG_INFO_STREAM(
@@ -418,21 +420,37 @@ bool CHokuyoURG::setHighBaudrate()
 /*-------------------------------------------------------------
 						ensureBufferHasBytes
 -------------------------------------------------------------*/
-bool CHokuyoURG::ensureBufferHasBytes(const size_t nDesiredBytes)
+bool CHokuyoURG::ensureBufferHasBytes(
+	const size_t nDesiredBytes, bool additionalWaitForData)
 {
 	ASSERT_LT_(nDesiredBytes, m_rx_buffer.capacity());
 
 	if (m_rx_buffer.size() >= nDesiredBytes) return true;
 
 	// Try to read more bytes:
-	std::array<uint8_t, 128> buf;
+	std::array<uint8_t, 512> buf;
 	const size_t to_read = std::min(m_rx_buffer.available(), buf.size());
 
 	try
 	{
-		auto sock = dynamic_cast<CClientTCPSocket*>(m_stream.get());
-		const size_t nRead = sock ? sock->readAsync(&buf[0], to_read, 100, 10)
-								  : m_stream->Read(&buf[0], to_read);
+		const size_t nRead = [this, &buf, additionalWaitForData, to_read]() {
+			if (auto sock = dynamic_cast<CClientTCPSocket*>(m_stream.get());
+				sock)
+			{
+				// socket:
+				auto timeout = m_comms_timeout_ms;
+				if (additionalWaitForData) mrpt::keep_max(timeout, 100);
+
+				return sock->readAsync(
+					&buf[0], to_read, timeout, m_comms_between_timeout_ms);
+			}
+			else
+			{
+				// serial port:
+				return m_stream->Read(&buf[0], to_read);
+			}
+		}();
+
 		m_rx_buffer.push_many(&buf[0], nRead);
 	}
 	catch (std::exception&)
@@ -443,7 +461,7 @@ bool CHokuyoURG::ensureBufferHasBytes(const size_t nDesiredBytes)
 	return (m_rx_buffer.size() >= nDesiredBytes);
 }
 
-bool CHokuyoURG::parseResponse()
+bool CHokuyoURG::parseResponse(bool additionalWaitForData)
 {
 	m_rcv_status0 = '\0';
 	m_rcv_status1 = '\0';
@@ -467,7 +485,8 @@ bool CHokuyoURG::parseResponse()
 			unsigned int i = 0;
 			do
 			{
-				if (!ensureBufferHasBytes(verifLen - i)) return false;
+				if (!ensureBufferHasBytes(verifLen - i, additionalWaitForData))
+					return false;
 
 				// If matches the echo, go on:
 				if (m_rx_buffer.peek(peekIdx++) == m_lastSentMeasCmd[i])
@@ -486,7 +505,8 @@ bool CHokuyoURG::parseResponse()
 		}
 
 		// Now, the status bytes:
-		if (!ensureBufferHasBytes(peekIdx + 2)) return false;
+		if (!ensureBufferHasBytes(peekIdx + 2, additionalWaitForData))
+			return false;
 
 		tmp_rcv_status0 = m_rx_buffer.peek(peekIdx++);
 		tmp_rcv_status1 = m_rx_buffer.peek(peekIdx++);
@@ -495,7 +515,8 @@ bool CHokuyoURG::parseResponse()
 		if (tmp_rcv_status1 != 0x0A)
 		{
 			// Yes, it is SCIP2.0
-			if (!ensureBufferHasBytes(peekIdx + 1)) return false;
+			if (!ensureBufferHasBytes(peekIdx + 1, additionalWaitForData))
+				return false;
 			// Ignore this byte: sumStatus
 			peekIdx++;
 		}
@@ -505,7 +526,8 @@ bool CHokuyoURG::parseResponse()
 		}
 
 		// After the status bytes, there must be a LF:
-		if (!ensureBufferHasBytes(peekIdx + 1)) return false;
+		if (!ensureBufferHasBytes(peekIdx + 1, additionalWaitForData))
+			return false;
 		char nextChar = m_rx_buffer.peek(peekIdx++);
 		if (nextChar != 0x0A) return false;
 
@@ -521,7 +543,7 @@ bool CHokuyoURG::parseResponse()
 		std::string tmp_rx;
 		for (;;)
 		{
-			if (!ensureBufferHasBytes(peekIdx + 1))
+			if (!ensureBufferHasBytes(peekIdx + 1, additionalWaitForData))
 			{
 				// Do not empty the queue, it seems we need to wait for more
 				// data:
@@ -536,7 +558,8 @@ bool CHokuyoURG::parseResponse()
 				m_rcv_status0 = tmp_rcv_status0;
 				m_rcv_status1 = tmp_rcv_status1;
 				// Empty read bytes so far:
-				for (size_t k = 0; k < peekIdx; k++) m_rx_buffer.pop();
+				for (size_t k = 0; k < peekIdx; k++)
+					m_rx_buffer.pop();
 				return true;
 			}
 
@@ -567,7 +590,8 @@ bool CHokuyoURG::parseResponse()
 				m_rcv_status1 = tmp_rcv_status1;
 
 				// Empty read bytes so far:
-				for (size_t k = 0; k < peekIdx; k++) m_rx_buffer.pop();
+				for (size_t k = 0; k < peekIdx; k++)
+					m_rx_buffer.pop();
 
 				MRPT_LOG_DEBUG_STREAM(
 					"[Hokuyo] parseResponse(): RX `" << m_rcv_data << "`");
@@ -1025,10 +1049,10 @@ void CHokuyoURG::initialize()
 {
 	if (m_verbose) this->setMinLoggingLevel(mrpt::system::LVL_DEBUG);
 
-	if (!ensureStreamIsOpen()) return;
-
-	if (!turnOn())
+	if (!ensureStreamIsOpen() || !turnOn())
 	{
+		m_state = ssError;
+
 		MRPT_LOG_ERROR("[Hokuyo] Error initializing HOKUYO scanner");
 		return;
 	}
@@ -1041,10 +1065,7 @@ void CHokuyoURG::purgeBuffers()
 	if (m_ip_dir.empty())
 	{
 		auto* COM = dynamic_cast<CSerialPort*>(m_stream.get());
-		if (COM != nullptr)
-		{
-			COM->purgeBuffers();
-		}
+		if (COM != nullptr) { COM->purgeBuffers(); }
 	}
 	else  // Socket connection
 	{

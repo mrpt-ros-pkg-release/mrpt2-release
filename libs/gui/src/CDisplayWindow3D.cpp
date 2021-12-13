@@ -2,21 +2,19 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "gui-precomp.h"  // Precompiled headers
-
+//
 #include <mrpt/config.h>
-
 #include <mrpt/gui/CDisplayWindow3D.h>
-#include <mrpt/img/CImage.h>
-#include <mrpt/system/CTicTac.h>
-
 #include <mrpt/gui/WxSubsystem.h>
 #include <mrpt/gui/WxUtils.h>
+#include <mrpt/img/CImage.h>
+#include <mrpt/system/CTicTac.h>
 
 #if MRPT_HAS_OPENGL_GLUT
 #ifdef _WIN32
@@ -109,10 +107,7 @@ void CMyGLCanvas_DisplayWindow3D::display3D_processKeyEvent(
 				m_win3D->m_lastFullScreen = mrpt::system::now();
 				cout << "[CDisplayWindow3D] Switching fullscreen...\n";
 				auto* win = (C3DWindowDialog*)m_win3D->m_hwnd.get();
-				if (win)
-				{
-					win->ShowFullScreen(!win->IsFullScreen());
-				}
+				if (win) { win->ShowFullScreen(!win->IsFullScreen()); }
 			}
 			// Alt+Enter: Don't notify on this key stroke, since if we're
 			// switching to fullscreen
@@ -250,7 +245,7 @@ void CMyGLCanvas_DisplayWindow3D::OnPostRenderSwapBuffers(
 	}
 }
 
-#endif  // Wx + OpenGL
+#endif	// Wx + OpenGL
 
 #if MRPT_HAS_WXWIDGETS
 
@@ -333,9 +328,9 @@ void C3DWindowDialog::OnClose(wxCloseEvent& event)
 }
 
 // Menu: Close
-void C3DWindowDialog::OnMenuClose(wxCommandEvent& event) { Close(); }
+void C3DWindowDialog::OnMenuClose(wxCommandEvent&) { Close(); }
 // Menu: About
-void C3DWindowDialog::OnMenuAbout(wxCommandEvent& event)
+void C3DWindowDialog::OnMenuAbout(wxCommandEvent&)
 {
 	::wxMessageBox(
 		_("3D Scene viewer\n Class gui::CDisplayWindow3D\n MRPT C++ library"),
@@ -369,7 +364,7 @@ void C3DWindowDialog::OnResize(wxSizeEvent& event)
 #endif
 }
 
-#endif  // MRPT_HAS_WXWIDGETS
+#endif	// MRPT_HAS_WXWIDGETS
 
 /*---------------------------------------------------------------
 					Constructor
@@ -541,10 +536,7 @@ void CDisplayWindow3D::setCameraPointingToPoint(
 {
 #if MRPT_HAS_WXWIDGETS && MRPT_HAS_OPENGL_GLUT
 	auto* win = (C3DWindowDialog*)m_hwnd.get();
-	if (win)
-	{
-		win->m_canvas->setCameraPointing(x, y, z);
-	}
+	if (win) { win->m_canvas->setCameraPointing(x, y, z); }
 #endif
 }
 
@@ -751,8 +743,7 @@ void CDisplayWindow3D::grabImagesStop() { m_grab_imgs_prefix.clear(); }
  ---------------------------------------------------------------*/
 std::string CDisplayWindow3D::grabImageGetNextFile()
 {
-	if (m_grab_imgs_prefix.empty())
-		return string();
+	if (m_grab_imgs_prefix.empty()) return string();
 	else
 		return format(
 			"%s%06u.png", m_grab_imgs_prefix.c_str(), m_grab_imgs_idx++);
@@ -777,7 +768,7 @@ bool CDisplayWindow3D::getLastWindowImage(mrpt::img::CImage& out_img) const
 		std::lock_guard<std::mutex> lock(m_last_captured_img_cs);
 		if (m_last_captured_img)
 		{
-			out_img = *m_last_captured_img;  // Copy the full image
+			out_img = *m_last_captured_img;	 // Copy the full image
 			ret = true;
 		}
 		else
@@ -841,4 +832,44 @@ CDisplayWindow3DLocker::CDisplayWindow3DLocker(CDisplayWindow3D& win)
 CDisplayWindow3DLocker::~CDisplayWindow3DLocker()
 {
 	m_win.unlockAccess3DScene();
+}
+
+void CDisplayWindow3D::sendFunctionToRunOnGUIThread(
+	const std::function<void(void)>& f)
+{
+#if MRPT_HAS_WXWIDGETS && MRPT_HAS_OPENGL_GLUT
+	auto* win = (C3DWindowDialog*)m_hwnd.get();
+	if (!win) return;
+
+	// Send refresh request:
+	auto* REQ = new WxSubsystem::TRequestToWxMainThread[1];
+	REQ->source3D = this;
+	REQ->OPCODE = 800;
+	REQ->userFunction = f;
+	WxSubsystem::pushPendingWxRequest(REQ);
+
+#endif
+}
+
+bool CDisplayWindow3D::is_GL_context_created() const
+{
+#if MRPT_HAS_WXWIDGETS && MRPT_HAS_OPENGL_GLUT
+	auto* win = (C3DWindowDialog*)m_hwnd.get();
+	if (!win || !win->m_canvas) return false;
+	return win->m_canvas->is_GL_context_created();
+#else
+	THROW_EXCEPTION("This function requires wxWidgets and OpenGL");
+#endif
+}
+
+bool CDisplayWindow3D::wait_for_GL_context(const double timeout_seconds) const
+{
+	const double t0 = mrpt::Clock::nowDouble();
+	bool ok = false;
+	while (!(ok = is_GL_context_created()) &&
+		   mrpt::Clock::nowDouble() - t0 < timeout_seconds)
+	{
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+	}
+	return ok;
 }

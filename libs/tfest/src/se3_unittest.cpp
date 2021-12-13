@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -82,14 +82,14 @@ void generate_list_of_points(
 	TMatchingPairTempl<T> pair;
 	for (unsigned int i = 0; i < 5; ++i)
 	{
-		pair.this_idx = pair.other_idx = i;
-		pair.this_x = d2f(pA[i][0]);
-		pair.this_y = d2f(pA[i][1]);
-		pair.this_z = d2f(pA[i][2]);
+		pair.globalIdx = pair.localIdx = i;
+		pair.global.x = d2f(pA[i][0]);
+		pair.global.y = d2f(pA[i][1]);
+		pair.global.z = d2f(pA[i][2]);
 
-		pair.other_x = d2f(pB[i][0]);
-		pair.other_y = d2f(pB[i][1]);
-		pair.other_z = d2f(pB[i][2]);
+		pair.local.x = d2f(pB[i][0]);
+		pair.local.y = d2f(pB[i][1]);
+		pair.local.z = d2f(pB[i][2]);
 
 		list.push_back(pair);
 	}
@@ -115,11 +115,11 @@ void generate_vector_of_points(
 template <typename T>
 void se3_l2_MatchList_test()
 {
-	TPoints pA, pB;  // The input points
+	TPoints pA, pB;	 // The input points
 	CPose3DQuat qPose = generate_points(pA, pB);
 
 	TMatchingPairListTempl<T> list;
-	generate_list_of_points(pA, pB, list);  // Generate a list of matched points
+	generate_list_of_points(pA, pB, list);	// Generate a list of matched points
 
 	CPose3DQuat outQuat;  // Output CPose3DQuat for the LSRigidTransformation
 	double scale;  // Output scale value
@@ -155,7 +155,7 @@ TEST(tfest, se3_l2_MatchList_double) { se3_l2_MatchList_test<double>(); }
 
 TEST(tfest, se3_l2_PtsLists)
 {
-	TPoints pA, pB;  // The input points
+	TPoints pA, pB;	 // The input points
 	CPose3DQuat qPose = generate_points(pA, pB);
 
 	vector<mrpt::math::TPoint3D> ptsA, ptsB;
@@ -165,7 +165,7 @@ TEST(tfest, se3_l2_PtsLists)
 	mrpt::poses::CPose3DQuat qu;
 	double scale;
 	mrpt::tfest::se3_l2(
-		ptsA, ptsB, qu, scale);  // Output quaternion for the Horn Method
+		ptsA, ptsB, qu, scale);	 // Output quaternion for the Horn Method
 
 	double err = 0.0;
 	if ((qPose[3] * qu[3] > 0 && qPose[4] * qu[4] > 0 && qPose[5] * qu[5] > 0 &&
@@ -192,11 +192,11 @@ TEST(tfest, se3_l2_PtsLists)
 
 TEST(tfest, se3_l2_robust)
 {
-	TPoints pA, pB;  // The input points
+	TPoints pA, pB;	 // The input points
 	CPose3DQuat qPose = generate_points(pA, pB);
 
 	TMatchingPairList list;
-	generate_list_of_points(pA, pB, list);  // Generate a list of matched points
+	generate_list_of_points(pA, pB, list);	// Generate a list of matched points
 
 	mrpt::tfest::TSE3RobustResult estim_result;
 	mrpt::tfest::TSE3RobustParams params;

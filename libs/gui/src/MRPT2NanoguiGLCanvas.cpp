@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "gui-precomp.h"  // Precompiled headers
-
+//
 #include <mrpt/core/exceptions.h>
 #include <mrpt/gui/MRPT2NanoguiGLCanvas.h>
 
@@ -36,7 +36,7 @@ void MRPT2NanoguiGLCanvas::drawGL()
 			m_backgroundColor.R, m_backgroundColor.G, m_backgroundColor.B,
 			m_backgroundColor.A);
 
-		if (!scene) return;  // No scene -> nothing to render
+		if (!scene) return;	 // No scene -> nothing to render
 
 		// We need the size of the viewport:
 		GLint win_dims[4];
@@ -83,4 +83,4 @@ bool MRPT2NanoguiGLCanvas::scrollEvent(
 	return true;  // already processed
 }
 
-#endif  // MRPT_HAS_NANOGUI
+#endif	// MRPT_HAS_NANOGUI

@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -92,8 +92,8 @@ class COccupancyGridMap2D
 	/** Auxiliary variables to speed up the computation of observation
 	 * likelihood values for LF method among others, at a high cost in memory
 	 * (see TLikelihoodOptions::enableLikelihoodCache). */
-	std::vector<double> precomputedLikelihood;
-	bool m_likelihoodCacheOutDated{true};
+	mutable std::vector<double> precomputedLikelihood;
+	mutable bool m_likelihoodCacheOutDated{true};
 
 	/** Used for Voronoi calculation.Same struct as "map", but contains a "0" if
 	 * not a basis point. */
@@ -118,8 +118,7 @@ class COccupancyGridMap2D
 	template <typename T>
 	static T H(const T p)
 	{
-		if (p == 0 || p == 1)
-			return 0;
+		if (p == 0 || p == 1) return 0;
 		else
 			return -p * std::log(p);
 	}
@@ -148,37 +147,37 @@ class COccupancyGridMap2D
 	 * Consensus for gridmaps, see the ICRA2007 paper by Blanco et al.)  */
 	double computeObservationLikelihood_Consensus(
 		const mrpt::obs::CObservation& obs,
-		const mrpt::poses::CPose2D& takenFrom);
+		const mrpt::poses::CPose2D& takenFrom) const;
 	/** One of the methods that can be selected for implementing
 	 * "computeObservationLikelihood". TODO: This method is described in....  */
 	double computeObservationLikelihood_ConsensusOWA(
 		const mrpt::obs::CObservation& obs,
-		const mrpt::poses::CPose2D& takenFrom);
+		const mrpt::poses::CPose2D& takenFrom) const;
 	/** One of the methods that can be selected for implementing
 	 * "computeObservationLikelihood"  */
 	double computeObservationLikelihood_CellsDifference(
 		const mrpt::obs::CObservation& obs,
-		const mrpt::poses::CPose2D& takenFrom);
+		const mrpt::poses::CPose2D& takenFrom) const;
 	/** One of the methods that can be selected for implementing
 	 * "computeObservationLikelihood" */
 	double computeObservationLikelihood_MI(
 		const mrpt::obs::CObservation& obs,
-		const mrpt::poses::CPose2D& takenFrom);
+		const mrpt::poses::CPose2D& takenFrom) const;
 	/** One of the methods that can be selected for implementing
 	 * "computeObservationLikelihood" */
 	double computeObservationLikelihood_rayTracing(
 		const mrpt::obs::CObservation& obs,
-		const mrpt::poses::CPose2D& takenFrom);
+		const mrpt::poses::CPose2D& takenFrom) const;
 	/** One of the methods that can be selected for implementing
 	 * "computeObservationLikelihood".*/
 	double computeObservationLikelihood_likelihoodField_Thrun(
 		const mrpt::obs::CObservation& obs,
-		const mrpt::poses::CPose2D& takenFrom);
+		const mrpt::poses::CPose2D& takenFrom) const;
 	/** One of the methods that can be selected for implementing
 	 * "computeObservationLikelihood". */
 	double computeObservationLikelihood_likelihoodField_II(
 		const mrpt::obs::CObservation& obs,
-		const mrpt::poses::CPose2D& takenFrom);
+		const mrpt::poses::CPose2D& takenFrom) const;
 
 	/** Clear the map: It set all cells to their default occupancy value (0.5),
 	 * without changing the resolution (the grid extension is reset to the
@@ -198,7 +197,8 @@ class COccupancyGridMap2D
 	 */
 	bool internal_insertObservation(
 		const mrpt::obs::CObservation& obs,
-		const mrpt::poses::CPose3D* robotPose = nullptr) override;
+		const std::optional<const mrpt::poses::CPose3D>& robotPose =
+			std::nullopt) override;
 
    public:
 	/** Read-only access to the raw cell contents (cells are in log-odd units)
@@ -225,7 +225,9 @@ class COccupancyGridMap2D
 		int cellsUpdated{0};
 		/** In this mode, some laser rays can be skips to speep-up */
 		int laserRaysSkip{1};
-	} updateInfoChangeOnly;
+	};
+
+	mutable TUpdateCellsInfoChangeOnly updateInfoChangeOnly;
 
 	/** Fills all the cells with a default value. */
 	void fill(float default_value = 0.5f);
@@ -368,8 +370,7 @@ class COccupancyGridMap2D
 	 * do not use it normally */
 	inline cellType* getRow(int cy)
 	{
-		if (cy < 0 || static_cast<unsigned int>(cy) >= size_y)
-			return nullptr;
+		if (cy < 0 || static_cast<unsigned int>(cy) >= size_y) return nullptr;
 		else
 			return &map[0 + cy * size_x];
 	}
@@ -378,8 +379,7 @@ class COccupancyGridMap2D
 	 * do not use it normally */
 	inline const cellType* getRow(int cy) const
 	{
-		if (cy < 0 || static_cast<unsigned int>(cy) >= size_y)
-			return nullptr;
+		if (cy < 0 || static_cast<unsigned int>(cy) >= size_y) return nullptr;
 		else
 			return &map[0 + cy * size_x];
 	}
@@ -483,7 +483,7 @@ class COccupancyGridMap2D
 			const mrpt::config::CConfigFileBase& source,
 			const std::string& section) override;  // See base docs
 		void dumpToTextStream(
-			std::ostream& out) const override;  // See base docs
+			std::ostream& out) const override;	// See base docs
 
 		/** The altitude (z-axis) of 2D scans (within a 0.01m tolerance) for
 		 * they to be inserted in this map! */
@@ -565,7 +565,7 @@ class COccupancyGridMap2D
 			const mrpt::config::CConfigFileBase& source,
 			const std::string& section) override;  // See base docs
 		void dumpToTextStream(
-			std::ostream& out) const override;  // See base docs
+			std::ostream& out) const override;	// See base docs
 
 		/** The selected method to compute an observation likelihood */
 		TLikelihoodMethod likelihoodMethod{lmLikelihoodField_Thrun};
@@ -630,17 +630,19 @@ class COccupancyGridMap2D
 	/** Some members of this struct will contain intermediate or output data
 	 * after calling "computeObservationLikelihood" for some likelihood
 	 * functions */
-	class TLikelihoodOutput
+	struct TLikelihoodOutput
 	{
 	   public:
-		TLikelihoodOutput() : OWA_pairList(), OWA_individualLikValues() {}
 		/** [OWA method] This will contain the ascending-ordered list of
 		 * pairs:(likelihood values, 2D point in map coordinates). */
 		std::vector<TPairLikelihoodIndex> OWA_pairList;
+
 		/** [OWA method] This will contain the ascending-ordered list of
 		 * likelihood values for individual range measurements in the scan. */
 		std::vector<double> OWA_individualLikValues;
-	} likelihoodOutputs;
+	};
+
+	mutable TLikelihoodOutput likelihoodOutputs;
 
 	/** Performs a downsampling of the gridmap, by a given factor:
 	 * resolution/=ratio */
@@ -926,7 +928,7 @@ class COccupancyGridMap2D
 	 */
 	double computeLikelihoodField_Thrun(
 		const CPointsMap* pm,
-		const mrpt::poses::CPose2D* relativePose = nullptr);
+		const mrpt::poses::CPose2D* relativePose = nullptr) const;
 
 	/** Computes the likelihood [0,1] of a set of points, given the current grid
 	 * map as reference.
@@ -937,7 +939,7 @@ class COccupancyGridMap2D
 	 */
 	double computeLikelihoodField_II(
 		const CPointsMap* pm,
-		const mrpt::poses::CPose2D* relativePose = nullptr);
+		const mrpt::poses::CPose2D* relativePose = nullptr) const;
 
 	/** Saves the gridmap as a graphical file (BMP,PNG,...).
 	 * The format will be derived from the file extension (see
@@ -1027,7 +1029,8 @@ class COccupancyGridMap2D
 	 * transparency proportional to "uncertainty" (i.e. a value of 0.5 is fully
 	 * transparent)
 	 */
-	void getAs3DObject(mrpt::opengl::CSetOfObjects::Ptr& outObj) const override;
+	void getVisualizationInto(
+		mrpt::opengl::CSetOfObjects& outObj) const override;
 
 	/** Get a point cloud with all (border) occupied cells as points */
 	void getAsPointCloud(
@@ -1118,11 +1121,19 @@ class COccupancyGridMap2D
 		std::vector<int> x_basis1, y_basis1, x_basis2, y_basis2;
 	} CriticalPointsList;
 
+	/** Returns a short description of the map. */
+	std::string asString() const override
+	{
+		return mrpt::format(
+			"2D gridmap, extending from (%f,%f) to (%f,%f), cell size=%f",
+			getXMin(), getYMin(), getXMax(), getYMax(), getResolution());
+	}
+
    private:
 	// See docs in base class
 	double internal_computeObservationLikelihood(
 		const mrpt::obs::CObservation& obs,
-		const mrpt::poses::CPose3D& takenFrom) override;
+		const mrpt::poses::CPose3D& takenFrom) const override;
 	// See docs in base class
 	bool internal_canComputeObservationLikelihood(
 		const mrpt::obs::CObservation& obs) const override;

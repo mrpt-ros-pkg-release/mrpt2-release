@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -19,9 +19,10 @@ using namespace std;
 // (expected robustified output)   ; R' (1st derivative)   ; R'' (2nd
 // derivative)
 // =============  Kernel: None (plain least squares)
-const double list_test_kernel_none[][5] = {{0.0, .0, 0.0, 1.0, 0.0},
-										   {1.0, .0, 1.0, 1.0, 0.0},
-										   {10.0, .0, 10.0, 1.0, 0.0}};
+const double list_test_kernel_none[][5] = {
+	{0.0, .0, 0.0, 1.0, 0.0},
+	{1.0, .0, 1.0, 1.0, 0.0},
+	{10.0, .0, 10.0, 1.0, 0.0}};
 
 // =============  Kernel: Pseudo-Huber
 const double list_test_kernel_pshb[][5] = {

@@ -25,46 +25,113 @@
 
 #include "fy-ctype.h"
 #include "fy-utf8.h"
+#include "fy-emit-accum.h"
+
+#include "fy-walk.h"
 
 #include "fy-token.h"
 
-struct fy_token *fy_token_alloc(void)
+enum fy_scalar_style fy_token_scalar_style(struct fy_token *fyt)
+{
+	if (!fyt || fyt->type != FYTT_SCALAR)
+		return FYSS_PLAIN;
+
+	if (fyt->type == FYTT_SCALAR)
+		return fyt->scalar.style;
+
+	return FYSS_PLAIN;
+}
+
+enum fy_token_type fy_token_get_type(struct fy_token *fyt)
+{
+	return fyt ? fyt->type : FYTT_NONE;
+}
+
+struct fy_token *fy_token_alloc_rl(struct fy_token_list *fytl)
 {
 	struct fy_token *fyt;
-	unsigned int i;
 
-	fyt = malloc(sizeof(*fyt));
-	if (!fyt)
-		return fyt;
+	fyt = NULL;
+	if (fytl) {
+		fyt = fy_token_list_pop(fytl);
+		if (fyt) {
+			fyt->analyze_flags = 0;
+			fyt->text_len = 0;
+			fyt->text = NULL;
+			fyt->text0 = NULL;
+			fyt->handle.fyi = NULL;
+			fyt->comment = NULL;
+		}
+	}
+	if (!fyt) {
+		fyt = malloc(sizeof(*fyt));
+		if (!fyt)
+			return NULL;
 
-	memset(fyt, 0, sizeof(*fyt));
+		memset(fyt, 0, sizeof(*fyt));
+	}
 
 	fyt->type = FYTT_NONE;
-	fyt->analyze_flags = 0;
-	fyt->text_len = 0;
-	fyt->text = NULL;
-	fyt->text0 = NULL;
-	fyt->handle.fyi = NULL;
-	for (i = 0; i < sizeof(fyt->comment)/sizeof(fyt->comment[0]); i++)
-		fyt->comment[i].fyi = NULL;
-
 	fyt->refs = 1;
 
 	return fyt;
 }
 
-void fy_token_free(struct fy_token *fyt)
+void fy_token_clean_rl(struct fy_token_list *fytl, struct fy_token *fyt)
 {
+	int i;
+
 	if (!fyt)
 		return;
 
 	/* release reference */
 	fy_input_unref(fyt->handle.fyi);
 
+	/* release comment references */
+	if (fyt->comment) {
+		for (i = 0; i < fycp_max; i++)
+			fy_input_unref(fyt->comment[i].fyi);
+		free(fyt->comment);
+	}
+
 	switch (fyt->type) {
 	case FYTT_TAG:
 		fy_token_unref(fyt->tag.fyt_td);
+		if (fyt->tag.handle0)
+			free(fyt->tag.handle0);
+		if (fyt->tag.suffix0)
+			free(fyt->tag.suffix0);
+		fyt->tag.fyt_td = NULL;
+		fyt->tag.handle0 = NULL;
+		fyt->tag.suffix0 = NULL;
 		break;
+
+	case FYTT_TAG_DIRECTIVE:
+		if (fyt->tag_directive.prefix0)
+			free(fyt->tag_directive.prefix0);
+		if (fyt->tag_directive.handle0)
+			free(fyt->tag_directive.handle0);
+		fyt->tag_directive.prefix0 = NULL;
+		fyt->tag_directive.handle0 = NULL;
+		break;
+
+	case FYTT_PE_MAP_KEY:
+		fy_document_destroy(fyt->map_key.fyd);
+		fyt->map_key.fyd = NULL;
+		break;
+
+	case FYTT_SCALAR:
+		if (fyt->scalar.path_key_storage)
+			free(fyt->scalar.path_key_storage);
+		fyt->scalar.path_key_storage = NULL;
+		break;
+
+	case FYTT_ALIAS:
+		if (fyt->alias.expr)
+			fy_path_expr_free(fyt->alias.expr);
+		fyt->alias.expr = NULL;
+		break;
+
 	default:
 		break;
 	}
@@ -72,39 +139,48 @@ void fy_token_free(struct fy_token *fyt)
 	if (fyt->text0)
 		free(fyt->text0);
 
-	free(fyt);
+	fyt->type = FYTT_NONE;
+	fyt->analyze_flags = 0;
+	fyt->text_len = 0;
+	fyt->text = NULL;
+	fyt->text0 = NULL;
+	fyt->handle.fyi = NULL;
+	fyt->comment = NULL;
 }
 
-struct fy_token *fy_token_ref(struct fy_token *fyt)
-{
-	/* take care of overflow */
-	if (!fyt)
-		return NULL;
-	assert(fyt->refs + 1 > 0);
-	fyt->refs++;
-
-	return fyt;
-}
-
-void fy_token_unref(struct fy_token *fyt)
+void fy_token_free_rl(struct fy_token_list *fytl, struct fy_token *fyt)
 {
 	if (!fyt)
 		return;
 
-	assert(fyt->refs > 0);
+	fy_token_clean_rl(fytl, fyt);
 
-	if (fyt->refs == 1)
-		fy_token_free(fyt);
+	if (fytl)
+		fy_token_list_push(fytl, fyt);
 	else
-		fyt->refs--;
+		free(fyt);
 }
 
-void fy_token_list_unref_all(struct fy_token_list *fytl)
+void fy_token_list_unref_all_rl(struct fy_token_list *fytl, struct fy_token_list *fytl_tofree)
 {
 	struct fy_token *fyt;
 
-	while ((fyt = fy_token_list_pop(fytl)) != NULL)
-		fy_token_unref(fyt);
+	while ((fyt = fy_token_list_pop(fytl_tofree)) != NULL)
+		fy_token_unref_rl(fytl, fyt);
+}
+
+static bool fy_token_text_needs_rebuild(struct fy_token *fyt)
+{
+	const struct fy_atom *fya;
+
+	if (!fy_token_text_is_direct(fyt))
+		return false;
+
+	fya = fy_token_atom(fyt);
+	if (!fya || !fya->fyi)
+		return false;
+
+	return fya->fyi_generation != fya->fyi->generation;
 }
 
 static int fy_tag_token_format_internal(const struct fy_token *fyt, void *out, size_t *outszp)
@@ -279,6 +355,39 @@ const char *fy_tag_directive_token_prefix(struct fy_token *fyt, size_t *lenp)
 	return ptr;
 }
 
+const char *fy_tag_directive_token_prefix0(struct fy_token *fyt)
+{
+	char *text0;
+	const char *text;
+	size_t len;
+
+	if (!fyt || fyt->type != FYTT_TAG_DIRECTIVE)
+		return NULL;
+
+	/* use the cache if it's there (and doesn't need a rebuild) */
+	if (fyt->tag_directive.prefix0 && !fy_token_text_needs_rebuild(fyt))
+		return fyt->tag_directive.prefix0;
+
+	if (fyt->tag_directive.prefix0) {
+		free(fyt->tag_directive.prefix0);
+		fyt->tag_directive.prefix0 = NULL;
+	}
+
+	text = fy_tag_directive_token_prefix(fyt, &len);
+	if (!text)
+		return NULL;
+
+	text0 = malloc(len + 1);
+	if (!text0)
+		return NULL;
+	memcpy(text0, text, len);
+	text0[len] = '\0';
+
+	fyt->tag_directive.prefix0 = text0;
+
+	return fyt->tag_directive.prefix0;
+}
+
 const char *fy_tag_directive_token_handle(struct fy_token *fyt, size_t *lenp)
 {
 	const char *ptr;
@@ -292,34 +401,72 @@ const char *fy_tag_directive_token_handle(struct fy_token *fyt, size_t *lenp)
 	return ptr;
 }
 
-struct fy_token *fy_token_vcreate(enum fy_token_type type, va_list ap)
+const char *fy_tag_directive_token_handle0(struct fy_token *fyt)
+{
+	char *text0;
+	const char *text;
+	size_t len;
+
+	if (!fyt || fyt->type != FYTT_TAG_DIRECTIVE)
+		return NULL;
+
+	/* use the cache if it's there (and doesn't need a rebuild) */
+	if (fyt->tag_directive.handle0 && !fy_token_text_needs_rebuild(fyt))
+		return fyt->tag_directive.handle0;
+
+	if (fyt->tag_directive.handle0) {
+		free(fyt->tag_directive.handle0);
+		fyt->tag_directive.handle0 = NULL;
+	}
+
+	text = fy_tag_directive_token_handle(fyt, &len);
+	if (!text)
+		return NULL;
+
+	text0 = malloc(len + 1);
+	if (!text0)
+		return NULL;
+	memcpy(text0, text, len);
+	text0[len] = '\0';
+
+	fyt->tag_directive.handle0 = text0;
+
+	return fyt->tag_directive.handle0;
+}
+
+struct fy_token *fy_token_vcreate_rl(struct fy_token_list *fytl, enum fy_token_type type, va_list ap)
 {
 	struct fy_token *fyt = NULL;
 	struct fy_atom *handle;
 	struct fy_token *fyt_td;
 
-	if ((unsigned int)type > FYTT_INPUT_MARKER)
+	if ((unsigned int)type >= FYTT_COUNT)
 		goto err_out;
 
-	fyt = fy_token_alloc();
+	fyt = fy_token_alloc_rl(fytl);
 	if (!fyt)
 		goto err_out;
 	fyt->type = type;
 
 	handle = va_arg(ap, struct fy_atom *);
-	if (!handle)
-		goto err_out;
-	fyt->handle = *handle;
+	if (handle)
+		fyt->handle = *handle;
+	else
+		memset(&fyt->handle, 0, sizeof(fyt->handle));
 
 	switch (fyt->type) {
 	case FYTT_TAG_DIRECTIVE:
 		fyt->tag_directive.tag_length = va_arg(ap, unsigned int);
 		fyt->tag_directive.uri_length = va_arg(ap, unsigned int);
+		fyt->tag_directive.is_default = va_arg(ap, int) ? true : false;
 		break;
 	case FYTT_SCALAR:
 		fyt->scalar.style = va_arg(ap, enum fy_scalar_style);
 		if ((unsigned int)fyt->scalar.style >= FYSS_MAX)
 			goto err_out;
+		fyt->scalar.path_key = NULL;
+		fyt->scalar.path_key_len = 0;
+		fyt->scalar.path_key_storage = NULL;
 		break;
 	case FYTT_TAG:
 		fyt->tag.skip = va_arg(ap, unsigned int);
@@ -332,6 +479,31 @@ struct fy_token *fy_token_vcreate(enum fy_token_type type, va_list ap)
 		fyt->tag.fyt_td = fy_token_ref(fyt_td);
 		break;
 
+	case FYTT_VERSION_DIRECTIVE:
+		fyt->version_directive.vers = *va_arg(ap, struct fy_version *);
+		break;
+
+	case FYTT_ALIAS:
+		fyt->alias.expr = va_arg(ap, struct fy_path_expr *);
+		break;
+
+	case FYTT_KEY:
+		fyt->key.flow_level = va_arg(ap, int);
+		break;
+
+	case FYTT_PE_MAP_KEY:
+		fyt->map_key.fyd = va_arg(ap, struct fy_document *);
+		break;
+
+	case FYTT_PE_SEQ_INDEX:
+		fyt->seq_index.index = va_arg(ap, int);
+		break;
+
+	case FYTT_PE_SEQ_SLICE:
+		fyt->seq_slice.start_index = va_arg(ap, int);
+		fyt->seq_slice.end_index = va_arg(ap, int);
+		break;
+
 	case FYTT_NONE:
 		goto err_out;
 
@@ -339,10 +511,8 @@ struct fy_token *fy_token_vcreate(enum fy_token_type type, va_list ap)
 		break;
 	}
 
-	assert(fyt->handle.fyi);
-
-	/* take reference */
-	fy_input_ref(fyt->handle.fyi);
+	if (fyt->handle.fyi)
+		fy_input_ref(fyt->handle.fyi);
 
 	return fyt;
 
@@ -352,73 +522,45 @@ err_out:
 	return NULL;
 }
 
+struct fy_token *fy_token_create_rl(struct fy_token_list *fytl, enum fy_token_type type, ...)
+{
+	struct fy_token *fyt;
+	va_list ap;
+
+	va_start(ap, type);
+	fyt = fy_token_vcreate_rl(fytl, type, ap);
+	va_end(ap);
+
+	return fyt;
+}
+
+struct fy_token *fy_token_vcreate(enum fy_token_type type, va_list ap)
+{
+	return fy_token_vcreate_rl(NULL, type, ap);
+}
+
 struct fy_token *fy_token_create(enum fy_token_type type, ...)
 {
 	struct fy_token *fyt;
 	va_list ap;
 
 	va_start(ap, type);
-	fyt = fy_token_vcreate(type, ap);
+	fyt = fy_token_vcreate_rl(NULL, type, ap);
 	va_end(ap);
 
 	return fyt;
 }
 
-static struct fy_token *
-fy_token_vqueue_internal(struct fy_parser *fyp, struct fy_token_list *fytl,
-			 enum fy_token_type type, va_list ap)
+struct fy_token *fy_parse_token_create(struct fy_parser *fyp, enum fy_token_type type, ...)
 {
 	struct fy_token *fyt;
+	va_list ap;
 
-	fyt = fy_token_vcreate(type, ap);
-	if (!fyt)
+	if (!fyp)
 		return NULL;
-	fy_token_list_add_tail(fytl, fyt);
-
-	/* special handling for zero indented scalars */
-	if (fyt->type == FYTT_DOCUMENT_START) {
-		fyp->document_first_content_token = true;
-		fyp_scan_debug(fyp, "document_first_content_token set to true");
-	} else if (fyp->document_first_content_token &&
-			fy_token_type_is_content(fyt->type)) {
-		fyp->document_first_content_token = false;
-		fyp_scan_debug(fyp, "document_first_content_token set to false");
-	}
-
-	fyp_debug_dump_token_list(fyp, fytl, fyt, "queued: ");
-	return fyt;
-}
-
-struct fy_token *fy_token_queue_internal(struct fy_parser *fyp, struct fy_token_list *fytl,
-					 enum fy_token_type type, ...)
-{
-	va_list ap;
-	struct fy_token *fyt;
 
 	va_start(ap, type);
-	fyt = fy_token_vqueue_internal(fyp, fytl, type, ap);
-	va_end(ap);
-
-	return fyt;
-}
-
-struct fy_token *fy_token_vqueue(struct fy_parser *fyp, enum fy_token_type type, va_list ap)
-{
-	struct fy_token *fyt;
-
-	fyt = fy_token_vqueue_internal(fyp, &fyp->queued_tokens, type, ap);
-	if (fyt)
-		fyp->token_activity_counter++;
-	return fyt;
-}
-
-struct fy_token *fy_token_queue(struct fy_parser *fyp, enum fy_token_type type, ...)
-{
-	va_list ap;
-	struct fy_token *fyt;
-
-	va_start(ap, type);
-	fyt = fy_token_vqueue(fyp, type, ap);
+	fyt = fy_token_vcreate_rl(&fyp->recycled_token, type, ap);
 	va_end(ap);
 
 	return fyt;
@@ -532,31 +674,8 @@ const struct fy_mark *fy_token_end_mark(struct fy_token *fyt)
 	return NULL;
 }
 
-enum fy_atom_style fy_token_atom_style(struct fy_token *fyt)
-{
-	if (!fyt)
-		return FYAS_PLAIN;
-
-	if (fyt->type == FYTT_TAG)
-		return FYAS_URI;
-
-	return fyt->handle.style;
-}
-
-enum fy_scalar_style fy_token_scalar_style(struct fy_token *fyt)
-{
-	if (!fyt || fyt->type != FYTT_SCALAR)
-		return FYSS_PLAIN;
-
-	if (fyt->type == FYTT_SCALAR)
-		return fyt->scalar.style;
-
-	return FYSS_PLAIN;
-}
-
 int fy_token_text_analyze(struct fy_token *fyt)
 {
-	const struct fy_input *fyi;
 	const char *s, *e;
 	const char *value = NULL;
 	enum fy_atom_style style;
@@ -584,7 +703,6 @@ int fy_token_text_analyze(struct fy_token *fyt)
 	flags = FYTTAF_TEXT_TOKEN;
 
 	style = fy_token_atom_style(fyt);
-	fyi = fy_token_get_input(fyt);
 
 	/* can this token be a simple key initial condition */
 	if (!fy_atom_style_is_block(style) && style != FYAS_URI)
@@ -597,7 +715,7 @@ int fy_token_text_analyze(struct fy_token *fyt)
 	/* get value */
 	value = fy_token_get_text(fyt, &len);
 	if (!value || len == 0) {
-		flags |= FYTTAF_EMPTY | FYTTAF_CAN_BE_DOUBLE_QUOTED;
+		flags |= FYTTAF_EMPTY | FYTTAF_CAN_BE_DOUBLE_QUOTED | FYTTAF_CAN_BE_UNQUOTED_PATH_KEY;
 		fyt->analyze_flags = flags;
 		return flags;
 	}
@@ -608,7 +726,8 @@ int fy_token_text_analyze(struct fy_token *fyt)
 		 FYTTAF_CAN_BE_LITERAL |
 		 FYTTAF_CAN_BE_LITERAL |
 		 FYTTAF_CAN_BE_FOLDED |
-		 FYTTAF_CAN_BE_PLAIN_FLOW;
+		 FYTTAF_CAN_BE_PLAIN_FLOW |
+		 FYTTAF_CAN_BE_UNQUOTED_PATH_KEY;
 
 	/* start with document indicators must be quoted at indent 0 */
 	if (len >= 3 && (!memcmp(value, "---", 3) || !memcmp(value, "...", 3)))
@@ -622,14 +741,14 @@ int fy_token_text_analyze(struct fy_token *fyt)
 	/* get first character */
 	cn = fy_utf8_get(s, e - s, &w);
 	s += w;
-	col = fy_input_is_lb(fyi, cn) ? 0 : (col + 1);
+	col = fy_token_is_lb(fyt, cn) ? 0 : (col + 1);
 
 	/* disable folded right off the bat, it's a pain */
 	flags &= ~FYTTAF_CAN_BE_FOLDED;
 
 	/* plain scalars can't start with any indicator (or space/lb) */
 	if ((flags & (FYTTAF_CAN_BE_PLAIN | FYTTAF_CAN_BE_PLAIN_FLOW)) &&
-		(fy_is_indicator(cn) || fy_input_is_lb(fyi, cn) || fy_is_ws(cn)))
+		(fy_is_indicator(cn) || fy_token_is_lb(fyt, cn) || fy_is_ws(cn)))
 		flags &= ~(FYTTAF_CAN_BE_PLAIN |
 			   FYTTAF_CAN_BE_PLAIN_FLOW);
 
@@ -637,6 +756,11 @@ int fy_token_text_analyze(struct fy_token *fyt)
 	if ((flags & FYTTAF_CAN_BE_PLAIN_FLOW) &&
 		fy_is_flow_indicator(cn))
 		flags &= ~FYTTAF_CAN_BE_PLAIN_FLOW;
+
+	/* plain unquoted path keys can only start with [a-zA-Z_] */
+	if ((flags & FYTTAF_CAN_BE_UNQUOTED_PATH_KEY) &&
+		!fy_is_first_alpha(cn))
+		flags &= ~FYTTAF_CAN_BE_UNQUOTED_PATH_KEY;
 
 	cp = -1;
 	for (c = cn; c >= 0; s += w, cp = c, c = cn) {
@@ -651,7 +775,8 @@ int fy_token_text_analyze(struct fy_token *fyt)
 				   FYTTAF_CAN_BE_SINGLE_QUOTED |
 				   FYTTAF_CAN_BE_LITERAL |
 				   FYTTAF_CAN_BE_FOLDED |
-				   FYTTAF_CAN_BE_PLAIN_FLOW);
+				   FYTTAF_CAN_BE_PLAIN_FLOW |
+				   FYTTAF_CAN_BE_UNQUOTED_PATH_KEY);
 			flags |= FYTTAF_CAN_BE_DOUBLE_QUOTED;
 
 		} else if (fy_is_ws(c)) {
@@ -660,10 +785,10 @@ int fy_token_text_analyze(struct fy_token *fyt)
 			if (fy_is_ws(cn))
 				flags |= FYTTAF_HAS_CONSECUTIVE_WS;
 
-		} else if (fy_input_is_lb(fyi, c)) {
+		} else if (fy_token_is_lb(fyt, c)) {
 
 			flags |= FYTTAF_HAS_LB;
-			if (fy_input_is_lb(fyi, cn))
+			if (fy_token_is_lb(fyt, cn))
 				flags |= FYTTAF_HAS_CONSECUTIVE_LB;
 
 			/* only non linebreaks can be simple keys */
@@ -673,10 +798,13 @@ int fy_token_text_analyze(struct fy_token *fyt)
 			flags &= ~FYTTAF_DIRECT_OUTPUT;
 		}
 
+		if ((flags & FYTTAF_CAN_BE_UNQUOTED_PATH_KEY) && !fy_is_alnum(c))
+			flags &= ~FYTTAF_CAN_BE_UNQUOTED_PATH_KEY;
+
 		/* illegal plain combination */
 		if ((flags & FYTTAF_CAN_BE_PLAIN) &&
-			((c == ':' && fy_input_is_blankz(fyi, cn)) ||
-			 (fy_input_is_blankz(fyi, c) && cn == '#') ||
+			((c == ':' && fy_is_blankz_m(cn, fy_token_atom_lb_mode(fyt))) ||
+			 (fy_is_blankz_m(c, fy_token_atom_lb_mode(fyt)) && cn == '#') ||
 			 (cp < 0 && c == '#' && cn < 0) ||
 			 !fy_is_print(c))) {
 			flags &= ~(FYTTAF_CAN_BE_PLAIN |
@@ -703,12 +831,12 @@ int fy_token_text_analyze(struct fy_token *fyt)
 		     (style == FYAS_DOUBLE_QUOTED && c == '\\')))
 			flags &= ~FYTTAF_DIRECT_OUTPUT;
 
-		col = fy_input_is_lb(fyi, c) ? 0 : (col + 1);
+		col = fy_token_is_lb(fyt, c) ? 0 : (col + 1);
 
 		/* last character */
 		if (cn < 0) {
 			/* if ends with whitespace or linebreak, can't be plain */
-			if (fy_is_ws(cn) || fy_input_is_lb(fyi, cn))
+			if (fy_is_ws(cn) || fy_token_is_lb(fyt, cn))
 				flags &= ~(FYTTAF_CAN_BE_PLAIN |
 					   FYTTAF_CAN_BE_PLAIN_FLOW);
 		}
@@ -746,6 +874,114 @@ const char *fy_token_get_direct_output(struct fy_token *fyt, size_t *sizep)
 	}
 	*sizep = fy_atom_size(fya);
 	return fy_atom_data(fya);
+}
+
+const char *fy_tag_token_handle(struct fy_token *fyt, size_t *lenp)
+{
+	return fy_tag_token_get_directive_handle(fyt, lenp);
+}
+
+const char *fy_tag_token_suffix(struct fy_token *fyt, size_t *lenp)
+{
+	const char *tag, *prefix, *handle, *suffix;
+	size_t tag_len, prefix_len, handle_len, suffix_len;
+
+	if (!fyt || fyt->type != FYTT_TAG) {
+		*lenp = 0;
+		return NULL;
+	}
+
+	tag = fy_token_get_text(fyt, &tag_len);
+	if (!tag)
+		return NULL;
+	prefix = fy_tag_token_get_directive_prefix(fyt, &prefix_len);
+	if (!prefix)
+		return NULL;
+	handle = fy_tag_token_handle(fyt, &handle_len);
+	if (!handle || !handle_len) {
+		suffix = tag;
+		suffix_len = tag_len;
+	} else {
+		assert(prefix_len <= tag_len);
+		assert(tag_len >= prefix_len);
+		suffix = tag + prefix_len;
+		suffix_len = tag_len - prefix_len;
+	}
+	*lenp = suffix_len;
+	return suffix;
+}
+
+const char *fy_tag_token_handle0(struct fy_token *fyt)
+{
+	char *text0;
+	const char *text;
+	size_t len;
+
+	if (!fyt || fyt->type != FYTT_TAG)
+		return NULL;
+
+	/* use the cache if it's there (and doesn't need a rebuild) */
+	if (fyt->tag.handle0 && !fy_token_text_needs_rebuild(fyt))
+		return fyt->tag.handle0;
+
+	if (fyt->tag.handle0) {
+		free(fyt->tag.handle0);
+		fyt->tag.handle0 = NULL;
+	}
+
+	text = fy_tag_token_handle(fyt, &len);
+	if (!text)
+		return NULL;
+
+	text0 = malloc(len + 1);
+	if (!text0)
+		return NULL;
+	memcpy(text0, text, len);
+	text0[len] = '\0';
+
+	fyt->tag.handle0 = text0;
+
+	return fyt->tag.handle0;
+}
+
+const char *fy_tag_token_suffix0(struct fy_token *fyt)
+{
+	char *text0;
+	const char *text;
+	size_t len;
+
+	if (!fyt || fyt->type != FYTT_TAG)
+		return NULL;
+
+	/* use the cache if it's there (and doesn't need a rebuild) */
+	if (fyt->tag.suffix0 && !fy_token_text_needs_rebuild(fyt))
+		return fyt->tag.suffix0;
+
+	if (fyt->tag.suffix0) {
+		free(fyt->tag.suffix0);
+		fyt->tag.suffix0 = NULL;
+	}
+
+	text = fy_tag_token_suffix(fyt, &len);
+	if (!text)
+		return NULL;
+
+	text0 = malloc(len + 1);
+	if (!text0)
+		return NULL;
+	memcpy(text0, text, len);
+	text0[len] = '\0';
+
+	fyt->tag.suffix0 = text0;
+
+	return fyt->tag.suffix0;
+}
+
+const struct fy_version * fy_version_directive_token_version(struct fy_token *fyt)
+{
+	if (!fyt || fyt->type != FYTT_VERSION_DIRECTIVE)
+		return NULL;
+	return &fyt->version_directive.vers;
 }
 
 static void fy_token_prepare_text(struct fy_token *fyt)
@@ -791,7 +1027,7 @@ const char *fy_token_get_text(struct fy_token *fyt, size_t *lenp)
 	}
 
 	/* already found something */
-	if (fyt->text) {
+	if (fyt->text && !fy_token_text_needs_rebuild(fyt)) {
 		*lenp = fyt->text_len;
 		return fyt->text;
 	}
@@ -818,32 +1054,319 @@ const char *fy_token_get_text0(struct fy_token *fyt)
 	return fyt->text0;
 }
 
-const char *fy_token_get_comment(struct fy_token *fyt, char *buf, size_t maxsz,
-	enum fy_comment_placement which)
-{
-	const char *str;
-	if (maxsz == 0)
-		return buf;
-
-	/* return empty */
-	if (!fyt || which<0 || which>=fycp_max ||
-	    !fy_atom_is_set(&fyt->comment[which])) {
-		if (maxsz > 0)
-			buf[0] = '\0';
-		return buf;
-	}
-
-	str = fy_atom_format_text(&fyt->comment[which], buf, maxsz);
-	return str;
-}
-
 size_t fy_token_get_text_length(struct fy_token *fyt)
 {
 	return fy_token_format_text_length(fyt);
 }
 
-unsigned int fy_analyze_scalar_content(const struct fy_input *fyi,
-				       const char *data, size_t size)
+enum comment_out_state {
+	cos_normal,
+	cos_lastnl,
+	cos_lastnlhash,
+	cos_lastnlhashspc,
+};
+
+const char *fy_token_get_comment(struct fy_token *fyt, char *buf, size_t maxsz,
+	enum fy_comment_placement which)
+{
+	struct fy_atom *handle;
+	struct fy_atom_iter iter;
+	const struct fy_iter_chunk *ic;
+	char *s, *e;
+	const char *ss, *ee;
+	int c, w, ret;
+	enum comment_out_state state;
+	bool output;
+
+	if (!buf || maxsz == 0 || (unsigned int)which >= fycp_max)
+		return NULL;
+
+	/* return empty? */
+	handle = fy_token_comment_handle(fyt, which, false);
+	if (!handle || !fy_atom_is_set(handle))
+		return NULL;
+
+	/* start expecting # */
+	state = cos_lastnl;
+
+	s = buf;
+	e = s + maxsz;
+	fy_atom_iter_start(handle, &iter);
+	ic = NULL;
+	while ((ic = fy_atom_iter_chunk_next(&iter, ic, &ret)) != NULL) {
+		ss = ic->str;
+		ee = ss + ic->len;
+
+		while ((c = fy_utf8_get(ss, ee - ss, &w)) > 0) {
+
+			output = true;
+			switch (state) {
+			case cos_normal:
+				if (fy_is_lb_m(c, handle->lb_mode))
+					state = cos_lastnl;
+				break;
+
+			case cos_lastnl:
+				if (c == '#') {
+					state = cos_lastnlhash;
+					output = false;
+					break;
+				}
+				state = cos_normal;
+				break;
+
+			case cos_lastnlhash:
+				if (c == ' ') {
+					state = cos_lastnlhashspc;
+					output = false;
+					break;
+				}
+				state = cos_normal;
+				break;
+
+			case cos_lastnlhashspc:
+				state = cos_normal;
+				break;
+			}
+
+			if (output) {
+				s = fy_utf8_put(s, (size_t)(e - s), c);
+				if (!s)
+					return NULL;
+			}
+
+			ss += w;
+		}
+	}
+	fy_atom_iter_finish(&iter);
+
+	if (ret != 0 || s >= e)
+		return NULL;
+	*s = '\0';
+
+	return buf;
+}
+
+const char *fy_token_get_scalar_path_key(struct fy_token *fyt, size_t *lenp)
+{
+	struct fy_atom *atom;
+	struct fy_atom_iter iter;
+	struct fy_emit_accum ea;	/* use an emit accumulator */
+	uint8_t non_utf8[4];
+	size_t non_utf8_len, k;
+	int c, i, w, digit;
+	int aflags;
+
+	if (!fyt || fyt->type != FYTT_SCALAR) {
+		*lenp = 0;
+		return NULL;
+	}
+
+	/* was it cached? return */
+	if (fyt->scalar.path_key) {
+		*lenp = fyt->scalar.path_key_len;
+		return fyt->scalar.path_key;
+	}
+
+	/* analyze the token */
+	aflags = fy_token_text_analyze(fyt);
+
+	/* simple one? perfect */
+	if ((aflags & FYTTAF_CAN_BE_UNQUOTED_PATH_KEY) == FYTTAF_CAN_BE_UNQUOTED_PATH_KEY) {
+		fyt->scalar.path_key = fy_token_get_text(fyt, &fyt->scalar.path_key_len);
+		*lenp = fyt->scalar.path_key_len;
+		return fyt->scalar.path_key;
+	}
+
+	/* not possible, need to quote (and escape) */
+
+	/* no atom? i.e. empty */
+	atom = fy_token_atom(fyt);
+	if (!atom) {
+		fyt->scalar.path_key = "";
+		fyt->scalar.path_key_len = 0;
+		*lenp = 0;
+		return fyt->scalar.path_key;
+	}
+
+	/* no inplace buffer; we will need the malloc'ed contents anyway */
+	fy_emit_accum_init(&ea, NULL, 0, 0, fylb_cr_nl);
+
+	fy_atom_iter_start(atom, &iter);
+	fy_emit_accum_start(&ea, 0, fy_token_atom_lb_mode(fyt));
+
+	/* output in quoted form */
+	fy_emit_accum_utf8_put(&ea, '"');
+
+	for (;;) {
+		non_utf8_len = sizeof(non_utf8);
+		c = fy_atom_iter_utf8_quoted_get(&iter, &non_utf8_len, non_utf8);
+		if (c < 0)
+			break;
+
+		if (c == 0 && non_utf8_len > 0) {
+			for (k = 0; k < non_utf8_len; k++) {
+				c = (int)non_utf8[k] & 0xff;
+				fy_emit_accum_utf8_put(&ea, '\\');
+				fy_emit_accum_utf8_put(&ea, 'x');
+				digit = ((unsigned int)c >> 4) & 15;
+				fy_emit_accum_utf8_put(&ea,
+						digit <= 9 ? ('0' + digit) : ('A' + digit - 10));
+				digit = (unsigned int)c & 15;
+				fy_emit_accum_utf8_put(&ea,
+						digit <= 9 ? ('0' + digit) : ('A' + digit - 10));
+			}
+			continue;
+		}
+
+		if (!fy_is_printq(c) || c == '"' || c == '\\') {
+
+			fy_emit_accum_utf8_put(&ea, '\\');
+
+			switch (c) {
+
+			/* common YAML & JSON escapes */
+			case '\b':
+				fy_emit_accum_utf8_put(&ea, 'b');
+				break;
+			case '\f':
+				fy_emit_accum_utf8_put(&ea, 'f');
+				break;
+			case '\n':
+				fy_emit_accum_utf8_put(&ea, 'n');
+				break;
+			case '\r':
+				fy_emit_accum_utf8_put(&ea, 'r');
+				break;
+			case '\t':
+				fy_emit_accum_utf8_put(&ea, 't');
+				break;
+			case '"':
+				fy_emit_accum_utf8_put(&ea, '"');
+				break;
+			case '\\':
+				fy_emit_accum_utf8_put(&ea, '\\');
+				break;
+
+			/* YAML only escapes */
+			case '\0':
+				fy_emit_accum_utf8_put(&ea, '0');
+				break;
+			case '\a':
+				fy_emit_accum_utf8_put(&ea, 'a');
+				break;
+			case '\v':
+				fy_emit_accum_utf8_put(&ea, 'v');
+				break;
+			case '\e':
+				fy_emit_accum_utf8_put(&ea, 'e');
+				break;
+			case 0x85:
+				fy_emit_accum_utf8_put(&ea, 'N');
+				break;
+			case 0xa0:
+				fy_emit_accum_utf8_put(&ea, '_');
+				break;
+			case 0x2028:
+				fy_emit_accum_utf8_put(&ea, 'L');
+				break;
+			case 0x2029:
+				fy_emit_accum_utf8_put(&ea, 'P');
+				break;
+
+			default:
+				/* any kind of binary value */
+				if ((unsigned int)c <= 0xff) {
+					fy_emit_accum_utf8_put(&ea, 'x');
+					w = 2;
+				} else if ((unsigned int)c <= 0xffff) {
+					fy_emit_accum_utf8_put(&ea, 'u');
+					w = 4;
+				} else if ((unsigned int)c <= 0xffffffff) {
+					fy_emit_accum_utf8_put(&ea, 'U');
+					w = 8;
+				}
+
+				for (i = w - 1; i >= 0; i--) {
+					digit = ((unsigned int)c >> (i * 4)) & 15;
+					fy_emit_accum_utf8_put(&ea,
+							digit <= 9 ? ('0' + digit) : ('A' + digit - 10));
+				}
+				break;
+			}
+
+			continue;
+		}
+
+		/* regular character */
+		fy_emit_accum_utf8_put(&ea, c);
+	}
+
+	fy_atom_iter_finish(&iter);
+
+	/* closing quote */
+	fy_emit_accum_utf8_put(&ea, '"');
+
+	fy_emit_accum_make_0_terminated(&ea);
+
+	/* get the output (note it's now NULL terminated) */
+	fyt->scalar.path_key_storage = fy_emit_accum_steal(&ea, &fyt->scalar.path_key_len);
+	fyt->scalar.path_key = fyt->scalar.path_key_storage;
+	fy_emit_accum_cleanup(&ea);
+
+	*lenp = fyt->scalar.path_key_len;
+
+	return fyt->scalar.path_key;
+}
+
+size_t fy_token_get_scalar_path_key_length(struct fy_token *fyt)
+{
+	const char *text;
+	size_t len;
+
+	text = fy_token_get_scalar_path_key(fyt, &len);
+	if (!text)
+		return 0;
+	return len;
+}
+
+const char *fy_token_get_scalar_path_key0(struct fy_token *fyt)
+{
+	const char *text;
+	size_t len;
+
+	if (!fyt || fyt->type != FYTT_SCALAR) {
+		return NULL;
+	}
+
+	/* storage is \0 terminated */
+	if (fyt->scalar.path_key_storage)
+		return fyt->scalar.path_key_storage;
+
+	text = fyt->scalar.path_key;
+	len = fyt->scalar.path_key_len;
+	if (!text)
+		text = fy_token_get_scalar_path_key(fyt, &len);
+
+	/* something is catastrophically wrong */
+	if (!text)
+		return NULL;
+
+	if (fyt->scalar.path_key_storage)
+		return fyt->scalar.path_key_storage;
+
+	fyt->scalar.path_key_storage = malloc(len + 1);
+	if (!fyt->scalar.path_key_storage)
+		return NULL;
+
+	memcpy(fyt->scalar.path_key_storage, text, len);
+	fyt->scalar.path_key_storage[len] = '\0';
+
+	return fyt->scalar.path_key_storage;
+}
+
+unsigned int fy_analyze_scalar_content(const char *data, size_t size,
+		bool json_mode, enum fy_lb_mode lb_mode, enum fy_flow_ws_mode fws_mode)
 {
 	const char *s, *e;
 	int c, lastc, nextc, w, ww, col, break_run;
@@ -870,7 +1393,7 @@ unsigned int fy_analyze_scalar_content(const struct fy_input *fyi,
 		if (first) {
 			if (fy_is_ws(c))
 				flags |= FYACF_STARTS_WITH_WS;
-			else if (fy_input_is_lb(fyi, c))
+			else if (fy_is_generic_lb_m(c, lb_mode))
 				flags |= FYACF_STARTS_WITH_LB;
 			/* scalars starting with & or * must be quoted */
 			if (c == '&' || c == '*')
@@ -881,20 +1404,20 @@ unsigned int fy_analyze_scalar_content(const struct fy_input *fyi,
 
 		/* anything other than white space or linebreak */
 		if ((flags & FYACF_EMPTY) &&
-		    !fy_is_ws(c) && !fy_input_is_lb(fyi, c))
+		    !fy_is_ws(c) && !fy_is_generic_lb_m(c, lb_mode))
 			flags &= ~FYACF_EMPTY;
 
 		if ((flags & FYACF_VALID_ANCHOR) &&
 		    (fy_utf8_strchr(",[]{}&*:", c) || fy_is_ws(c) ||
-		     fy_is_lb(c) || fy_is_unicode_control(c) ||
+		     fy_is_any_lb(c) || fy_is_unicode_control(c) ||
 		     fy_is_unicode_space(c)))
 			flags &= ~FYACF_VALID_ANCHOR;
 
 		/* linebreak */
-		if (fy_input_is_lb(fyi, c)) {
+		if (fy_is_generic_lb_m(c, lb_mode)) {
 			flags |= FYACF_LB;
 			if (!(flags & FYACF_CONSECUTIVE_LB) &&
-			    fy_input_is_lb(fyi, nextc))
+			    fy_is_generic_lb_m(nextc, lb_mode))
 				flags |= FYACF_CONSECUTIVE_LB;
 			break_run++;
 		} else
@@ -925,8 +1448,8 @@ unsigned int fy_analyze_scalar_content(const struct fy_input *fyi,
 		/* comment indicator can't be present after a space or lb */
 		/* : followed by blank can't be any plain */
 		if (flags & (FYACF_BLOCK_PLAIN | FYACF_FLOW_PLAIN) &&
-		    (((fy_is_blank(c) || fy_input_is_lb(fyi, c)) && nextc == '#') ||
-		     (c == ':' && fy_input_is_blankz(fyi, nextc))))
+		    (((fy_is_blank(c) || fy_is_generic_lb_m(c, lb_mode)) && nextc == '#') ||
+		     (c == ':' && fy_is_blankz_m(nextc, lb_mode))))
 			flags &= ~(FYACF_BLOCK_PLAIN | FYACF_FLOW_PLAIN);
 
 		/* : followed by flow markers can't be a plain in flow context */
@@ -937,7 +1460,7 @@ unsigned int fy_analyze_scalar_content(const struct fy_input *fyi,
 		if (!(flags & FYACF_JSON_ESCAPE) && !fy_is_json_unescaped(c))
 			flags |= FYACF_JSON_ESCAPE;
 
-		if (fy_input_is_lb(fyi, c))
+		if (fy_is_generic_lb_m(c, lb_mode))
 			col = 0;
 		else
 			col++;
@@ -951,7 +1474,7 @@ unsigned int fy_analyze_scalar_content(const struct fy_input *fyi,
 
 	if (fy_is_ws(lastc))
 		flags |= FYACF_ENDS_WITH_WS;
-	else if (fy_input_is_lb(fyi, lastc))
+	else if (fy_is_generic_lb_m(lastc, lb_mode))
 		flags |= FYACF_ENDS_WITH_LB;
 
 	if (break_run > 1)
@@ -969,85 +1492,12 @@ char *fy_token_debug_text(struct fy_token *fyt)
 	int wlen;
 	int rc __FY_DEBUG_UNUSED__;
 
-	if (!fyt) {
+	if (!fyt || !fy_token_type_is_valid(fyt->type)) {
 		typetxt = "<NULL>";
 		goto out;
 	}
+	typetxt = fy_token_type_txt[fyt->type];
 
-	switch (fyt->type) {
-	case FYTT_NONE:
-		typetxt = NULL;
-		break;
-	case FYTT_STREAM_START:
-		typetxt = "STRM+";
-		break;
-	case FYTT_STREAM_END:
-		typetxt = "STRM-";
-		break;
-	case FYTT_VERSION_DIRECTIVE:
-		typetxt = "VRSD";
-		break;
-	case FYTT_TAG_DIRECTIVE:
-		typetxt = "TAGD";
-		break;
-	case FYTT_DOCUMENT_START:
-		typetxt = "DOC+";
-		break;
-	case FYTT_DOCUMENT_END:
-		typetxt = "DOC-";
-		break;
-	case FYTT_BLOCK_SEQUENCE_START:
-		typetxt = "BSEQ+";
-		break;
-	case FYTT_BLOCK_MAPPING_START:
-		typetxt = "BMAP+";
-		break;
-	case FYTT_BLOCK_END:
-		typetxt = "BEND";
-		break;
-	case FYTT_FLOW_SEQUENCE_START:
-		typetxt = "FSEQ+";
-		break;
-	case FYTT_FLOW_SEQUENCE_END:
-		typetxt = "FSEQ-";
-		break;
-	case FYTT_FLOW_MAPPING_START:
-		typetxt = "FMAP+";
-		break;
-	case FYTT_FLOW_MAPPING_END:
-		typetxt = "FMAP-";
-		break;
-	case FYTT_BLOCK_ENTRY:
-		typetxt = "BENTR";
-		break;
-	case FYTT_FLOW_ENTRY:
-		typetxt = "FENTR";
-		break;
-	case FYTT_KEY:
-		typetxt = "KEY";
-		break;
-	case FYTT_SCALAR:
-		typetxt = "SCLR";
-		break;
-	case FYTT_VALUE:
-		typetxt = "VAL";
-		break;
-	case FYTT_ALIAS:
-		typetxt = "ALIAS";
-		break;
-	case FYTT_ANCHOR:
-		typetxt = "ANCHR";
-		break;
-	case FYTT_TAG:
-		typetxt = "TAG";
-		break;
-	case FYTT_INPUT_MARKER:
-		typetxt = "IMRKR";
-		break;
-	default:
-		typetxt = NULL;
-		break;
-	}
 	/* should never happen really */
 	assert(typetxt);
 
@@ -1383,4 +1833,76 @@ int fy_token_iter_utf8_peek(struct fy_token_iter *iter)
 		return -1;
 
 	return fy_token_iter_utf8_unget(iter, c);
+}
+
+enum fy_scalar_style
+fy_scalar_token_get_style(struct fy_token *fyt)
+{
+	if (!fyt || fyt->type != FYTT_SCALAR)
+		return FYSS_ANY;
+	return fyt->scalar.style;
+}
+
+const struct fy_tag *fy_tag_token_tag(struct fy_token *fyt)
+{
+	if (!fyt || fyt->type != FYTT_TAG)
+		return NULL;
+
+	/* always refresh, should be relatively infrequent */
+	fyt->tag.tag.handle = fy_tag_token_handle0(fyt);
+	fyt->tag.tag.prefix = fy_tag_token_suffix0(fyt);
+
+	return &fyt->tag.tag;
+}
+
+const struct fy_tag *
+fy_tag_directive_token_tag(struct fy_token *fyt)
+{
+	if (!fyt || fyt->type != FYTT_TAG_DIRECTIVE)
+		return NULL;
+
+	/* always refresh, should be relatively infrequent */
+	fyt->tag_directive.tag.handle = fy_tag_directive_token_handle0(fyt);
+	fyt->tag_directive.tag.prefix = fy_tag_directive_token_prefix0(fyt);
+
+	return &fyt->tag_directive.tag;
+}
+
+struct fy_atom *fy_token_comment_handle(struct fy_token *fyt, enum fy_comment_placement placement, bool alloc)
+{
+	struct fy_atom *handle;
+	size_t size;
+
+	if (!fyt || (unsigned int)placement >= fycp_max)
+		return NULL;
+
+	if (!fyt->comment) {
+		if (!alloc)
+			return NULL;
+
+		size = sizeof(*fyt->comment) * fycp_max;
+		fyt->comment = malloc(size);
+		if (!fyt->comment)
+			return NULL;
+		memset(fyt->comment, 0, size);
+	}
+	handle = &fyt->comment[placement];
+
+	return handle;
+}
+
+bool fy_token_has_any_comment(struct fy_token *fyt)
+{
+	struct fy_atom *handle;
+	enum fy_comment_placement placement;
+
+	if (!fyt || !fyt->comment)
+		return false;
+
+	for (placement = fycp_top; placement <= fycp_bottom; placement++) {
+		handle = &fyt->comment[placement];
+		if (fy_atom_is_set(handle))
+			return true;
+	}
+	return false;
 }

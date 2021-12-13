@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -26,6 +26,7 @@
 #include <wx/things/toggle.h>
 #include <wx/timer.h>
 #include <wx/toolbar.h>
+
 #include <optional>
 
 class CDlgCamTracking;
@@ -87,6 +88,7 @@ class _DSceneViewerFrame : public wxFrame
 	void OnmnuItemShowCloudOctreesSelected(wxCommandEvent& event);
 	void OnmnuItemChangeMaxPointsPerOctreeNodeSelected(wxCommandEvent& event);
 	void OnmnuSceneStatsSelected(wxCommandEvent& event);
+	void OnMenuPrintScene(wxCommandEvent& event);
 	void OnMenuItemImportPLYPointCloud(wxCommandEvent& event);
 	void OnMenuItemExportPointsPLY(wxCommandEvent& event);
 	void OnMenuItemHighResRender(wxCommandEvent& event);
@@ -131,6 +133,7 @@ class _DSceneViewerFrame : public wxFrame
 	static const long ID_MENUITEM12;
 	static const long ID_MENUITEM23;
 	static const long ID_MENUITEM18;
+	static const long ID_MENUITEM_PRINT_TEXT;
 	static const long idMenuQuit;
 	static const long ID_MENUITEM24;
 	static const long ID_MENUITEM26;
@@ -178,6 +181,7 @@ class _DSceneViewerFrame : public wxFrame
 	wxCustomButton* btnOptions;
 	wxMenuItem* mnuSelectNone;
 	wxMenuItem* mnuSceneStats;
+	wxMenuItem* mnuPrintScene;
 	wxMenuItem* mnuSelectionScale;
 	wxMenuItem* mnuImportLAS;
 	wxCustomButton* btnOrtho;
@@ -224,4 +228,4 @@ class _DSceneViewerFrame : public wxFrame
 	DECLARE_EVENT_TABLE()
 };
 
-#endif  // _DSCENEVIEWERMAIN_H
+#endif	// _DSCENEVIEWERMAIN_H

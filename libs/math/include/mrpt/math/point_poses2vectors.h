@@ -2,14 +2,14 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 #pragma once
 
-#include <cstddef>  // size_t
-#include <type_traits>  // enable_if_t
+#include <cstddef>	// size_t
+#include <type_traits>	// enable_if_t
 
 namespace mrpt::math
 {
@@ -30,18 +30,19 @@ CONTAINER& containerFromPoseOrPoint(CONTAINER& C, const POINT_OR_POSE& p)
 	return C;
 }
 
-#define MRPT_MATRIX_CONSTRUCTORS_FROM_POSES(_CLASS_)                          \
-	template <                                                                \
-		class TPOSE, typename = std::enable_if_t<                             \
-						 std::is_base_of_v<mrpt::math::TPoseOrPoint, TPOSE>>> \
-	explicit inline _CLASS_(const TPOSE& p)                                   \
-	{                                                                         \
-		mrpt::math::containerFromPoseOrPoint(*this, p);                       \
-	}                                                                         \
-	template <class CPOSE, int = CPOSE::is_3D_val>                            \
-	explicit inline _CLASS_(const CPOSE& p)                                   \
-	{                                                                         \
-		mrpt::math::containerFromPoseOrPoint(*this, p);                       \
+#define MRPT_MATRIX_CONSTRUCTORS_FROM_POSES(_CLASS_)                           \
+	template <                                                                 \
+		class TPOSE,                                                           \
+		typename = std::enable_if_t<                                           \
+			std::is_base_of_v<mrpt::math::TPoseOrPoint, TPOSE>>>               \
+	explicit inline _CLASS_(const TPOSE& p)                                    \
+	{                                                                          \
+		mrpt::math::containerFromPoseOrPoint(*this, p);                        \
+	}                                                                          \
+	template <class CPOSE, int = CPOSE::is_3D_val>                             \
+	explicit inline _CLASS_(const CPOSE& p)                                    \
+	{                                                                          \
+		mrpt::math::containerFromPoseOrPoint(*this, p);                        \
 	}
 
 /** @} */

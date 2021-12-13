@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -201,14 +201,14 @@ class CParticleFilter : public mrpt::system::COutputLogger
 	void executeOn(
 		CParticleFilterCapable& obj, const mrpt::obs::CActionCollection* action,
 		const mrpt::obs::CSensoryFrame* observation,
-		TParticleFilterStats* stats = nullptr);
+		TParticleFilterStats* stats = nullptr) const;
 
 	/** The options to be used in the PF, must be set before executing any step
 	 * of the particle filter.
 	 */
 	CParticleFilter::TParticleFilterOptions m_options;
 
-};  // End of class def.
+};	// End of class def.
 
 }  // namespace bayes
 }  // namespace mrpt

@@ -2,21 +2,20 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 #pragma once
 
 #include <mrpt/math/CMatrixF.h>
-#include <mrpt/obs/CObservation.h>  // INVALID_BEACON_ID
+#include <mrpt/obs/CObservation.h>	// INVALID_BEACON_ID
+#include <mrpt/opengl/CSetOfObjects.h>
 #include <mrpt/poses/CPoint3D.h>
 #include <mrpt/poses/CPointPDFGaussian.h>
 #include <mrpt/poses/CPointPDFParticles.h>
 #include <mrpt/poses/CPointPDFSOG.h>
 #include <mrpt/serialization/CSerializable.h>
-
-#include <mrpt/opengl/CSetOfObjects.h>
 
 namespace mrpt::maps
 {
@@ -111,7 +110,7 @@ class CBeacon : public mrpt::poses::CPointPDF
 		const mrpt::poses::CPose3D& newReferenceBase) override;
 
 	/** Saves a 3D representation of the beacon into a given OpenGL scene  */
-	void getAs3DObject(mrpt::opengl::CSetOfObjects::Ptr& outObj) const;
+	void getVisualizationInto(mrpt::opengl::CSetOfObjects& o) const;
 
 	/** Gets a set of MATLAB commands which draw the current state of the
 	 * beacon: */
@@ -177,6 +176,6 @@ class CBeacon : public mrpt::poses::CPointPDF
 			mrpt::poses::CPoint3D(0, 0, 0),
 		float maxDistanceFromCenter = 0);
 
-};  // End of class definition
+};	// End of class definition
 
 }  // namespace mrpt::maps

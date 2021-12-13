@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -22,9 +22,10 @@
 #if defined(_MSC_VER)
 #pragma warning(disable : 4505)
 #endif
-#include <GL/glew.h>
 #include <windows.h>
-#endif  // _WIN32
+//
+#include <GL/glew.h>
+#endif	// _WIN32
 
 #ifdef __APPLE__
 #include <GLUT/glut.h>
@@ -70,11 +71,11 @@ void checkOpenGLErr_impl(
 
 /** Checks glGetError and throws an exception if an error situation is found
  */
-#define CHECK_OPENGL_ERROR()                                                  \
-	{                                                                         \
-		auto openglErr = glGetError();                                        \
-		if (openglErr != GL_NO_ERROR)                                         \
-			mrpt::opengl::checkOpenGLErr_impl(openglErr, __FILE__, __LINE__); \
+#define CHECK_OPENGL_ERROR()                                                   \
+	{                                                                          \
+		auto openglErr = glGetError();                                         \
+		if (openglErr != GL_NO_ERROR)                                          \
+			mrpt::opengl::checkOpenGLErr_impl(openglErr, __FILE__, __LINE__);  \
 	}
 
-#endif  // MRPT_HAS_OPENGL_GLUT
+#endif	// MRPT_HAS_OPENGL_GLUT

@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -10,6 +10,7 @@
 
 //! [example sstring]
 #include <mrpt/typemeta/static_string.h>
+
 #include <iostream>
 
 void Test_StaticString()
@@ -37,6 +38,7 @@ void Test_StaticString()
 
 //! [example num2str]
 #include <mrpt/typemeta/num_to_string.h>
+
 #include <iostream>
 
 void Test_StaticNum2Str()

@@ -2,18 +2,18 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 #pragma once
 
+#include <mrpt/comms/CClientTCPSocket.h>
+#include <mrpt/comms/CServerTCPSocket.h>
 #include <mrpt/config/CConfigFileBase.h>
 #include <mrpt/hwdrivers/CGenericSensor.h>
 #include <mrpt/obs/CObservationRFID.h>
 
-#include <mrpt/comms/CClientTCPSocket.h>
-#include <mrpt/comms/CServerTCPSocket.h>
 #include <memory>
 
 namespace mrpt::hwdrivers
@@ -22,6 +22,7 @@ namespace mrpt::hwdrivers
  * connects to a program that does the actual communication with the receiver.
  * This is done because the manufacturer only provides libraries for C# and
  * Java. The program that runs the device must be started after this object
+ * \ingroup mrpt_hwdrivers_grp
  */
 class CImpinjRFID : public mrpt::hwdrivers::CGenericSensor
 {
@@ -99,6 +100,6 @@ class CImpinjRFID : public mrpt::hwdrivers::CGenericSensor
 	/** Close the connection to the reader.
 	 */
 	void closeReader();
-};  // End of class def.
+};	// End of class def.
 
 }  // namespace mrpt::hwdrivers

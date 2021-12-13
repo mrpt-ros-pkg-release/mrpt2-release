@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -13,17 +13,11 @@
 namespace mrpt::opengl
 {
 /** A 3D arrow
- *  \sa opengl::COpenGLScene
  *
- *  <div align="center">
- *  <table border="0" cellspan="4" cellspacing="4" style="border-width: 1px;
- * border-style: solid;">
- *   <tr> <td> mrpt::opengl::CArrow </td> <td> \image html preview_CArrow.png
- * </td> </tr>
- *  </table>
- *  </div>
+ *  ![mrpt::opengl::CArrow](preview_CArrow.png)
+ *
+ * \sa opengl::COpenGLScene
  * \ingroup mrpt_opengl_grp
- *
  */
 class CArrow : public CRenderizableShaderTriangles
 {
@@ -72,9 +66,7 @@ class CArrow : public CRenderizableShaderTriangles
 	/** Number of radial divisions  */
 	inline uint32_t getSlicesCount() const { return m_slices; }
 
-	void getBoundingBox(
-		mrpt::math::TPoint3D& bb_min,
-		mrpt::math::TPoint3D& bb_max) const override;
+	mrpt::math::TBoundingBox getBoundingBox() const override;
 
 	/** Constructor */
 	CArrow(
@@ -93,6 +85,21 @@ class CArrow : public CRenderizableShaderTriangles
 	{
 	}
 
+	CArrow(
+		const mrpt::math::TPoint3Df& from, const mrpt::math::TPoint3Df& to,
+		float headRatio = 0.2f, float smallRadius = 0.05f,
+		float largeRadius = 0.2f)
+		: m_x0(from.x),
+		  m_y0(from.y),
+		  m_z0(from.z),
+		  m_x1(to.x),
+		  m_y1(to.y),
+		  m_z1(to.z),
+		  m_headRatio(headRatio),
+		  m_smallRadius(smallRadius),
+		  m_largeRadius(largeRadius)
+	{
+	}
 	~CArrow() override = default;
 
    protected:

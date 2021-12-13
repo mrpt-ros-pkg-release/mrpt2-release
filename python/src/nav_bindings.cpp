@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -21,14 +21,14 @@ using namespace mrpt::maps;
 
 // PlannerSimple2D
 tuple PlannerSimple2D_computePath(
-	PlannerSimple2D& self, COccupancyGridMap2D& theMap, CPose2D& origin,
+	PlannerSimple2D& me, COccupancyGridMap2D& theMap, CPose2D& origin,
 	CPose2D& target)
 {
 	// function args
 	std::deque<mrpt::math::TPoint2D> path;
 	bool notFound;
 	// invoke function
-	self.computePath(theMap, origin, target, path, notFound);
+	me.computePath(theMap, origin, target, path, notFound);
 	// convert to python compatible
 	boost::python::list ret_val;
 	boost::python::list py_path;

@@ -2,13 +2,12 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "CFormPlayVideo.h"
-#include "xRawLogViewerMain.h"
 
 #include <wx/app.h>
 #include <wx/dcclient.h>
@@ -16,6 +15,8 @@
 #include <wx/dirdlg.h>
 #include <wx/filedlg.h>
 #include <wx/msgdlg.h>
+
+#include "xRawLogViewerMain.h"
 
 //(*InternalHeaders(CFormPlayVideo)
 #include <wx/artprov.h>
@@ -467,13 +468,15 @@ void CFormPlayVideo::OnbtnPickClick(wxCommandEvent& event)
 }
 
 // On stop:
-void CFormPlayVideo::OnbtnStopClick(wxCommandEvent& event)
+void CFormPlayVideo::OnbtnStopClick(wxCommandEvent&)
 {
 	m_nowPlaying = false;
+	btnPlay->Enable(true);
+	btnStop->Enable(false);
 }
 
 // On play:
-void CFormPlayVideo::OnbtnPlayClick(wxCommandEvent& event)
+void CFormPlayVideo::OnbtnPlayClick(wxCommandEvent&)
 {
 	btnPlay->Enable(false);
 	btnStop->Enable(true);
@@ -501,10 +504,7 @@ void CFormPlayVideo::OnbtnPlayClick(wxCommandEvent& event)
 		size_t nImgs = 0, count = 0;
 
 		// If we are playing from memory, continue:
-		if (!fil)
-		{
-			count = edIndex->GetValue();
-		}
+		if (!fil) { count = edIndex->GetValue(); }
 
 		progressBar->SetRange(
 			0, fil ? (int)fil->getTotalBytesCount() : (int)rawlog.size());
@@ -515,11 +515,9 @@ void CFormPlayVideo::OnbtnPlayClick(wxCommandEvent& event)
 		{
 			wxTheApp->Yield();
 			CSerializable::Ptr obj;
+			mrpt::Clock::time_point imgTimestamp = INVALID_TIMESTAMP;
 
-			if (fil)
-			{
-				archiveFrom(*fil) >> obj;
-			}
+			if (fil) { archiveFrom(*fil) >> obj; }
 			else
 			{
 				obj = rawlog.getAsGeneric(count);
@@ -528,27 +526,38 @@ void CFormPlayVideo::OnbtnPlayClick(wxCommandEvent& event)
 
 			bool doDelay = false;
 
-			if (IS_CLASS(*obj, CSensoryFrame))
-			{
-				doDelay = showSensoryFrame(obj.get(), nImgs);
-			}
+			if (auto sf = std::dynamic_pointer_cast<CSensoryFrame>(obj); sf)
+			{ doDelay = showSensoryFrame(*sf, nImgs, imgTimestamp); }
 			else if (IS_DERIVED(*obj, CObservation))
 			{
-				CSensoryFrame sf;
-				sf.insert(std::dynamic_pointer_cast<CObservation>(obj));
-				doDelay = showSensoryFrame(&sf, nImgs);
+				CSensoryFrame sf2;
+				sf2.insert(std::dynamic_pointer_cast<CObservation>(obj));
+				doDelay = showSensoryFrame(sf2, nImgs, imgTimestamp);
 			}
 
 			// Free the loaded object!
 			if (fil) obj.reset();
 
 			// Update UI
-			if ((count++) % 100 == 0)
+			count++;
+			// if ((count) % 10 == 0)
 			{
 				progressBar->SetValue(
 					fil ? (int)fil->getPosition() : (int)count);
 				wxString str;
-				str.sprintf(_("Processed: %d images"), nImgs);
+				if (imgTimestamp != INVALID_TIMESTAMP)
+				{
+					str.sprintf(
+						_("Processed: %d images. Timestamp: %f [%s UTC]"),
+						static_cast<int>(nImgs),
+						mrpt::Clock::toDouble(imgTimestamp),
+						mrpt::system::dateTimeToString(imgTimestamp).c_str());
+				}
+				else
+				{
+					str.sprintf(
+						_("Processed: %d images."), static_cast<int>(nImgs));
+				}
 				lbProgress->SetLabel(str);
 				if (!doDelay) wxTheApp->Yield();
 			}
@@ -659,12 +668,31 @@ void CFormPlayVideo::drawHorzRules(mrpt::img::CImage& img)
 		img.line(0, y, w - 1, y, mrpt::img::TColor::white());
 }
 
-bool CFormPlayVideo::showSensoryFrame(void* SF, size_t& nImgs)
+bool CFormPlayVideo::showSensoryFrame(
+	mrpt::obs::CSensoryFrame& SF, size_t& nImgs, Clock::time_point& timestamp)
 {
 	WX_START_TRY
 
-	ASSERT_(SF);
-	auto* sf = (CSensoryFrame*)SF;
+	try
+	{
+		return showSensoryFrameImpl(SF, nImgs, timestamp);
+	}
+	catch (const std::exception& e)
+	{
+		// Make sure playback is stopped in the event of an error:
+		wxCommandEvent ev;
+		OnbtnStopClick(ev);
+		throw;
+	}
+
+	WX_END_TRY
+	return false;
+}
+
+bool CFormPlayVideo::showSensoryFrameImpl(
+	mrpt::obs::CSensoryFrame& SF, size_t& nImgs, Clock::time_point& timestamp)
+{
+	auto* sf = &SF;
 
 	bool doDelay = false;
 	bool doReduceLargeImgs = cbReduceLarge->GetValue();
@@ -673,9 +701,6 @@ bool CFormPlayVideo::showSensoryFrame(void* SF, size_t& nImgs)
 
 	// Find an image to show:
 	CImage* imgShow = nullptr;
-
-	// Displayed images:
-	// displayedImgs.resize(3);
 
 	// unload current imgs:
 	for (auto& displayedImg : displayedImgs)
@@ -689,11 +714,13 @@ bool CFormPlayVideo::showSensoryFrame(void* SF, size_t& nImgs)
 		wxStaticText* theLabel = nullptr;
 
 		for (int img_idx_sf = 0; img_idx_sf < 3;
-			 img_idx_sf++)  // Up to 3 images maximum:
+			 img_idx_sf++)	// Up to 3 images maximum:
 		{
 			CObservationImage::Ptr obsImg =
 				sf->getObservationByClass<CObservationImage>(img_idx_sf);
-			if (!obsImg) break;  // No more images, go on...
+			if (!obsImg) break;	 // No more images, go on...
+
+			timestamp = obsImg->timestamp;
 
 			// Onto which panel to draw??
 			if (!orderByYaw && !orderByY)
@@ -713,8 +740,7 @@ bool CFormPlayVideo::showSensoryFrame(void* SF, size_t& nImgs)
 						thePanel = pnRight2;
 						theLabel = lbCam3;
 						break;
-					default:
-						ASSERT_(false);
+					default: ASSERT_(false);
 				};
 			}
 			else
@@ -753,7 +779,7 @@ bool CFormPlayVideo::showSensoryFrame(void* SF, size_t& nImgs)
 					}
 					else
 					{
-						thePanel = pnRight;  // Center
+						thePanel = pnRight;	 // Center
 						theLabel = lbCam2;
 					}
 				}
@@ -786,6 +812,7 @@ bool CFormPlayVideo::showSensoryFrame(void* SF, size_t& nImgs)
 			// Draw image:
 			drawHorzRules(*imgShow);
 			wxImage* wxIMG = mrpt::gui::MRPTImage2wxImage(*imgShow);
+			imgShow->unload();	// for delayed-loaded rawlogs
 
 			wxWindowDC dc(thePanel);
 			wxMemoryDC tmpDc;
@@ -820,8 +847,10 @@ bool CFormPlayVideo::showSensoryFrame(void* SF, size_t& nImgs)
 	{
 		CObservationStereoImages::Ptr obsImg2 =
 			sf->getObservationByClass<CObservationStereoImages>();
+
 		if (obsImg2)
 		{
+			timestamp = obsImg2->timestamp;
 			nImgs++;
 
 			// Left:
@@ -846,8 +875,7 @@ bool CFormPlayVideo::showSensoryFrame(void* SF, size_t& nImgs)
 
 				drawHorzRules(*imgShow);
 				wxImage* wxIMG = mrpt::gui::MRPTImage2wxImage(*imgShow);
-				imgShow->unload();  // for delayed-loaded rawlogs, save lots of
-				// memory!
+				imgShow->unload();	// for delayed-loaded rawlogs
 
 				wxWindowDC dc(pnLeft);
 				wxMemoryDC tmpDc;
@@ -888,8 +916,7 @@ bool CFormPlayVideo::showSensoryFrame(void* SF, size_t& nImgs)
 
 				drawHorzRules(*imgShow);
 				wxImage* wxIMG = mrpt::gui::MRPTImage2wxImage(*imgShow);
-				imgShow->unload();  // for delayed-loaded rawlogs, save lots of
-				// memory!
+				imgShow->unload();	// for delayed-loaded rawlogs
 
 				wxWindowDC dc(pnRight);
 				wxMemoryDC tmpDc;
@@ -931,8 +958,7 @@ bool CFormPlayVideo::showSensoryFrame(void* SF, size_t& nImgs)
 
 				drawHorzRules(*imgShow);
 				wxImage* wxIMG = mrpt::gui::MRPTImage2wxImage(*imgShow);
-				imgShow->unload();  // for delayed-loaded rawlogs, save lots of
-				// memory!
+				imgShow->unload();	// for delayed-loaded rawlogs
 
 				wxWindowDC dc(pnRight);
 				wxMemoryDC tmpDc;
@@ -957,8 +983,10 @@ bool CFormPlayVideo::showSensoryFrame(void* SF, size_t& nImgs)
 	{
 		CObservation3DRangeScan::Ptr obs3D =
 			sf->getObservationByClass<CObservation3DRangeScan>();
+
 		if (obs3D && obs3D->hasIntensityImage)
 		{
+			timestamp = obs3D->timestamp;
 			nImgs++;
 
 			// Intensity channel
@@ -983,8 +1011,7 @@ bool CFormPlayVideo::showSensoryFrame(void* SF, size_t& nImgs)
 
 				drawHorzRules(*imgShow);
 				wxImage* wxIMG = mrpt::gui::MRPTImage2wxImage(*imgShow);
-				imgShow->unload();  // for delayed-loaded rawlogs, save lots of
-				// memory!
+				imgShow->unload();	// for delayed-loaded rawlogs
 
 				wxWindowDC dc(pnLeft);
 				wxMemoryDC tmpDc;
@@ -1006,37 +1033,47 @@ bool CFormPlayVideo::showSensoryFrame(void* SF, size_t& nImgs)
 	}
 
 	return doDelay;
-
-	WX_END_TRY
-	return false;
 }
 
-void CFormPlayVideo::OnprogressBarCmdScrollChanged(wxScrollEvent& event)
+void CFormPlayVideo::OnprogressBarCmdScrollChanged(wxScrollEvent&)
 {
 	int idx = progressBar->GetValue();
 	m_idxInRawlog = idx;
+	mrpt::Clock::time_point imgTimestamp;
+	size_t nImgs = 0;
+
 	if (idx > 0 && idx < (int)rawlog.size())
 	{
 		if (rawlog.getType(idx) == CRawlog::etSensoryFrame)
 		{
-			size_t dummy = 0;
-
 			CSensoryFrame::Ptr sf = rawlog.getAsObservations(idx);
-			showSensoryFrame(sf.get(), dummy);
+			showSensoryFrame(*sf.get(), nImgs, imgTimestamp);
 			edIndex->SetValue(idx);
 		}
 		else if (rawlog.getType(idx) == CRawlog::etObservation)
 		{
-			size_t dummy = 0;
-
 			CObservation::Ptr o = rawlog.getAsObservation(idx);
 
 			CSensoryFrame sf;
 			sf.insert(o);
-			showSensoryFrame(&sf, dummy);
+			showSensoryFrame(sf, nImgs, imgTimestamp);
 
 			edIndex->SetValue(idx);
 		}
+
+		wxString str;
+		if (imgTimestamp != INVALID_TIMESTAMP)
+		{
+			str.sprintf(
+				_("Processed: %d images. Timestamp: %f [%s UTC]"),
+				static_cast<int>(nImgs), mrpt::Clock::toDouble(imgTimestamp),
+				mrpt::system::dateTimeToString(imgTimestamp).c_str());
+		}
+		else
+		{
+			str.sprintf(_("Processed: %d images."), static_cast<int>(nImgs));
+		}
+		lbProgress->SetLabel(str);
 	}
 }
 
@@ -1117,28 +1154,16 @@ void CFormPlayVideo::saveCamImage(int n)
 	WX_END_TRY
 }
 
-void CFormPlayVideo::OnbtnSaveCam1Click(wxCommandEvent& event)
-{
-	saveCamImage(0);
-}
-void CFormPlayVideo::OnbtnSaveCam2Click(wxCommandEvent& event)
-{
-	saveCamImage(1);
-}
-void CFormPlayVideo::OnbtnSaveCam3Click(wxCommandEvent& event)
-{
-	saveCamImage(2);
-}
+void CFormPlayVideo::OnbtnSaveCam1Click(wxCommandEvent&) { saveCamImage(0); }
+void CFormPlayVideo::OnbtnSaveCam2Click(wxCommandEvent&) { saveCamImage(1); }
+void CFormPlayVideo::OnbtnSaveCam3Click(wxCommandEvent&) { saveCamImage(2); }
 
-void CFormPlayVideo::OncbImageDirsSelect(wxCommandEvent& event)
+void CFormPlayVideo::OncbImageDirsSelect(wxCommandEvent&)
 {
 	wxString dir = cbImageDirs->GetValue();
 	string dirc = string(dir.mb_str());
 
-	if (mrpt::system::fileExists(dirc))
-	{
-		CImage::setImagesPathBase(dirc);
-	}
+	if (mrpt::system::fileExists(dirc)) { CImage::setImagesPathBase(dirc); }
 	else
 	{
 		wxMessageBox(

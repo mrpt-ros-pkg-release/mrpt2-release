@@ -2,17 +2,18 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "obs-precomp.h"  // Precompiled headers
-
+//
 #include <mrpt/obs/CObservation.h>
 #include <mrpt/poses/CPose3D.h>
 #include <mrpt/serialization/CArchive.h>
 #include <mrpt/system/os.h>
+
 #include <iomanip>
 
 using namespace mrpt::obs;
@@ -56,7 +57,7 @@ void CObservation::getDescriptionAsText(std::ostream& o) const
 	  << "\n\n";
 }
 
-std::string CObservation::getDescriptionAsTextValue() const
+std::string CObservation::asString() const
 {
 	std::stringstream ss;
 	getDescriptionAsText(ss);

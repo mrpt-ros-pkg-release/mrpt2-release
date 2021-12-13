@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -13,6 +13,7 @@
 	buf.assignMemoryNotOwn(sample_image1,sizeof(sample_image1));
 	buf >> img;
 */
+// clang-format off
 static const unsigned char sample_image1[] = {
 	138, 67,  77,  82,  80,  84,  73,  109, 97,  103, 101, 7,   0,   1,   128,
 	2,   0,   0,   224, 1,   0,   0,   99,  110, 1,   0,   255, 216, 255, 224,
@@ -6270,3 +6271,4 @@ static const unsigned char sample_image1[] = {
 	167, 189, 104, 253, 172, 169, 217, 74,  214, 254, 187, 153, 58,  120, 69,
 	85,  74,  113, 110, 82,  109, 223, 211, 212, 255, 217, 136,
 };
+// clang-format on

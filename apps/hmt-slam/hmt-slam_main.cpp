@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -127,7 +127,7 @@ void Run_HMT_SLAM()
 	// Set relative path for externally-stored images in rawlogs:
 	string rawlog_images_path = extractFileDirectory(rawlogFileName);
 	rawlog_images_path += "/Images";
-	CImage::setImagesPathBase(rawlog_images_path);  // Set it.
+	CImage::setImagesPathBase(rawlog_images_path);	// Set it.
 
 	// Load the config options for mapping:
 	// ----------------------------------------
@@ -213,7 +213,7 @@ void Run_HMT_SLAM()
 
 		step++;
 
-	};  // end "while(1)"
+	};	// end "while(1)"
 
 	mapping.logFmt(
 		mrpt::system::LVL_INFO,

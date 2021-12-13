@@ -2,12 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "robotic_arm_kinematicsMain.h"
+
 #include <wx/msgdlg.h>
 
 //(*InternalHeaders(robotic_arm_kinematicsFrame)
@@ -20,12 +21,8 @@
 #include <wx/settings.h>
 #include <wx/string.h>
 //*)
-#include <mrpt/gui/wx28-fixes.h>
-
-#include "CAboutBox.h"
-
 #include <mrpt/gui/WxUtils.h>
-
+#include <mrpt/gui/wx28-fixes.h>
 #include <mrpt/io/CFileGZInputStream.h>
 #include <mrpt/io/CFileGZOutputStream.h>
 #include <mrpt/io/CFileOutputStream.h>
@@ -35,6 +32,7 @@
 #include <mrpt/serialization/CArchive.h>
 
 #include "../wx-common/mrpt_logo.xpm"
+#include "CAboutBox.h"
 #include "imgs/main_icon.xpm"
 
 // A custom Art provider for customizing the icons:
@@ -508,9 +506,7 @@ robotic_arm_kinematicsFrame::robotic_arm_kinematicsFrame(
 	lbXYZs = new wxListBox(
 		Panel1, ID_LISTBOX1, wxDefaultPosition, wxSize(45, -1), 0, nullptr, 0,
 		wxDefaultValidator, _T("ID_LISTBOX1"));
-	wxFont lbXYZsFont(
-		7, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, wxNORMAL, false,
-		wxEmptyString, wxFONTENCODING_DEFAULT);
+	wxFont lbXYZsFont(7, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, wxNORMAL);
 	lbXYZs->SetFont(lbXYZsFont);
 	FlexGridSizer19->Add(
 		lbXYZs, 1, wxALL | wxEXPAND | wxALIGN_LEFT | wxALIGN_TOP, 0);
@@ -696,15 +692,15 @@ void robotic_arm_kinematicsFrame::UpdateListLinks()
 
 		if (std::abs(R(0, 2)) > std::abs(R(1, 2)) &&
 			std::abs(R(0, 2)) > std::abs(R(2, 2)))
-			RadioBox1->SetSelection(2);  // X
+			RadioBox1->SetSelection(2);	 // X
 		else if (
 			std::abs(R(1, 2)) > std::abs(R(0, 2)) &&
 			std::abs(R(1, 2)) > std::abs(R(2, 2)))
-			RadioBox1->SetSelection(1);  // Y
+			RadioBox1->SetSelection(1);	 // Y
 		else if (
 			std::abs(R(2, 2)) > std::abs(R(0, 2)) &&
 			std::abs(R(2, 2)) > std::abs(R(1, 2)))
-			RadioBox1->SetSelection(0);  // Z
+			RadioBox1->SetSelection(0);	 // Z
 	}
 
 	listLinks->Freeze();
@@ -723,8 +719,7 @@ void robotic_arm_kinematicsFrame::UpdateListLinks()
 		std::stringstream ss;
 		ss << "<b>" << (i + 1) << "</b>: ";
 		ss << "Type: ";
-		if (l.is_prismatic)
-			ss << "<font color='blue'>P</font>";
+		if (l.is_prismatic) ss << "<font color='blue'>P</font>";
 		else
 			ss << "<font color='red'>R</font>";
 		ss << mrpt::format(
@@ -758,8 +753,7 @@ void robotic_arm_kinematicsFrame::UpdateListLinks()
 
 			{
 				std::stringstream ss;
-				if (l.is_prismatic)
-					ss << "d<sub>" << (i + 1) << "</sub>";
+				if (l.is_prismatic) ss << "d<sub>" << (i + 1) << "</sub>";
 				else
 					ss << "&theta;<sub>" << (i + 1) << "</sub>";
 
@@ -852,8 +846,7 @@ void robotic_arm_kinematicsFrame::OnSliderDOFScroll(wxScrollEvent&)
 	for (size_t i = 0; i < m_dof_panels.size(); i++)
 	{
 		TKinematicLink& l = m_robot.getLinkRef(i);
-		if (l.is_prismatic)
-			l.d = m_dof_panels[i]->Slider1->GetValue() * 1e-3;
+		if (l.is_prismatic) l.d = m_dof_panels[i]->Slider1->GetValue() * 1e-3;
 		else
 			l.theta = DEG2RAD(m_dof_panels[i]->Slider1->GetValue());
 	}
@@ -911,16 +904,16 @@ void robotic_arm_kinematicsFrame::OnButtonSaveFromEdit(wxCommandEvent& event)
 		TKinematicLink& l = m_robot.getLinkRef(sel);
 
 		double d;
-		edTheta->GetValue().ToDouble(&d);
+		edTheta->GetValue().ToCDouble(&d);
 		l.theta = DEG2RAD(d);
 
-		edD->GetValue().ToDouble(&d);
+		edD->GetValue().ToCDouble(&d);
 		l.d = 1e-3 * d;
 
-		edA->GetValue().ToDouble(&d);
+		edA->GetValue().ToCDouble(&d);
 		l.a = 1e-3 * d;
 
-		edAlpha->GetValue().ToDouble(&d);
+		edAlpha->GetValue().ToCDouble(&d);
 		l.alpha = DEG2RAD(d);
 
 		l.is_prismatic = (rbType->GetSelection() == 1);
@@ -1049,10 +1042,7 @@ void robotic_arm_kinematicsFrame::OnlbXYZsSelect(wxCommandEvent& event)
 void robotic_arm_kinematicsFrame::UpdateMatrixView()
 {
 	const int sel = lbXYZs->GetSelection();
-	if (sel < 0 || size_t(sel) > m_all_poses.size())
-	{
-		return;
-	}
+	if (sel < 0 || size_t(sel) > m_all_poses.size()) { return; }
 
 	edMatrix->Freeze();
 
@@ -1079,17 +1069,11 @@ void robotic_arm_kinematicsFrame::On1stXYZSelect(wxCommandEvent& event)
 	{
 		// Z:
 		default:
-		case 0:
-			pose0 = CPose3D(0, 0, 0, 0.0_deg, 0.0_deg, 0.0_deg);
-			break;
+		case 0: pose0 = CPose3D(0, 0, 0, 0.0_deg, 0.0_deg, 0.0_deg); break;
 		// Y:
-		case 1:
-			pose0 = CPose3D(0, 0, 0, 0.0_deg, 0.0_deg, -90.0_deg);
-			break;
+		case 1: pose0 = CPose3D(0, 0, 0, 0.0_deg, 0.0_deg, -90.0_deg); break;
 		// X:
-		case 2:
-			pose0 = CPose3D(0, 0, 0, 0.0_deg, 90.0_deg, 0.0_deg);
-			break;
+		case 2: pose0 = CPose3D(0, 0, 0, 0.0_deg, 90.0_deg, 0.0_deg); break;
 	};
 
 	m_robot.setOriginPose(pose0);

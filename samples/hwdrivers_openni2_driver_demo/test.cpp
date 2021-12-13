@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -12,6 +12,7 @@
 #include <mrpt/img/TColor.h>
 #include <mrpt/opengl.h>
 #include <mrpt/system/CTicTac.h>
+
 #include <iostream>
 
 using namespace mrpt;
@@ -147,7 +148,7 @@ int main(int argc, char** argv)
 			bool bObs = false, bError = true;
 			mrpt::system::TTimeStamp last_obs_tim = INVALID_TIMESTAMP;
 
-			while (!win3D.keyHit())  // Push any key to exit // win3D.isOpen()
+			while (!win3D.keyHit())	 // Push any key to exit // win3D.isOpen()
 			{
 				//    cout << "Get new observation\n";
 				CObservation3DRangeScan::Ptr newObs =

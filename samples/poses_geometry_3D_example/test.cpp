@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -11,6 +11,7 @@
 #include <mrpt/poses/CPose2D.h>
 #include <mrpt/poses/CPose3D.h>
 #include <mrpt/system/CTicTac.h>
+
 #include <iostream>
 
 using namespace mrpt;
@@ -56,7 +57,8 @@ void TestGeometry3D()
 	CTicTac tictac;
 	tictac.Tic();
 	size_t i, N = 10000;
-	for (i = 0; i < N; i++) L2 = L - (R + C);
+	for (i = 0; i < N; i++)
+		L2 = L - (R + C);
 	cout << "Computation in: " << 1e6 * tictac.Tac() / ((double)N) << " us"
 		 << endl;
 

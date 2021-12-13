@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -79,7 +79,8 @@ class CLandmarksMap : public mrpt::maps::CMetricMap
 	void internal_clear() override;
 	bool internal_insertObservation(
 		const mrpt::obs::CObservation& obs,
-		const mrpt::poses::CPose3D* robotPose = nullptr) override;
+		const std::optional<const mrpt::poses::CPose3D>& robotPose =
+			std::nullopt) override;
 
    public:
 	/** Computes the (logarithmic) likelihood that a given observation was taken
@@ -121,7 +122,7 @@ class CLandmarksMap : public mrpt::maps::CMetricMap
 	 */
 	double internal_computeObservationLikelihood(
 		const mrpt::obs::CObservation& obs,
-		const mrpt::poses::CPose3D& takenFrom) override;
+		const mrpt::poses::CPose3D& takenFrom) const override;
 
 	/** The color of landmark ellipsoids in CLandmarksMap::getAs3DObject */
 	static mrpt::img::TColorf COLOR_LANDMARKS_IN_3DSCENES;
@@ -175,10 +176,9 @@ class CLandmarksMap : public mrpt::maps::CMetricMap
 		void hasBeenModifiedAll();
 		void erase(unsigned int indx);
 
-		mrpt::containers::CDynamicGrid<std::vector<int32_t>>* getGrid()
-		{
-			return &m_grid;
-		}
+		auto* getGrid() { return &m_grid; }
+		const auto* getGrid() const { return &m_grid; }
+
 		/** Returns the landmark with a given landmrk ID, or nullptr if not
 		 * found
 		 */
@@ -200,6 +200,9 @@ class CLandmarksMap : public mrpt::maps::CMetricMap
 
 	CLandmarksMap() = default;
 	~CLandmarksMap() override = default;
+
+	/** Returns a short description of the map. */
+	std::string asString() const override { return "LandmarksMap"; }
 
 	/**** FAMD ***/
 	/** Map of the Euclidean Distance between the descriptors of two SIFT-based
@@ -237,7 +240,7 @@ class CLandmarksMap : public mrpt::maps::CMetricMap
 			const mrpt::config::CConfigFileBase& source,
 			const std::string& section) override;  // See base docs
 		void dumpToTextStream(
-			std::ostream& out) const override;  // See base docs
+			std::ostream& out) const override;	// See base docs
 
 		/** If set to true (default), the insertion of a CObservationImage in
 		 * the map will insert SIFT 3D features.
@@ -350,7 +353,7 @@ class CLandmarksMap : public mrpt::maps::CMetricMap
 			const mrpt::config::CConfigFileBase& source,
 			const std::string& section) override;  // See base docs
 		void dumpToTextStream(
-			std::ostream& out) const override;  // See base docs
+			std::ostream& out) const override;	// See base docs
 
 		/** @name Parameters for: 2D LIDAR scans
 		 * @{ */
@@ -506,7 +509,7 @@ class CLandmarksMap : public mrpt::maps::CMetricMap
 	  Automation (ICRA), Rome (Italy), Apr 10-14, 2007</em>
 	  */
 	double computeLikelihood_RSLC_2007(
-		const CLandmarksMap* s, const mrpt::poses::CPose2D& sensorPose);
+		const CLandmarksMap* s, const mrpt::poses::CPose2D& sensorPose) const;
 
 	/** Loads into this landmarks map the SIFT features extracted from an image
 	 * observation (Previous contents of map will be erased)
@@ -545,7 +548,8 @@ class CLandmarksMap : public mrpt::maps::CMetricMap
 	 */
 	void loadOccupancyFeaturesFrom2DRangeScan(
 		const mrpt::obs::CObservation2DRangeScan& obs,
-		const mrpt::poses::CPose3D* robotPose = nullptr,
+		const std::optional<const mrpt::poses::CPose3D>& robotPose =
+			std::nullopt,
 		unsigned int downSampleFactor = 1);
 
 	// See docs in base class
@@ -606,7 +610,7 @@ class CLandmarksMap : public mrpt::maps::CMetricMap
 	double computeLikelihood_SIFT_LandmarkMap(
 		CLandmarksMap* map,
 		mrpt::tfest::TMatchingPairList* correspondences = nullptr,
-		std::vector<bool>* otherCorrespondences = nullptr);
+		std::vector<bool>* otherCorrespondences = nullptr) const;
 
 	/** Returns true if the map is empty/no observation has been inserted.
 	 */
@@ -694,7 +698,8 @@ class CLandmarksMap : public mrpt::maps::CMetricMap
 	/** Returns a 3D object representing the map.
 	 * \sa COLOR_LANDMARKS_IN_3DSCENES
 	 */
-	void getAs3DObject(mrpt::opengl::CSetOfObjects::Ptr& outObj) const override;
+	void getVisualizationInto(
+		mrpt::opengl::CSetOfObjects& outObj) const override;
 
 	// See base docs
 	void auxParticleFilterCleanUp() override;
@@ -708,7 +713,7 @@ class CLandmarksMap : public mrpt::maps::CMetricMap
 	mrpt::maps::CLandmarksMap::TLikelihoodOptions likelihoodOpts;
 	MAP_DEFINITION_END(CLandmarksMap)
 
-};  // End of class def.
+};	// End of class def.
 
 }  // namespace maps
 }  // namespace mrpt

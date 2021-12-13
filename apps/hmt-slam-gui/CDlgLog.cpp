@@ -2,12 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "CDlgLog.h"
+
 #include "hmt_slam_guiMain.h"
 
 //(*InternalHeaders(CDlgLog)
@@ -71,9 +72,7 @@ CDlgLog::CDlgLog(
 		wxTE_PROCESS_ENTER | wxTE_PROCESS_TAB | wxTE_MULTILINE | wxTE_READONLY |
 			wxHSCROLL | wxALWAYS_SHOW_SB,
 		wxDefaultValidator, _T("ID_TEXTCTRL2"));
-	wxFont edLogFont(
-		8, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, wxNORMAL, false,
-		wxEmptyString, wxFONTENCODING_DEFAULT);
+	wxFont edLogFont(8, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, wxNORMAL);
 	edLog->SetFont(edLogFont);
 	FlexGridSizer3->Add(
 		edLog, 1, wxALL | wxEXPAND | wxALIGN_LEFT | wxALIGN_BOTTOM, 1);

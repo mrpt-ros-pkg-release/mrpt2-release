@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -55,7 +55,7 @@ class CColouredPointsMap : public CPointsMap
 		@{ */
 
 	void reserve(size_t newLength) override;  // See base class docs
-	void resize(size_t newLength) override;  // See base class docs
+	void resize(size_t newLength) override;	 // See base class docs
 	void setSize(size_t newLength) override;  // See base class docs
 
 	/** The virtual method for \a insertPoint() *without* calling
@@ -99,11 +99,13 @@ class CColouredPointsMap : public CPointsMap
 	/** See CPointsMap::loadFromRangeScan() */
 	void loadFromRangeScan(
 		const mrpt::obs::CObservation2DRangeScan& rangeScan,
-		const mrpt::poses::CPose3D* robotPose = nullptr) override;
+		const std::optional<const mrpt::poses::CPose3D>& robotPose =
+			std::nullopt) override;
 	/** See CPointsMap::loadFromRangeScan() */
 	void loadFromRangeScan(
 		const mrpt::obs::CObservation3DRangeScan& rangeScan,
-		const mrpt::poses::CPose3D* robotPose = nullptr) override;
+		const std::optional<const mrpt::poses::CPose3D>& robotPose =
+			std::nullopt) override;
 
    protected:
 	void impl_copyFrom(const CPointsMap& obj) override;
@@ -173,7 +175,8 @@ class CColouredPointsMap : public CPointsMap
 	/** Override of the default 3D scene builder to account for the individual
 	 * points' color.
 	 */
-	void getAs3DObject(mrpt::opengl::CSetOfObjects::Ptr& outObj) const override;
+	void getVisualizationInto(
+		mrpt::opengl::CSetOfObjects& outObj) const override;
 
 	/** Colour a set of points from a CObservationImage and the global pose of
 	 * the robot */
@@ -208,7 +211,7 @@ class CColouredPointsMap : public CPointsMap
 			const mrpt::config::CConfigFileBase& source,
 			const std::string& section) override;  // See base docs
 		void dumpToTextStream(
-			std::ostream& out) const override;  // See base docs
+			std::ostream& out) const override;	// See base docs
 
 		TColouringMethod scheme{cmFromHeightRelativeToSensor};
 		float z_min{-10}, z_max{10};
@@ -243,7 +246,8 @@ class CColouredPointsMap : public CPointsMap
 
 		const float f = 255.f;
 
-		union myaux_t {
+		union myaux_t
+		{
 			uint8_t rgb[4];
 			float f;
 		} aux_val;
@@ -295,7 +299,7 @@ class CColouredPointsMap : public CPointsMap
 	void getPCLPointCloudXYZRGB(POINTCLOUD& cloud) const
 	{
 		const size_t nThis = this->size();
-		this->getPCLPointCloud(cloud);  // 1st: xyz data
+		this->getPCLPointCloud(cloud);	// 1st: xyz data
 		// 2nd: RGB data
 		for (size_t i = 0; i < nThis; ++i)
 		{
@@ -347,7 +351,7 @@ class CColouredPointsMap : public CPointsMap
 	mrpt::maps::CColouredPointsMap::TColourOptions colourOpts;
 	MAP_DEFINITION_END(CColouredPointsMap)
 
-};  // End of class def.
+};	// End of class def.
 
 }  // namespace maps
 
@@ -471,7 +475,7 @@ class PointCloudAdapter<mrpt::maps::CColouredPointsMap>
 		m_obj.setPointFast(idx, 0, 0, 0);
 	}
 
-};  // end of PointCloudAdapter<mrpt::maps::CColouredPointsMap>
+};	// end of PointCloudAdapter<mrpt::maps::CColouredPointsMap>
 }  // namespace opengl
 }  // namespace mrpt
 
