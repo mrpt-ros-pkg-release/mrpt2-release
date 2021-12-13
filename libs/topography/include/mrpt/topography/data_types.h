@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -200,7 +200,7 @@ struct TGeodeticCoords
 	inline bool isClear() const
 	{
 		return lat.getDecimalValue() == 0 && lon.getDecimalValue() == 0 &&
-			   height == 0;
+			height == 0;
 	}
 
 	/** Latitude (in degrees) */
@@ -303,8 +303,8 @@ struct TDatumHelmert2D
 	/** Deltas [X,Y] */
 	double dX, dY;
 	double alpha;  // The rotation about Z-axis (degrees)
-	double dS;  // Scale factor (Scale is 1+dS)
-	double Xp, Yp;  // Coordinates of the rotation point
+	double dS;	// Scale factor (Scale is 1+dS)
+	double Xp, Yp;	// Coordinates of the rotation point
 
 	inline TDatumHelmert2D(
 		const double _dX, const double _dY, const double _alpha,

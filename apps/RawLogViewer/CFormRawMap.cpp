@@ -2,19 +2,19 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "CFormRawMap.h"
 
-#include "xRawLogViewerMain.h"
-
 #include <wx/app.h>
 #include <wx/filedlg.h>
 #include <wx/msgdlg.h>
 #include <wx/progdlg.h>
+
+#include "xRawLogViewerMain.h"
 
 //(*InternalHeaders(CFormRawMap)
 #include <wx/artprov.h>
@@ -87,7 +87,6 @@ const long CFormRawMap::ID_BUTTON8 = wxNewId();
 const long CFormRawMap::ID_BUTTON9 = wxNewId();
 const long CFormRawMap::ID_STATICTEXT8 = wxNewId();
 const long CFormRawMap::ID_STATICTEXT2 = wxNewId();
-const long CFormRawMap::ID_BITMAPBUTTON1 = wxNewId();
 const long CFormRawMap::ID_BUTTON4 = wxNewId();
 const long CFormRawMap::ID_TEXTCTRL1 = wxNewId();
 const long CFormRawMap::ID_PANEL1 = wxNewId();
@@ -104,7 +103,6 @@ CFormRawMap::CFormRawMap(wxWindow* parent, wxWindowID)
 {
 	//(*Initialize(CFormRawMap)
 	wxFlexGridSizer* FlexGridSizer4;
-	wxFlexGridSizer* FlexGridSizer10;
 	wxFlexGridSizer* FlexGridSizer5;
 	wxFlexGridSizer* FlexGridSizer9;
 	wxStaticBoxSizer* boxResults;
@@ -204,7 +202,7 @@ CFormRawMap::CFormRawMap(wxWindow* parent, wxWindowID)
 		5);
 	FlexGridSizer4->Add(
 		FlexGridSizer3, 1, wxALL | wxEXPAND | wxALIGN_LEFT | wxALIGN_TOP, 0);
-	FlexGridSizer5 = new wxFlexGridSizer(3, 1, 0, 0);
+	FlexGridSizer5 = new wxFlexGridSizer(2, 1, 0, 0);
 	FlexGridSizer5->AddGrowableCol(0);
 	FlexGridSizer6 = new wxFlexGridSizer(1, 1, 0, 0);
 	FlexGridSizer6->AddGrowableCol(0);
@@ -274,9 +272,13 @@ CFormRawMap::CFormRawMap(wxWindow* parent, wxWindowID)
 	btnView3D->Disable();
 	FlexGridSizer11->Add(
 		btnView3D, 1, wxALL | wxEXPAND | wxALIGN_LEFT | wxALIGN_TOP, 5);
+
+	btnClose = new wxButton(
+		Panel2, ID_BUTTON4, _("Close"), wxDefaultPosition, wxDefaultSize, 0,
+		wxDefaultValidator, _T("ID_BUTTON4"));
 	FlexGridSizer11->Add(
-		-1, -1, 1, wxALL | wxALIGN_CENTER_HORIZONTAL | wxALIGN_CENTER_VERTICAL,
-		5);
+		btnClose, 1, wxALL | wxEXPAND | wxALIGN_LEFT | wxALIGN_TOP, 5);
+
 	lbCount = new wxStaticText(
 		Panel2, ID_STATICTEXT8, _("Point count=0 \n (No decimation)"),
 		wxDefaultPosition, wxDefaultSize, 0, _T("ID_STATICTEXT8"));
@@ -297,27 +299,6 @@ CFormRawMap::CFormRawMap(wxWindow* parent, wxWindowID)
 		boxResults, 1, wxALL | wxEXPAND | wxALIGN_LEFT | wxALIGN_TOP, 0);
 	FlexGridSizer5->Add(
 		FlexGridSizer7, 1, wxALL | wxEXPAND | wxALIGN_LEFT | wxALIGN_TOP, 3);
-	FlexGridSizer10 = new wxFlexGridSizer(1, 3, 0, 0);
-	FlexGridSizer10->AddGrowableCol(0);
-	FlexGridSizer10->AddGrowableRow(0);
-	FlexGridSizer10->Add(
-		-1, -1, 1, wxALL | wxALIGN_CENTER_HORIZONTAL | wxALIGN_CENTER_VERTICAL,
-		5);
-	btnHelp = new wxBitmapButton(
-		Panel2, ID_BITMAPBUTTON1,
-		wxArtProvider::GetBitmap(
-			wxART_MAKE_ART_ID_FROM_STR(_T("wxART_INFORMATION")), wxART_BUTTON),
-		wxDefaultPosition, wxDefaultSize, wxBU_AUTODRAW, wxDefaultValidator,
-		_T("ID_BITMAPBUTTON1"));
-	FlexGridSizer10->Add(
-		btnHelp, 1, wxALL | wxEXPAND | wxALIGN_LEFT | wxALIGN_TOP, 4);
-	btnClose = new wxButton(
-		Panel2, ID_BUTTON4, _("Close"), wxDefaultPosition, wxDefaultSize, 0,
-		wxDefaultValidator, _T("ID_BUTTON4"));
-	FlexGridSizer10->Add(
-		btnClose, 1, wxALL | wxEXPAND | wxALIGN_LEFT | wxALIGN_TOP, 5);
-	FlexGridSizer5->Add(
-		FlexGridSizer10, 1, wxALL | wxEXPAND | wxALIGN_LEFT | wxALIGN_TOP, 5);
 	FlexGridSizer4->Add(
 		FlexGridSizer5, 1, wxALL | wxEXPAND | wxALIGN_LEFT | wxALIGN_TOP, 0);
 	FlexGridSizer2->Add(
@@ -435,8 +416,7 @@ void loadMapInto3DScene(COpenGLScene& scene)
 {
 	{
 		TPoint3D minC, maxC;
-		if (robot_path.size())
-			robot_path.getBoundingBox(minC, maxC);
+		if (robot_path.size()) robot_path.getBoundingBox(minC, maxC);
 		else
 		{
 			minC = TPoint3D(-100, -100, 0);
@@ -482,9 +462,7 @@ void loadMapInto3DScene(COpenGLScene& scene)
 			auto this_t = it.first;
 
 			if (distanceBetweenPoints(x0, y0, z0, p.x, p.y, p.z) < 5.5)
-			{
-				obj->appendLine(x0, y0, z0, p.x, p.y, p.z);
-			}
+			{ obj->appendLine(x0, y0, z0, p.x, p.y, p.z); }
 			else if (last_t)
 			{
 				// We have a gap without GT:
@@ -554,9 +532,7 @@ void loadMapInto3DScene(COpenGLScene& scene)
 
 	// The built maps:
 	// ---------------------------
-	opengl::CSetOfObjects::Ptr objs = std::make_shared<opengl::CSetOfObjects>();
-	theMap.getAs3DObject(objs);
-	scene.insert(objs);
+	scene.insert(theMap.getVisualization());
 }
 
 // From slider moved:
@@ -617,7 +593,7 @@ void CFormRawMap::OnbtnGenerateClick(wxCommandEvent&)
 		wxPD_CAN_ABORT | wxPD_APP_MODAL | wxPD_SMOOTH | wxPD_AUTO_HIDE |
 			wxPD_ELAPSED_TIME | wxPD_ESTIMATED_TIME | wxPD_REMAINING_TIME);
 
-	wxTheApp->Yield();  // Let the app. process messages
+	wxTheApp->Yield();	// Let the app. process messages
 	size_t count = 0;
 
 	vector<float> pathX, pathY;
@@ -680,7 +656,7 @@ void CFormRawMap::OnbtnGenerateClick(wxCommandEvent&)
 				{
 					CPose3D dumPose(curPose);
 					rawlog.getAsObservations(i)->insertObservationsInto(
-						&theMap, &dumPose);
+						theMap, dumPose);
 				}
 				addNewPathEntry = true;
 			}
@@ -700,15 +676,14 @@ void CFormRawMap::OnbtnGenerateClick(wxCommandEvent&)
 				{
 					CPose3D dumPose(curPose);
 					theMap.insertObservation(
-						*rawlog.getAsObservation(i), &dumPose);
+						*rawlog.getAsObservation(i), dumPose);
 					last_tim = rawlog.getAsObservation(i)->timestamp;
 				}
 				addNewPathEntry = true;
 			}
 			break;
-			default:
-				break;
-		};  // end switch
+			default: break;
+		};	// end switch
 
 		if (addNewPathEntry)
 		{
@@ -734,11 +709,10 @@ void CFormRawMap::OnbtnGenerateClick(wxCommandEvent&)
 	mpFXYVector* lyPath = new mpFXYVector();
 	lyPath->SetPen(wxPen(wxColour(255, 0, 0), 2));
 	lyPath->SetContinuity(true);
-	lyPoints->SetPen(wxPen(wxColour(0, 0, 255), 0));
+	lyPoints->SetPen(wxPen(wxColour(0, 0, 255), 1));
 
 	plotMap->AddLayer(lyPoints);
 	plotMap->AddLayer(lyPath);
-	plotMap->EnableDoubleBuffer(true);
 
 	lyPath->SetData(pathX, pathY);
 
@@ -747,17 +721,14 @@ void CFormRawMap::OnbtnGenerateClick(wxCommandEvent&)
 		size_t nPts = thePntsMap->size();
 		size_t decimation = 1;
 
-		if (nPts > 100000)
-		{
-			decimation = nPts / 100000;
-		}
+		if (nPts > 100000) { decimation = nPts / 100000; }
 
 		vector<float> Xs, Ys;
 		thePntsMap->getAllPoints(Xs, Ys, decimation);
 
 		lyPoints->SetData(Xs, Ys);
 		plotMap->LockAspect(false);
-		plotMap->Fit();  // Update the window to show the new data fitted.
+		plotMap->Fit();	 // Update the window to show the new data fitted.
 		plotMap->LockAspect(true);
 		plotMap->AddLayer(new mpScaleX());
 		plotMap->AddLayer(new mpScaleY());
@@ -887,12 +858,12 @@ void CFormRawMap::OnbtnGeneratePathsClick(wxCommandEvent&)
 
 	wxProgressDialog progDia(
 		wxT("Generating paths"), wxT("Working..."),
-		(int)nComputationSteps,  // range
+		(int)nComputationSteps,	 // range
 		this,  // parent
 		wxPD_CAN_ABORT | wxPD_APP_MODAL | wxPD_SMOOTH | wxPD_AUTO_HIDE |
 			wxPD_ELAPSED_TIME | wxPD_ESTIMATED_TIME | wxPD_REMAINING_TIME);
 
-	wxTheApp->Yield();  // Let the app. process messages
+	wxTheApp->Yield();	// Let the app. process messages
 	size_t count = 0;
 
 	bool abort = false;
@@ -1002,9 +973,8 @@ void CFormRawMap::OnbtnGeneratePathsClick(wxCommandEvent&)
 	plotMap->AddLayer(lyCov, false);
 
 	//
-	plotMap->EnableDoubleBuffer(true);
 
-	plotMap->Fit();  // Update the window to show the new data fitted.
+	plotMap->Fit();	 // Update the window to show the new data fitted.
 	plotMap->LockAspect(true);
 	plotMap->AddLayer(new mpScaleX());
 	plotMap->AddLayer(new mpScaleY());
@@ -1074,14 +1044,13 @@ void CFormRawMap::OnGenerateFromRTK(wxCommandEvent&)
 			wxPD_ELAPSED_TIME | wxPD_ESTIMATED_TIME | wxPD_REMAINING_TIME);
 
 	progDia2.SetSize(400, progDia2.GetSize().GetHeight());
-	wxTheApp->Yield();  // Let the app. process messages
+	wxTheApp->Yield();	// Let the app. process messages
 
 	for (size_t i = first; !abort && i <= last; i++)
 	{
 		switch (rawlog.getType(i))
 		{
-			default:
-				break;
+			default: break;
 
 			case CRawlog::etObservation:
 			{
@@ -1099,7 +1068,7 @@ void CFormRawMap::OnGenerateFromRTK(wxCommandEvent&)
 					size_t& dec_cnt = decim_count[o->sensorLabel];
 
 					if ((++dec_cnt % decimate) == 0)
-						theMap.insertObservation(*o, &p);
+						theMap.insertObservation(*o, p);
 				}
 			}
 			break;
@@ -1144,11 +1113,10 @@ void CFormRawMap::OnGenerateFromRTK(wxCommandEvent&)
 	mpFXYVector* lyPath = new mpFXYVector();
 	lyPath->SetPen(wxPen(wxColour(255, 0, 0), 2));
 	lyPath->SetContinuity(true);
-	lyPoints->SetPen(wxPen(wxColour(0, 0, 255), 0));
+	lyPoints->SetPen(wxPen(wxColour(0, 0, 255), 1));
 
 	plotMap->AddLayer(lyPoints);
 	plotMap->AddLayer(lyPath);
-	plotMap->EnableDoubleBuffer(true);
 
 	lyPath->SetData(pathX, pathY);
 
@@ -1157,17 +1125,14 @@ void CFormRawMap::OnGenerateFromRTK(wxCommandEvent&)
 		size_t nPts = thePntsMap->size();
 		size_t decimation = 1;
 
-		if (nPts > 100000)
-		{
-			decimation = nPts / 100000;
-		}
+		if (nPts > 100000) { decimation = nPts / 100000; }
 
 		vector<float> Xs, Ys;
 		thePntsMap->getAllPoints(Xs, Ys, decimation);
 
 		lyPoints->SetData(Xs, Ys);
 		plotMap->LockAspect(false);
-		plotMap->Fit();  // Update the window to show the new data fitted.
+		plotMap->Fit();	 // Update the window to show the new data fitted.
 		plotMap->LockAspect(true);
 		plotMap->AddLayer(new mpScaleX());
 		plotMap->AddLayer(new mpScaleY());

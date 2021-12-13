@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -27,7 +27,12 @@ class CGlCanvasBase
 	struct CamaraParams
 	{
 		CamaraParams() = default;
+		/** Changes elevation, taking care of not going out of the [-90,90]
+		 * range */
 		void setElevationDeg(float deg);
+
+		/** Converts from a CCamera objects \note [New in MRPT 2.1.5] */
+		static CamaraParams FromCamera(const mrpt::opengl::CCamera& c);
 
 		float cameraPointingX = .0f, cameraPointingY = .0f,
 			  cameraPointingZ = .0f;
@@ -37,7 +42,8 @@ class CGlCanvasBase
 		float cameraFOV = 30.f;
 	};
 
-	CGlCanvasBase();
+	CGlCanvasBase() = default;
+
 	virtual ~CGlCanvasBase();
 	/** Sets the minimum of the zoom
 	 * See also setMaximumZoom(float) */
@@ -184,7 +190,7 @@ class CGlCanvasBase
 	float getClearColorB() const;
 	float getClearColorA() const;
 
-	static float SENSIBILITY_DEG_PER_PIXEL;  // Default = 0.1
+	static float SENSIBILITY_DEG_PER_PIXEL;	 // Default = 0.1
 
 	/** Overload this method to limit the capabilities of the user to move the
 	 * camera using the mouse.
@@ -252,7 +258,7 @@ class CGlCanvasBase
 	float m_minZoom = 1.f;
 	float m_maxZoom = 3200.f;
 	CamaraParams m_cameraParams;
-};  // end of class
+};	// end of class
 
 /** A headless dummy implementation of CGlCanvasBase: can be used to keep track
  * of user UI mouse events and update the camera parameters, with actual

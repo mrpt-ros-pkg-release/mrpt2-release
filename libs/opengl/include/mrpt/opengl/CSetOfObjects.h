@@ -2,25 +2,25 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 #pragma once
 
+#include <mrpt/containers/yaml.h>
 #include <mrpt/opengl/CRenderizable.h>
-#include <mrpt/poses/poses_frwds.h>  // All these are needed for the auxiliary methods posePDF2opengl()
+#include <mrpt/poses/poses_frwds.h>	 // All these are needed for the auxiliary methods posePDF2opengl()
 
 namespace mrpt::opengl
 {
 /** A set of object, which are referenced to the coordinates framework
- *established in this object.
- *  It can be established a hierarchy of "CSetOfObjects", where the coordinates
- *framework of each
- *   one will be referenced to the parent's one.
- *	The list of child objects is accessed directly as in the class
- *"COpenGLScene"
- *  \sa opengl::COpenGLScene
+ * established in this object.
+ * It can be established a hierarchy of "CSetOfObjects", where the coordinates
+ * framework of each one will be referenced to the parent's one.
+ * The list of child objects is accessed directly as in the class COpenGLScene
+ *
+ * \sa opengl::COpenGLScene
  * \ingroup mrpt_opengl_grp
  */
 class CSetOfObjects : public CRenderizable
@@ -61,7 +61,8 @@ class CSetOfObjects : public CRenderizable
 	template <class T_it>
 	inline void insert(const T_it& begin, const T_it& end)
 	{
-		for (T_it it = begin; it != end; it++) insert(*it);
+		for (T_it it = begin; it != end; it++)
+			insert(*it);
 	}
 
 	shader_list_t requiredShaders() const override
@@ -118,8 +119,13 @@ class CSetOfObjects : public CRenderizable
 	 */
 	void removeObject(const CRenderizable::Ptr& obj);
 
-	/** Retrieves a list of all objects in text form  */
-	void dumpListOfObjects(std::vector<std::string>& lst);
+	/** Retrieves a list of all objects in text form
+	 * \deprecated Prefer asYAML() (since MRPT 2.1.3) */
+	void dumpListOfObjects(std::vector<std::string>& lst) const;
+
+	/** Prints all objects in human-readable YAML form.
+	 * \note (New in MRPT 2.1.3) */
+	mrpt::containers::yaml asYAML() const;
 
 	bool traceRay(const mrpt::poses::CPose3D& o, double& dist) const override;
 
@@ -129,9 +135,7 @@ class CSetOfObjects : public CRenderizable
 	CRenderizable& setColorB_u8(const uint8_t b) override;
 	CRenderizable& setColorA_u8(const uint8_t a) override;
 	bool contains(const CRenderizable::Ptr& obj) const;
-	void getBoundingBox(
-		mrpt::math::TPoint3D& bb_min,
-		mrpt::math::TPoint3D& bb_max) const override;
+	mrpt::math::TBoundingBox getBoundingBox() const override;
 
 	/** @name pose_pdf -> 3d objects auxiliary templates
 		@{ */
@@ -202,8 +206,9 @@ typename T::Ptr CSetOfObjects::getByClass(size_t ith) const
 	// If not found directly, search recursively:
 	for (const auto& o : m_objects)
 	{
-		if (o && o->GetRuntimeClass() ==
-					 CLASS_ID_NAMESPACE(CSetOfObjects, mrpt::opengl))
+		if (o &&
+			o->GetRuntimeClass() ==
+				CLASS_ID_NAMESPACE(CSetOfObjects, mrpt::opengl))
 		{
 			typename T::Ptr obj = std::dynamic_pointer_cast<CSetOfObjects>(o)
 									  ->template getByClass<T>(ith);

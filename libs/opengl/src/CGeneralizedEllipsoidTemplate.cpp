@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
-#include "opengl-precomp.h"  // Precompiled header
-
+#include "opengl-precomp.h"	 // Precompiled header
+//
 #include <mrpt/opengl/CGeneralizedEllipsoidTemplate.h>
 #include <mrpt/opengl/opengl_api.h>
 
@@ -130,7 +130,8 @@ void CGeneralizedEllipsoidTemplate<2>::implUpdate_Triangles()
 	}
 
 	// All faces, all vertices, same color:
-	for (auto& t : tris) t.setColor(m_color);
+	for (auto& t : tris)
+		t.setColor(m_color);
 }
 
 template <>
@@ -160,9 +161,9 @@ void CGeneralizedEllipsoidTemplate<3>::implUpdate_Triangles()
 
 		tris.emplace_back(
 			// Points
-			pts[0], pts[idx], pts[idxp],
+			pts[0], pts[idxp], pts[idx],
 			// Normals:
-			pts[0], pts[idx], pts[idxp]);
+			pts[0], pts[idxp], pts[idx]);
 	}
 
 	// Middle slices: triangle strip (if it were solid)
@@ -202,13 +203,14 @@ void CGeneralizedEllipsoidTemplate<3>::implUpdate_Triangles()
 
 		tris.emplace_back(
 			// Points
-			pts[idx], pts[idxN], pts[idxp],
+			pts[idx], pts[idxp], pts[idxN],
 			// Normals
-			pts[idx], pts[idxN], pts[idxp]);
+			pts[idx], pts[idxp], pts[idxN]);
 	}
 
 	// All faces, all vertices, same color:
-	for (auto& t : tris) t.setColor(m_color);
+	for (auto& t : tris)
+		t.setColor(m_color);
 }
 
 template <>
@@ -282,8 +284,7 @@ void CGeneralizedEllipsoidTemplate<3>::generatePoints(
 
 	for (uint32_t i = 0; i < slices; i++)
 	{
-		if (i == 0)
-			aux_add3DpointWithEigenVectors(1, 0, 0, pts, U, m_mean);
+		if (i == 0) aux_add3DpointWithEigenVectors(1, 0, 0, pts, U, m_mean);
 		else if (i == (slices - 1))
 			aux_add3DpointWithEigenVectors(-1, 0, 0, pts, U, m_mean);
 		else

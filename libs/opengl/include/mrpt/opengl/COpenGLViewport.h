@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -22,6 +22,7 @@
 #include <mrpt/serialization/CSerializable.h>
 #include <mrpt/system/CObservable.h>
 #include <mrpt/system/mrptEvent.h>
+
 #include <map>
 
 namespace mrpt::img
@@ -100,10 +101,22 @@ class COpenGLViewport : public mrpt::serialization::CSerializable,
 	 * \sa setCloneView, setNormalMode
 	 */
 	inline void resetCloneView() { setNormalMode(); }
+
 	/** If set to true, and setCloneView() has been called, this viewport will
 	 * be rendered using the camera of the cloned viewport.
 	 */
-	inline void setCloneCamera(bool enable) { m_isClonedCamera = enable; }
+	void setCloneCamera(bool enable);
+
+	/** Use the camera of another viewport.
+	 *  Note this works even for viewports not in "clone" mode, so you can
+	 *  render different scenes but using the same camera.
+	 */
+	inline void setClonedCameraFrom(const std::string& viewPortName)
+	{
+		m_isClonedCamera = true;
+		m_clonedCameraViewport = viewPortName;
+	}
+
 	/** Resets the viewport to a normal 3D viewport \sa setCloneView,
 	 * setImageView */
 	void setNormalMode();
@@ -257,10 +270,20 @@ class COpenGLViewport : public mrpt::serialization::CSerializable,
 	 */
 	void insert(const CRenderizable::Ptr& newObject);
 
-	/** Compute the current 3D camera pose.
+	/** Compute the current 3D camera pose: +Z points forward, +X to the right,
+	 * +Y down.
+	 *
 	 * \sa get3DRayForPixelCoord
 	 */
 	void getCurrentCameraPose(mrpt::poses::CPose3D& out_cameraPose) const;
+
+	/// \overload
+	mrpt::poses::CPose3D getCurrentCameraPose() const
+	{
+		mrpt::poses::CPose3D p;
+		getCurrentCameraPose(p);
+		return p;
+	}
 
 	/** Changes the point of view of the camera, from a given pose.
 	 * \sa getCurrentCameraPose
@@ -292,8 +315,9 @@ class COpenGLViewport : public mrpt::serialization::CSerializable,
 		// If not found directly, search recursively:
 		for (const auto& o : m_objects)
 		{
-			if (o && o->GetRuntimeClass() ==
-						 CLASS_ID_NAMESPACE(CSetOfObjects, mrpt::opengl))
+			if (o &&
+				o->GetRuntimeClass() ==
+					CLASS_ID_NAMESPACE(CSetOfObjects, mrpt::opengl))
 			{
 				typename T::Ptr obj = std::dynamic_pointer_cast<T>(
 					std::dynamic_pointer_cast<CSetOfObjects>(o)
@@ -317,10 +341,11 @@ class COpenGLViewport : public mrpt::serialization::CSerializable,
 	opengl::CCamera& getCamera() { return m_camera; }
 	/** Get a reference to the camera associated with this viewport. */
 	const opengl::CCamera& getCamera() const { return m_camera; }
-	/** Evaluates the bounding box of this object (including possible children)
-	 * in the coordinate frame of the object parent. */
-	void getBoundingBox(
-		mrpt::math::TPoint3D& bb_min, mrpt::math::TPoint3D& bb_max) const;
+
+	mrpt::math::TBoundingBox getBoundingBox() const;
+
+	/** Returns a copy of the latest render matrices structure. */
+	TRenderMatrices getRenderMatrices() const { return m_state; }
 
 	/** @} */  // end of Contained objects set/get/search
 
@@ -338,6 +363,23 @@ class COpenGLViewport : public mrpt::serialization::CSerializable,
 		const int render_width, const int render_height,
 		const int render_offset_x = 0, const int render_offset_y = 0) const;
 
+	void updateMatricesFromCamera() const;
+
+	/** Provides read access to the opengl shaders */
+	const std::map<shader_id_t, mrpt::opengl::Program::Ptr>& shaders() const
+	{
+		return m_shaders;
+	}
+
+	/** Load all MPRT predefined shader programs into m_shaders */
+	void loadDefaultShaders() const;
+
+	/** Provides write access to the opengl shaders */
+	std::map<shader_id_t, mrpt::opengl::Program::Ptr>& shaders()
+	{
+		return m_shaders;
+	}
+
    protected:
 	/** Initializes all textures in the scene (See
 	 * opengl::CTexturedPlane::initializeTextures)
@@ -345,8 +387,12 @@ class COpenGLViewport : public mrpt::serialization::CSerializable,
 	void initializeTextures();
 
 	/** Retrieves a list of all objects in text form.
-	 */
-	void dumpListOfObjects(std::vector<std::string>& lst);
+	 * 	\deprecated Prefer asYAML() (since MRPT 2.1.3) */
+	void dumpListOfObjects(std::vector<std::string>& lst) const;
+
+	/** Prints all viewport objects in human-readable YAML form.
+	 * \note (New in MRPT 2.1.3) */
+	mrpt::containers::yaml asYAML() const;
 
 	/** Render in image mode */
 	void renderImageMode() const;
@@ -359,18 +405,29 @@ class COpenGLViewport : public mrpt::serialization::CSerializable,
 
 	/** The camera associated to the viewport */
 	opengl::CCamera m_camera;
+
 	/** The scene that contains this viewport. */
 	mrpt::safe_ptr<COpenGLScene> m_parent;
+
 	/** Set by setCloneView */
 	bool m_isCloned{false};
+
 	/** Set by setCloneCamera */
 	bool m_isClonedCamera{false};
+
 	/** Only if m_isCloned=true */
 	std::string m_clonedViewport;
+
+	/** If m_isClonedCamera && !m_isCloned, take the camera from another view,
+	 * to render a different scene. */
+	std::string m_clonedCameraViewport;
+
 	/** The viewport's name */
 	std::string m_name;
+
 	/** Whether to clear color buffer. */
 	bool m_isTransparent{false};
+
 	/** Default=0, the border around the viewport. */
 	uint32_t m_borderWidth{0};
 
@@ -394,9 +451,6 @@ class COpenGLViewport : public mrpt::serialization::CSerializable,
 
 	/** Default shader program */
 	mutable std::map<shader_id_t, mrpt::opengl::Program::Ptr> m_shaders;
-
-	/** Load all MPRT predefined shader programs into m_shaders */
-	void loadDefaultShaders() const;
 
 	/** Unload shader programs in m_shaders */
 	void unloadShaders();
@@ -436,7 +490,8 @@ inline COpenGLViewport::Ptr& operator<<(
 inline COpenGLViewport::Ptr& operator<<(
 	COpenGLViewport::Ptr& s, const std::vector<CRenderizable::Ptr>& v)
 {
-	for (const auto& it : v) s->insert(it);
+	for (const auto& it : v)
+		s->insert(it);
 	return s;
 }
 
@@ -465,7 +520,7 @@ class mrptEventGLPreRender : public mrpt::system::mrptEvent
 	{
 	}
 	const COpenGLViewport* const source_viewport;
-};  // End of class def.
+};	// End of class def.
 
 /**  An event sent by an mrpt::opengl::COpenGLViewport after calling the scene
  * OpenGL drawing primitives and before doing a glSwapBuffers
@@ -491,7 +546,7 @@ class mrptEventGLPostRender : public mrpt::system::mrptEvent
 	{
 	}
 	const COpenGLViewport* const source_viewport;
-};  // End of class def.
+};	// End of class def.
 
 /** @} */
 

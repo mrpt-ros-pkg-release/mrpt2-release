@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "maps-precomp.h"  // Precomp header
-
+//
 #include <mrpt/core/bits_mem.h>
 #include <mrpt/maps/CSimplePointsMap.h>
 #include <mrpt/serialization/CArchive.h>
@@ -142,8 +142,7 @@ void CSimplePointsMap::serializeFrom(
 				in.ReadBufferFixEndianness(&m_y[0], n);
 				in.ReadBufferFixEndianness(&m_z[0], n);
 			}
-			if (version >= 9)
-				in >> genericMapParams;
+			if (version >= 9) in >> genericMapParams;
 			else
 			{
 				bool disableSaveAs3DObject;
@@ -235,10 +234,7 @@ void CSimplePointsMap::serializeFrom(
 				}
 			}
 
-			if (version >= 3)
-			{
-				in >> insertionOptions.horizontalTolerance;
-			}
+			if (version >= 3) { in >> insertionOptions.horizontalTolerance; }
 
 			if (version >= 5)  // version 5: added likelihoodOptions
 				likelihoodOptions.readFromStream(in);
@@ -247,8 +243,7 @@ void CSimplePointsMap::serializeFrom(
 				in >> insertionOptions.insertInvalidPoints;
 		}
 		break;
-		default:
-			MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
 	};
 }
 
@@ -349,7 +344,8 @@ struct pointmap_traits<CSimplePointsMap>
 }  // namespace mrpt::maps::detail
 /** See CPointsMap::loadFromRangeScan() */
 void CSimplePointsMap::loadFromRangeScan(
-	const CObservation2DRangeScan& rangeScan, const CPose3D* robotPose)
+	const CObservation2DRangeScan& rangeScan,
+	const std::optional<const mrpt::poses::CPose3D>& robotPose)
 {
 	mrpt::maps::detail::loadFromRangeImpl<
 		CSimplePointsMap>::templ_loadFromRangeScan(*this, rangeScan, robotPose);
@@ -357,7 +353,8 @@ void CSimplePointsMap::loadFromRangeScan(
 
 /** See CPointsMap::loadFromRangeScan() */
 void CSimplePointsMap::loadFromRangeScan(
-	const CObservation3DRangeScan& rangeScan, const CPose3D* robotPose)
+	const CObservation3DRangeScan& rangeScan,
+	const std::optional<const mrpt::poses::CPose3D>& robotPose)
 {
 	mrpt::maps::detail::loadFromRangeImpl<
 		CSimplePointsMap>::templ_loadFromRangeScan(*this, rangeScan, robotPose);

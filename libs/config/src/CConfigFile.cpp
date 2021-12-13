@@ -2,12 +2,12 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
-#include "config-precomp.h"  // Precompiled headers
+#include "config-precomp.h"	 // Precompiled headers
 
 // Fix to SimpleIni bug: not able to build with C++17
 #include <functional>
@@ -25,10 +25,10 @@ using binary_function = std::function<RET(T1, T2)>;
 #define SI_CONVERT_ICU 1
 #endif
 #include <SimpleIni.h>
-
 #include <mrpt/config/CConfigFile.h>
 #include <mrpt/config/config_parser.h>
 #include <mrpt/system/os.h>
+
 #include <fstream>
 #include <iostream>
 
@@ -48,10 +48,7 @@ static std::string local_file_get_contents(const std::string& fileName)
 	// Note: Add "binary" to make sure the "tellg" file size matches the actual
 	// number of read bytes afterwards:
 	std::ifstream t(fileName, ios::binary);
-	if (!t.is_open())
-		THROW_EXCEPTION_FMT(
-			"file_get_contents(): Error opening for read file `%s`",
-			fileName.c_str());
+	if (!t.is_open()) return {};
 
 	t.seekg(0, std::ios::end);
 	std::size_t size = t.tellg();
@@ -114,7 +111,12 @@ void CConfigFile::writeNow()
 	MRPT_START
 	if (m_modified && !m_file.empty())
 	{
-		m_impl->ini->SaveFile(m_file.c_str());
+		if (SI_Error err = m_impl->ini->SaveFile(m_file.c_str()); err != SI_OK)
+		{
+			THROW_EXCEPTION_FMT(
+				"SimpleIni error %i for file='%s'", static_cast<int>(err),
+				m_file.c_str());
+		}
 		m_modified = false;
 	}
 	MRPT_END

@@ -2,16 +2,17 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "gui-precomp.h"  // Precompiled headers
-
+//
 #include <mrpt/gui/CBaseGUIWindow.h>
 #include <mrpt/gui/WxSubsystem.h>
 #include <mrpt/system/os.h>
+
 #include <iostream>
 
 using namespace mrpt;
@@ -66,7 +67,7 @@ void CBaseGUIWindow::createWxWindow(
 	if (!WxSubsystem::isConsoleApp())
 	{
 		std::this_thread::sleep_for(
-			20ms);  // Force at least 1-2 timer ticks for processing the event:
+			20ms);	// Force at least 1-2 timer ticks for processing the event:
 		wxApp::GetInstance()->Yield(true);
 	}
 	int maxTimeout =
@@ -119,7 +120,7 @@ void CBaseGUIWindow::destroyWxWindow()
 		// Wait until the thread ends:
 		if (!WxSubsystem::isConsoleApp())
 		{
-			std::this_thread::sleep_for(20ms);  // Force at least 1-2 timer
+			std::this_thread::sleep_for(20ms);	// Force at least 1-2 timer
 			// ticks for processing the
 			// event:
 			wxApp::GetInstance()->Yield(true);

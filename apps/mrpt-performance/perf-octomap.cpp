@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -55,7 +55,7 @@ double octomap_insert2Dscan(int resolution_cm, int num_reps)
 			rnd.drawUniform(-L * 0.1, L * 0.1), rnd.drawUniform(-M_PI, M_PI), 0,
 			0);
 
-		map.insertObservation(scan1, &robot_pose);
+		map.insertObservation(scan1, robot_pose);
 	}
 	return tictac.Tac() / num_reps;
 }

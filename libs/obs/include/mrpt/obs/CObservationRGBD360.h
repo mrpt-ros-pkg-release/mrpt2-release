@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -87,12 +87,12 @@ class CObservationRGBD360 : public CObservation
    protected:
 	/** If set to true, m_points3D_external_file is valid. */
 	bool m_points3D_external_stored{false};
-	/** 3D points are in CImage::getImagesPathBase()+<this_file_name> */
+	/** 3D points are in CImage::getImagesPathBase()+ this_file_name */
 	std::string m_points3D_external_file;
 
 	/** If set to true, m_rangeImage_external_file is valid. */
 	bool m_rangeImage_external_stored{false};
-	/** rangeImage is in CImage::getImagesPathBase()+<this_file_name> */
+	/** rangeImage is in CImage::getImagesPathBase()+ this_file_name */
 	std::string m_rangeImage_external_file;
 
    public:
@@ -147,7 +147,7 @@ class CObservationRGBD360 : public CObservation
 	}
 	void getDescriptionAsText(std::ostream& o) const override;
 
-};  // End of class def.
+};	// End of class def.
 
 }  // namespace obs
 

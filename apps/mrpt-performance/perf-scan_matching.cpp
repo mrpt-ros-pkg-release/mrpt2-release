@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -79,14 +79,14 @@ void generate_list_of_points(
 	TMatchingPair pair;
 	for (unsigned int i = 0; i < 5; ++i)
 	{
-		pair.this_idx = pair.other_idx = i;
-		pair.this_x = pA[i][0];
-		pair.this_y = pA[i][1];
-		pair.this_z = pA[i][2];
+		pair.globalIdx = pair.localIdx = i;
+		pair.global.x = pA[i][0];
+		pair.global.y = pA[i][1];
+		pair.global.z = pA[i][2];
 
-		pair.other_x = pB[i][0];
-		pair.other_y = pB[i][1];
-		pair.other_z = pB[i][2];
+		pair.local.x = pB[i][0];
+		pair.local.y = pB[i][1];
+		pair.local.z = pB[i][2];
 
 		list.push_back(pair);
 	}
@@ -127,7 +127,8 @@ double tfest_test_1(int a1, int a2)
 	CTicTac tictac;
 
 	tictac.Tic();
-	for (size_t i = 0; i < N; i++) mrpt::tfest::se3_l2(list, out, scale);
+	for (size_t i = 0; i < N; i++)
+		mrpt::tfest::se3_l2(list, out, scale);
 
 	const double T = tictac.Tac() / N;
 	return T;
@@ -180,14 +181,14 @@ double tfest_test_4(int nCorrs, int nRepets)
 	for (int i = 0; i < nCorrs; i++)
 	{
 		TMatchingPair& m = in_correspondences[i];
-		m.this_idx = i;
-		m.other_idx = i;
-		m.this_x = mrpt::random::getRandomGenerator().drawUniform(-10, 10);
-		m.this_y = mrpt::random::getRandomGenerator().drawUniform(-10, 10);
-		m.this_z = mrpt::random::getRandomGenerator().drawUniform(-10, 10);
-		m.other_x = mrpt::random::getRandomGenerator().drawUniform(-10, 10);
-		m.other_y = mrpt::random::getRandomGenerator().drawUniform(-10, 10);
-		m.other_z = mrpt::random::getRandomGenerator().drawUniform(-10, 10);
+		m.globalIdx = i;
+		m.localIdx = i;
+		m.global.x = mrpt::random::getRandomGenerator().drawUniform(-10, 10);
+		m.global.y = mrpt::random::getRandomGenerator().drawUniform(-10, 10);
+		m.global.z = mrpt::random::getRandomGenerator().drawUniform(-10, 10);
+		m.local.x = mrpt::random::getRandomGenerator().drawUniform(-10, 10);
+		m.local.y = mrpt::random::getRandomGenerator().drawUniform(-10, 10);
+		m.local.z = mrpt::random::getRandomGenerator().drawUniform(-10, 10);
 	}
 
 	const size_t N = nRepets;

@@ -1,8 +1,8 @@
-/* +------------------------------------------------------------------------+
+﻿/* +------------------------------------------------------------------------+
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -70,6 +70,11 @@ class CRenderizableShaderTexturedTriangles : public virtual CRenderizable
 	bool isLightEnabled() const { return m_enableLight; }
 	void enableLight(bool enable = true) { m_enableLight = enable; }
 
+	/** Control whether to render the FRONT, BACK, or BOTH (default) set of
+	 * faces. Refer to docs for glCullFace() */
+	void cullFaces(const TCullFace& cf) { m_cullface = cf; }
+	TCullFace cullFaces() const { return m_cullface; }
+
 	/** VERY IMPORTANT: If you use a multi-thread application, you MUST call
 	 * this from the same thread that will later destruct the object in order to
 	 * the OpenGL texture memory to be correctly deleted.
@@ -104,14 +109,34 @@ class CRenderizableShaderTexturedTriangles : public virtual CRenderizable
 	/** List of triangles  \sa TTriangle */
 	mutable std::vector<mrpt::opengl::TTriangle> m_triangles;
 
+	/** Returns the bounding box of m_triangles, or (0,0,0)-(0,0,0) if empty. */
+	const mrpt::math::TBoundingBox trianglesBoundingBox() const;
+
 	void writeToStreamTexturedObject(mrpt::serialization::CArchive& out) const;
 	void readFromStreamTexturedObject(mrpt::serialization::CArchive& in);
 
-   private:
-	bool m_enableLight = false;
+	using texture_name_t = unsigned int;
+	/// the "i" in GL_TEXTUREi
+	using texture_unit_t = int;
 
-	mutable unsigned int m_glTextureName{0};
-	mutable bool m_texture_is_loaded{false};
+	struct texture_name_unit_t
+	{
+		texture_name_unit_t() = default;
+		texture_name_unit_t(texture_name_t Name, texture_unit_t Unit)
+			: name(Name), unit(Unit)
+		{
+		}
+
+		texture_name_t name = 0;
+		/// the "i" in GL_TEXTUREi
+		texture_unit_t unit = 0;
+	};
+
+   private:
+	bool m_enableLight = true;
+	TCullFace m_cullface = TCullFace::NONE;
+
+	mutable std::optional<texture_name_unit_t> m_glTexture;
 	bool m_textureImageAssigned = false;
 	mutable mrpt::img::CImage m_textureImage{4, 4};
 	mutable mrpt::img::CImage m_textureImageAlpha;
@@ -123,8 +148,9 @@ class CRenderizableShaderTexturedTriangles : public virtual CRenderizable
 
 	void unloadTexture();
 
-	static unsigned int getNewTextureNumber();
-	static void releaseTextureName(unsigned int i);
+	/// Returns: [texture name, texture unit]
+	static texture_name_unit_t getNewTextureNumber();
+	static void releaseTextureName(const texture_name_unit_t& t);
 
 	mutable COpenGLBuffer m_vertexBuffer;
 	mutable COpenGLVertexArrayObject m_vao;

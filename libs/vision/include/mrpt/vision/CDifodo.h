@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -192,7 +192,7 @@ class CDifodo
 	double fps;
 
 	/** Resolution of the images taken by the range camera */
-	unsigned int cam_mode;  // (1 - 640 x 480, 2 - 320 x 240, 4 - 160 x 120)
+	unsigned int cam_mode;	// (1 - 640 x 480, 2 - 320 x 240, 4 - 160 x 120)
 
 	/** Downsample the image taken by the range camera. Useful to reduce the
 	  computational burden,

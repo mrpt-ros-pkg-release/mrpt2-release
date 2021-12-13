@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -11,6 +11,7 @@
 #include <mrpt/config/CConfigFileMemory.h>
 #include <mrpt/system/CRateTimer.h>
 #include <mrpt/system/os.h>
+
 #include "DifOdometry_Camera.h"
 
 using namespace std;
@@ -130,8 +131,7 @@ int main(int num_arg, char* argv[])
 
 		while (!stop)
 		{
-			if (odo.window.keyHit())
-				pushed_key = odo.window.getPushedKey();
+			if (odo.window.keyHit()) pushed_key = odo.window.getPushedKey();
 			else
 				pushed_key = 0;
 
@@ -151,9 +151,7 @@ int main(int num_arg, char* argv[])
 
 				// Start and stop continous odometry
 				case 's':
-				case 'S':
-					working = !working;
-					break;
+				case 'S': working = !working; break;
 
 				// Close the program
 				case 'e':
@@ -164,9 +162,7 @@ int main(int num_arg, char* argv[])
 
 					// Reset estimation
 				case 'R':
-				case 'r':
-					odo.reset();
-					break;
+				case 'r': odo.reset(); break;
 			}
 
 			if (working)

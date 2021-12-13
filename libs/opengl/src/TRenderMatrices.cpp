@@ -2,16 +2,18 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
-#include "opengl-precomp.h"  // Precompiled header
-
-#include <mrpt/math/geometry.h>  // crossProduct3D()
+#include "opengl-precomp.h"	 // Precompiled header
+//
+#include <mrpt/containers/yaml.h>
+#include <mrpt/math/geometry.h>	 // crossProduct3D()
 #include <mrpt/math/ops_containers.h>  // dotProduct()
 #include <mrpt/opengl/TRenderMatrices.h>
+
 #include <Eigen/Dense>
 
 using namespace mrpt::opengl;
@@ -20,6 +22,8 @@ void TRenderMatrices::computeOrthoProjectionMatrix(
 	float left, float right, float bottom, float top, float znear, float zfar)
 {
 	ASSERT_GT_(zfar, znear);
+	m_last_z_near = znear;
+	m_last_z_far = zfar;
 
 	p_matrix.setIdentity();
 
@@ -39,7 +43,43 @@ void TRenderMatrices::computeProjectionMatrix(float znear, float zfar)
 	ASSERT_GT_(zfar, .0f);
 	ASSERT_GE_(znear, .0f);
 
-	if (is_projective)
+	m_last_z_near = znear;
+	m_last_z_far = zfar;
+
+	if (pinhole_model.has_value())
+	{
+		const auto& phm = pinhole_model.value();
+
+		// Equivalent to gluPerspective(), from pinhole camera intrinsic
+		// parameters (cx,cy,fx,fy):
+		ASSERT_EQUAL_(viewport_width, pinhole_model->ncols);
+		ASSERT_EQUAL_(viewport_height, pinhole_model->nrows);
+
+		const int W = pinhole_model->ncols, H = pinhole_model->nrows;
+
+		// See: e.g.
+		// http://ksimek.github.io/2013/06/03/calibrated_cameras_in_opengl/
+		mrpt::math::CMatrixFloat44 persp;
+		persp.setZero();
+
+		persp(0, 0) = phm.fx();
+		persp(1, 1) = phm.fy();
+
+		persp(0, 2) = -phm.cx();
+		persp(1, 2) = -H + phm.cy();
+		persp(2, 2) = (zfar + znear);
+		persp(3, 2) = -1.0f;
+		persp(2, 3) = zfar * znear;
+
+		// glOrtho(-W/2, W/2, -H/2, H/2, near, far);
+
+		computeOrthoProjectionMatrix(
+			0, W, 0 /*bottom*/, H /*top*/, znear, zfar);
+
+		// glMultMatrix(persp);
+		p_matrix.asEigen() *= persp.asEigen();
+	}
+	else if (is_projective)
 	{
 		// Was: gluPerspective()
 		// Based on GLM's perspective (MIT license).
@@ -49,7 +89,6 @@ void TRenderMatrices::computeProjectionMatrix(float znear, float zfar)
 			std::abs(aspect - std::numeric_limits<float>::epsilon()), .0f);
 
 		const float f = 1.0f / std::tan(mrpt::DEG2RAD(FOV) / 2.0f);
-
 		p_matrix.setZero();
 
 		p_matrix(0, 0) = f / aspect;
@@ -67,8 +106,7 @@ void TRenderMatrices::computeProjectionMatrix(float znear, float zfar)
 		float Ax = eyeDistance * 0.5f;
 		float Ay = eyeDistance * 0.5f;
 
-		if (ratio > 1)
-			Ax *= ratio;
+		if (ratio > 1) Ax *= ratio;
 		else
 		{
 			if (ratio != 0) Ay /= ratio;
@@ -154,4 +192,32 @@ void TRenderMatrices::projectPointPixels(
 	projectPoint(x, y, z, proj_u_px, proj_v_px, proj_depth);
 	proj_u_px = (proj_u_px + 1.0f) * (viewport_width * 0.5f);
 	proj_v_px = (proj_v_px + 1.0f) * (viewport_height * 0.5f);
+}
+
+void TRenderMatrices::saveToYaml(mrpt::containers::yaml& c) const
+{
+	c = mrpt::containers::yaml::Map();
+
+	MCP_SAVE(c, initialized);
+	MCP_SAVE(c, viewport_width);
+	MCP_SAVE(c, viewport_height);
+	MCP_SAVE(c, FOV);
+	MCP_SAVE_DEG(c, azimuth);
+	MCP_SAVE_DEG(c, elev);
+	MCP_SAVE(c, eyeDistance);
+	MCP_SAVE(c, is_projective);
+
+	c["eye"] = eye.asString();
+	c["pointing"] = pointing.asString();
+	c["up"] = up.asString();
+
+	c["p_matrix"] = mrpt::containers::yaml::FromMatrix(p_matrix);
+	c["mv_matrix"] = mrpt::containers::yaml::FromMatrix(mv_matrix);
+}
+
+void TRenderMatrices::print(std::ostream& o) const
+{
+	mrpt::containers::yaml c;
+	saveToYaml(c);
+	o << c;
 }

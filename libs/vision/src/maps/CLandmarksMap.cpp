@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
-#include "vision-precomp.h"  // Precompiled headers
-
+#include "vision-precomp.h"	 // Precompiled headers
+//
 #include <mrpt/io/CFileOutputStream.h>
 #include <mrpt/maps/CLandmark.h>
 #include <mrpt/maps/CLandmarksMap.h>
@@ -27,6 +27,7 @@
 #include <mrpt/poses/CPointPDFGaussian.h>
 #include <mrpt/random.h>
 #include <mrpt/system/os.h>
+
 #include <Eigen/Dense>
 
 using namespace mrpt;
@@ -155,7 +156,8 @@ void CLandmarksMap::serializeTo(mrpt::serialization::CArchive& out) const
 	out << n;
 
 	// Write all landmarks:
-	for (const auto& landmark : landmarks) out << landmark;
+	for (const auto& landmark : landmarks)
+		out << landmark;
 }
 
 void CLandmarksMap::serializeFrom(
@@ -176,7 +178,7 @@ void CLandmarksMap::serializeFrom(
 			// -------------------------------------
 			in >> n;
 
-			landmarks.clear();  // resize(n);
+			landmarks.clear();	// resize(n);
 
 			// Read all landmarks:
 			for (i = 0; i < n; i++)
@@ -186,8 +188,7 @@ void CLandmarksMap::serializeFrom(
 			}
 		}
 		break;
-		default:
-			MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
 	};
 }
 
@@ -195,7 +196,7 @@ void CLandmarksMap::serializeFrom(
 					computeObservationLikelihood
   ---------------------------------------------------------------*/
 double CLandmarksMap::internal_computeObservationLikelihood(
-	const CObservation& obs, const CPose3D& robotPose3D)
+	const CObservation& obs, const CPose3D& robotPose3D) const
 {
 	MRPT_START
 
@@ -210,7 +211,7 @@ double CLandmarksMap::internal_computeObservationLikelihood(
 		CPose2D sensorPose2D(robotPose3D + o.sensorPose);
 
 		auxMap.loadOccupancyFeaturesFrom2DRangeScan(
-			o, &robotPose3D, likelihoodOptions.rangeScan2D_decimation);
+			o, robotPose3D, likelihoodOptions.rangeScan2D_decimation);
 
 		// And compute its likelihood:
 		return computeLikelihood_RSLC_2007(&auxMap, sensorPose2D);
@@ -254,8 +255,8 @@ double CLandmarksMap::internal_computeObservationLikelihood(
 		const auto& o = dynamic_cast<const CObservationBeaconRanges&>(obs);
 
 		const double sensorStd = likelihoodOptions.beaconRangesUseObservationStd
-									 ? o.stdError
-									 : likelihoodOptions.beaconRangesStd;
+			? o.stdError
+			: likelihoodOptions.beaconRangesStd;
 		ASSERT_GT_(sensorStd, .0);
 		const auto unif_val =
 			std::log(1.0 / (o.maxSensorDistance - o.minSensorDistance));
@@ -291,7 +292,7 @@ double CLandmarksMap::internal_computeObservationLikelihood(
 					(-0.5 *
 					 mrpt::square((expectedRange - sensedDist) / sensorStd));
 				found = true;
-				break;  // we found the beacon, skip the rest of landmarks
+				break;	// we found the beacon, skip the rest of landmarks
 			}
 
 			// If not found, uniform distribution:
@@ -436,7 +437,8 @@ double CLandmarksMap::internal_computeObservationLikelihood(
 						insertObservation
   ---------------------------------------------------------------*/
 bool CLandmarksMap::internal_insertObservation(
-	const CObservation& obs, const CPose3D* robotPose)
+	const CObservation& obs,
+	const std::optional<const mrpt::poses::CPose3D>& robotPose)
 {
 	MRPT_START
 
@@ -607,7 +609,7 @@ void CLandmarksMap::loadSiftFeaturesFromImageObservation(
 	CLandmark lm;
 
 	vision::CFeatureExtraction fExt;
-	vision::CFeatureList siftList;  // vision::TSIFTFeatureList siftList;
+	vision::CFeatureList siftList;	// vision::TSIFTFeatureList siftList;
 	vision::CFeatureList::iterator
 		sift;  // vision::TSIFTFeatureList::iterator	sift;
 
@@ -617,15 +619,15 @@ void CLandmarksMap::loadSiftFeaturesFromImageObservation(
 
 	// Remove distortion:
 	corImg =
-		obs.image;  // obs.image.correctDistortion(obs.intrinsicParams,obs.distortionParams);
+		obs.image;	// obs.image.correctDistortion(obs.intrinsicParams,obs.distortionParams);
 
 	// Extract SIFT features:
 	fExt.options = feat_options;
 	fExt.detectFeatures(
-		corImg, siftList);  // vision::computeSiftFeatures(corImg, siftList );
+		corImg, siftList);	// vision::computeSiftFeatures(corImg, siftList );
 
 	// Save them as 3D landmarks:
-	landmarks.clear();  // resize( siftList.size() );
+	landmarks.clear();	// resize( siftList.size() );
 
 	for (sift = siftList.begin(); sift != siftList.end(); sift++)
 	{
@@ -637,7 +639,7 @@ void CLandmarksMap::loadSiftFeaturesFromImageObservation(
 		// Compute the mean and covariance of the landmark gaussian 3D position,
 		//  from the unitary direction vector and a given distance:
 		// --------------------------------------------------------------------------
-		landmark3DPositionPDF.mean = CPoint3D(dir);  // The mean is easy :-)
+		landmark3DPositionPDF.mean = CPoint3D(dir);	 // The mean is easy :-)
 		landmark3DPositionPDF.mean *= d;
 
 		// The covariance:
@@ -693,9 +695,7 @@ void CLandmarksMap::loadSiftFeaturesFromStereoImageObservation(
 	CLandmarksMap landmarkMap;
 
 	// Extract SIFT features:
-	fExt.options = feat_options;  // OLD:
-	// fExt.options.SIFTOptions.implementation =
-	// vision::CFeatureExtraction::Hess;
+	fExt.options = feat_options;
 
 	// Default: Hess implementation
 	fExt.detectFeatures(
@@ -800,23 +800,23 @@ void CLandmarksMap::changeCoordinatesReference(const CPose3D& newOrg)
 
 		// The covariance:  cov = M * cov * (~M);
 		c11 = R11 * (C11 * R11 + C12 * R12 + C13 * R13) +
-			  R12 * (C12 * R11 + C22 * R12 + C23 * R13) +
-			  R13 * (C13 * R11 + C23 * R12 + C33 * R13);
+			R12 * (C12 * R11 + C22 * R12 + C23 * R13) +
+			R13 * (C13 * R11 + C23 * R12 + C33 * R13);
 		c12 = (C11 * R11 + C12 * R12 + C13 * R13) * R21 +
-			  (C12 * R11 + C22 * R12 + C23 * R13) * R22 +
-			  (C13 * R11 + C23 * R12 + C33 * R13) * R23;
+			(C12 * R11 + C22 * R12 + C23 * R13) * R22 +
+			(C13 * R11 + C23 * R12 + C33 * R13) * R23;
 		c13 = (C11 * R11 + C12 * R12 + C13 * R13) * R31 +
-			  (C12 * R11 + C22 * R12 + C23 * R13) * R32 +
-			  (C13 * R11 + C23 * R12 + C33 * R13) * R33;
+			(C12 * R11 + C22 * R12 + C23 * R13) * R32 +
+			(C13 * R11 + C23 * R12 + C33 * R13) * R33;
 		c22 = R21 * (C11 * R21 + C12 * R22 + C13 * R23) +
-			  R22 * (C12 * R21 + C22 * R22 + C23 * R23) +
-			  R23 * (C13 * R21 + C23 * R22 + C33 * R23);
+			R22 * (C12 * R21 + C22 * R22 + C23 * R23) +
+			R23 * (C13 * R21 + C23 * R22 + C33 * R23);
 		c23 = (C11 * R21 + C12 * R22 + C13 * R23) * R31 +
-			  (C12 * R21 + C22 * R22 + C23 * R23) * R32 +
-			  (C13 * R21 + C23 * R22 + C33 * R23) * R33;
+			(C12 * R21 + C22 * R22 + C23 * R23) * R32 +
+			(C13 * R21 + C23 * R22 + C33 * R23) * R33;
 		c33 = R31 * (C11 * R31 + C12 * R32 + C13 * R33) +
-			  R32 * (C12 * R31 + C22 * R32 + C23 * R33) +
-			  R33 * (C13 * R31 + C23 * R32 + C33 * R33);
+			R32 * (C12 * R31 + C22 * R32 + C23 * R33) +
+			R33 * (C13 * R31 + C23 * R32 + C33 * R33);
 
 		// save into the landmark:
 		lm->pose_cov_11 = c11;
@@ -887,23 +887,23 @@ void CLandmarksMap::changeCoordinatesReference(
 
 		// The covariance:  cov = M * cov * (~M);
 		c11 = R11 * (C11 * R11 + C12 * R12 + C13 * R13) +
-			  R12 * (C12 * R11 + C22 * R12 + C23 * R13) +
-			  R13 * (C13 * R11 + C23 * R12 + C33 * R13);
+			R12 * (C12 * R11 + C22 * R12 + C23 * R13) +
+			R13 * (C13 * R11 + C23 * R12 + C33 * R13);
 		c12 = (C11 * R11 + C12 * R12 + C13 * R13) * R21 +
-			  (C12 * R11 + C22 * R12 + C23 * R13) * R22 +
-			  (C13 * R11 + C23 * R12 + C33 * R13) * R23;
+			(C12 * R11 + C22 * R12 + C23 * R13) * R22 +
+			(C13 * R11 + C23 * R12 + C33 * R13) * R23;
 		c13 = (C11 * R11 + C12 * R12 + C13 * R13) * R31 +
-			  (C12 * R11 + C22 * R12 + C23 * R13) * R32 +
-			  (C13 * R11 + C23 * R12 + C33 * R13) * R33;
+			(C12 * R11 + C22 * R12 + C23 * R13) * R32 +
+			(C13 * R11 + C23 * R12 + C33 * R13) * R33;
 		c22 = R21 * (C11 * R21 + C12 * R22 + C13 * R23) +
-			  R22 * (C12 * R21 + C22 * R22 + C23 * R23) +
-			  R23 * (C13 * R21 + C23 * R22 + C33 * R23);
+			R22 * (C12 * R21 + C22 * R22 + C23 * R23) +
+			R23 * (C13 * R21 + C23 * R22 + C33 * R23);
 		c23 = (C11 * R21 + C12 * R22 + C13 * R23) * R31 +
-			  (C12 * R21 + C22 * R22 + C23 * R23) * R32 +
-			  (C13 * R21 + C23 * R22 + C33 * R23) * R33;
+			(C12 * R21 + C22 * R22 + C23 * R23) * R32 +
+			(C13 * R21 + C23 * R22 + C33 * R23) * R33;
 		c33 = R31 * (C11 * R31 + C12 * R32 + C13 * R33) +
-			  R32 * (C12 * R31 + C22 * R32 + C23 * R33) +
-			  R33 * (C13 * R31 + C23 * R32 + C33 * R33);
+			R32 * (C12 * R31 + C22 * R32 + C23 * R33) +
+			R33 * (C13 * R31 + C23 * R32 + C33 * R33);
 
 		// save into the landmark:
 		newLandmark.pose_cov_11 = c11;
@@ -963,8 +963,8 @@ void CLandmarksMap::fuseWith(CLandmarksMap& other, bool justInsertAllOfThem)
 		// ---------------------------------------------------------
 		for (corrIt = corrs.begin(); corrIt != corrs.end(); corrIt++)
 		{
-			thisLM = landmarks.get(corrIt->this_idx);
-			otherLM = other.landmarks.get(corrIt->other_idx);
+			thisLM = landmarks.get(corrIt->globalIdx);
+			otherLM = other.landmarks.get(corrIt->localIdx);
 
 			// Fuse their poses:
 			CPointPDFGaussian P, P1, P2;
@@ -974,14 +974,14 @@ void CLandmarksMap::fuseWith(CLandmarksMap& other, bool justInsertAllOfThem)
 
 			P.bayesianFusion(P1, P2);
 
-			landmarks.isToBeModified(corrIt->this_idx);
+			landmarks.isToBeModified(corrIt->globalIdx);
 			thisLM->setPose(P);
 
 			// Update "seen" data:
 			thisLM->seenTimesCount++;
 			thisLM->timestampLastSeen = otherLM->timestampLastSeen;
 
-			landmarks.hasBeenModified(corrIt->this_idx);
+			landmarks.hasBeenModified(corrIt->globalIdx);
 
 		}  // end foreach corrs
 	}
@@ -1011,10 +1011,9 @@ void CLandmarksMap::fuseWith(CLandmarksMap& other, bool justInsertAllOfThem)
 		for (i = n - 1; i >= 0; i--)
 		{
 			if (landmarks.get(i)->getType() !=
-				featNotDefined)  // Occupancy features
+				featNotDefined)	 // Occupancy features
 			{
-				const double dt =
-					1e-3 *
+				const double dt = 1e-3 *
 					std::chrono::duration_cast<std::chrono::milliseconds>(
 						lastestTime - landmarks.get(i)->timestampLastSeen)
 						.count();
@@ -1196,7 +1195,7 @@ void CLandmarksMap::computeMatchingWith3DLandmarks(
 									desc = CLandmarksMap::_mEDD[mPair];
 								}
 
-								lik_desc = exp(K_desc * desc);  // Likelihood
+								lik_desc = exp(K_desc * desc);	// Likelihood
 								// regarding the
 								// descriptor
 							}
@@ -1241,17 +1240,17 @@ void CLandmarksMap::computeMatchingWith3DLandmarks(
 							// OK: A correspondence found!!
 							otherCorrespondences[k] = true;
 
-							match.this_idx = maxIdx;
-							match.this_x = landmarks.get(maxIdx)->pose_mean.x;
-							match.this_y = landmarks.get(maxIdx)->pose_mean.y;
-							match.this_z = landmarks.get(maxIdx)->pose_mean.z;
+							match.globalIdx = maxIdx;
+							match.global.x = landmarks.get(maxIdx)->pose_mean.x;
+							match.global.y = landmarks.get(maxIdx)->pose_mean.y;
+							match.global.z = landmarks.get(maxIdx)->pose_mean.z;
 
-							match.other_idx = k;
-							match.other_x =
+							match.localIdx = k;
+							match.local.x =
 								anotherMap->landmarks.get(k)->pose_mean.x;
-							match.other_y =
+							match.local.y =
 								anotherMap->landmarks.get(k)->pose_mean.y;
-							match.other_z =
+							match.local.z =
 								anotherMap->landmarks.get(k)->pose_mean.z;
 
 							correspondences.push_back(match);
@@ -1311,7 +1310,7 @@ void CLandmarksMap::computeMatchingWith3DLandmarks(
 				if (mEDD > insertionOptions.SiftEDDThreshold)
 				{
 					// There is a correspondence
-					if (!thisLandmarkAssigned[mEDDidx])  // If there is not
+					if (!thisLandmarkAssigned[mEDDidx])	 // If there is not
 					// multiple
 					// correspondence
 					{
@@ -1323,17 +1322,17 @@ void CLandmarksMap::computeMatchingWith3DLandmarks(
 						otherIt->getPose(pointPDF_k);
 						thisIt->getPose(pointPDF_j);
 
-						match.this_idx = j;
-						match.this_x = landmarks.get(mEDDidx)->pose_mean.x;
-						match.this_y = landmarks.get(mEDDidx)->pose_mean.y;
-						match.this_z = landmarks.get(mEDDidx)->pose_mean.z;
+						match.globalIdx = j;
+						match.global.x = landmarks.get(mEDDidx)->pose_mean.x;
+						match.global.y = landmarks.get(mEDDidx)->pose_mean.y;
+						match.global.z = landmarks.get(mEDDidx)->pose_mean.z;
 
-						match.other_idx = k;
-						match.other_x =
+						match.localIdx = k;
+						match.local.x =
 							anotherMap->landmarks.get(k)->pose_mean.x;
-						match.other_y =
+						match.local.y =
 							anotherMap->landmarks.get(k)->pose_mean.y;
-						match.other_z =
+						match.local.z =
 							anotherMap->landmarks.get(k)->pose_mean.z;
 
 						correspondences.push_back(match);
@@ -1549,12 +1548,13 @@ bool CLandmarksMap::saveToMATLABScript2D(
 						loadOccupancyFeaturesFrom2DRangeScan
   ---------------------------------------------------------------*/
 void CLandmarksMap::loadOccupancyFeaturesFrom2DRangeScan(
-	const CObservation2DRangeScan& obs, const CPose3D* robotPose,
+	const CObservation2DRangeScan& obs,
+	const std::optional<const mrpt::poses::CPose3D>& robotPose,
 	unsigned int downSampleFactor)
 {
 	unsigned int i, n = obs.getScanSize();
-	double Th, dTh;  // angle of the ray
-	double J11, J12, J21, J22;  // The jacobian elements.
+	double Th, dTh;	 // angle of the ray
+	double J11, J12, J21, J22;	// The jacobian elements.
 	double d;
 	CPose3D sensorGlobalPose;
 
@@ -1562,8 +1562,7 @@ void CLandmarksMap::loadOccupancyFeaturesFrom2DRangeScan(
 	this->clear();
 
 	// Sensor pose in 3D:
-	if (!robotPose)
-		sensorGlobalPose = obs.sensorPose;
+	if (!robotPose) sensorGlobalPose = obs.sensorPose;
 	else
 		sensorGlobalPose = *robotPose + obs.sensorPose;
 
@@ -1625,7 +1624,7 @@ void CLandmarksMap::loadOccupancyFeaturesFrom2DRangeScan(
 			newLandmark.pose_cov_11 = (J11 * J11 * var_th + J12 * J12 * var_d);
 			newLandmark.pose_cov_12 = (J11 * J21 * var_th + J12 * J22 * var_d);
 			newLandmark.pose_cov_22 = (J21 * J21 * var_th + J22 * J22 * var_d);
-			newLandmark.pose_cov_33 = (square(0.005));  // var_d;
+			newLandmark.pose_cov_33 = (square(0.005));	// var_d;
 			newLandmark.pose_cov_13 = newLandmark.pose_cov_23 = 0;
 
 			// Append it:
@@ -1649,27 +1648,19 @@ void CLandmarksMap::loadOccupancyFeaturesFrom2DRangeScan(
 
   ---------------------------------------------------------------*/
 double CLandmarksMap::computeLikelihood_RSLC_2007(
-	const CLandmarksMap* s, [[maybe_unused]] const CPose2D& sensorPose)
+	const CLandmarksMap* s, [[maybe_unused]] const CPose2D& sensorPose) const
 {
 	MRPT_START
 
 	double lik = 1.0;
 	TSequenceLandmarks::const_iterator itOther;
-	CLandmark* lm;  //*itClosest;
 	double corr;
 	double PrNoCorr;
 	CPointPDFGaussian poseThis, poseOther;
-	// double								STD_THETA = 0.15_deg;
-	// double								STD_DIST = 0.5f;
 	double nFoundCorrs = 0;
-	std::vector<int32_t>* corrs;
 	unsigned int cx, cy, cx_1, cx_2, cy_1, cy_2;
 
-	//	s->saveToMATLABScript2D(std::string("ver_sensed.m"));
-	// saveToMATLABScript2D(std::string("ver_ref.m"),"r");
-
-	CDynamicGrid<std::vector<int32_t>>* grid = landmarks.getGrid();
-	// grid->saveToTextFile( "debug_grid.txt" );
+	const auto grid = landmarks.getGrid();
 
 	// For each landmark in the observations:
 	for (itOther = s->landmarks.begin(); itOther != s->landmarks.end();
@@ -1700,12 +1691,12 @@ double CLandmarksMap::computeLikelihood_RSLC_2007(
 		for (cx = cx_1; cx <= cx_2; cx++)
 			for (cy = cy_1; cy <= cy_2; cy++)
 			{
-				corrs = grid->cellByIndex(cx, cy);
+				auto corrs = grid->cellByIndex(cx, cy);
 				ASSERT_(corrs != nullptr);
 				if (!corrs->empty())
-					for (int& it : *corrs)
+					for (auto it : *corrs)
 					{
-						lm = landmarks.get(it);
+						auto lm = landmarks.get(it);
 
 						// Compute the "correspondence" in the range [0,1]:
 						// -------------------------------------------------------------
@@ -1739,37 +1730,7 @@ double CLandmarksMap::computeLikelihood_RSLC_2007(
 		// correspondence:
 		nFoundCorrs += 1 - PrNoCorr;
 
-		/**** DEBUG **** /
-		{
-			//FILE	*f=os::fopen("debug_corrs.txt","wt");
-			//for (Cij=v_Cij.begin(),pZj=v_pZj.begin(); pZj!=v_pZj.end();
-		Cij++,pZj++)
-			//{
-			//	os::fprintf(f,"%e %e\n", *Cij, *pZj);
-			//}
-
-			//os::fprintf(f,"\n INDIV LIK=%e\n lik=%e\n
-		closestObstacleInLine=%e\n measured
-		range=%e\n",indivLik,lik,closestObstacleInLine,
-		itOther.descriptors.SIFT[1]);
-			//os::fprintf(f,"
-		closestObstacleDirection=%e\n",closestObstacleDirection);
-			//os::fclose(f);
-
-			printf("\n lik=%e\n closestObstacleInLine=%e\n measured
-		range=%e\n",lik,closestObstacleInLine, itOther.descriptors.SIFT[1]);
-			if (itClosest)
-					printf(" closest=(%.03f,%.03f)\n", itClosest->pose_mean.x,
-		itClosest->pose_mean.y);
-			else	printf(" closest=nullptr\n");
-
-			printf(" P(no corrs)=%e\n",	PrNoCorr );
-			mrpt::system::pause();
-		}
-		/ ***************/
-
 		lik *= 1 - PrNoCorr;
-
 	}  // enf for each landmark in the other map.
 
 	lik = nFoundCorrs / static_cast<double>(s->size());
@@ -1943,14 +1904,14 @@ float CLandmarksMap::TCustomSequenceLandmarks::getLargestDistanceFromOrigin()
   ---------------------------------------------------------------*/
 double CLandmarksMap::computeLikelihood_SIFT_LandmarkMap(
 	CLandmarksMap* theMap, TMatchingPairList* correspondences,
-	std::vector<bool>* otherCorrespondences)
+	std::vector<bool>* otherCorrespondences) const
 {
-	double lik = 0;  // For 'traditional'
+	double lik = 0;	 // For 'traditional'
 	double lik_i;
 	unsigned long distDesc;
 	double likByDist, likByDesc;
 
-	std::vector<unsigned char>::iterator it1, it2;
+	std::vector<unsigned char>::const_iterator it1, it2;
 	double K_dist = -0.5 / square(likelihoodOptions.SIFTs_mahaDist_std);
 	double K_desc =
 		-0.5 / square(likelihoodOptions.SIFTs_sigma_descriptor_dist);
@@ -1964,26 +1925,26 @@ double CLandmarksMap::computeLikelihood_SIFT_LandmarkMap(
 	// USE INSERTOPTIONS METHOD
 	switch (insertionOptions.SIFTLikelihoodMethod)
 	{
-		case 0:  // Our method
+		case 0:	 // Our method
 		{
 			// lik = 1e-9;		// For consensus
-			lik = 1.0;  // For traditional
+			lik = 1.0;	// For traditional
 
-			TSequenceLandmarks::iterator lm1, lm2;
+			TSequenceLandmarks::const_iterator lm1, lm2;
 			for (idx1 = 0, lm1 = theMap->landmarks.begin();
 				 lm1 < theMap->landmarks.end();
-				 lm1 += decimation, idx1 += decimation)  // Other theMap LM1
+				 lm1 += decimation, idx1 += decimation)	 // Other theMap LM1
 			{
 				if (lm1->getType() == featSIFT)
 				{
 					// Get the pose of lm1 as an object:
 					lm1->getPose(lm1_pose);
 
-					lik_i = 0;  // Counter
+					lik_i = 0;	// Counter
 
 					for (idx2 = 0, lm2 = landmarks.begin();
 						 lm2 != landmarks.end();
-						 lm2++, idx2++)  // This theMap LM2
+						 lm2++, idx2++)	 // This theMap LM2
 					{
 						if (lm2->getType() == featSIFT)
 						{
@@ -2041,8 +2002,9 @@ double CLandmarksMap::computeLikelihood_SIFT_LandmarkMap(
 												   .descriptors.SIFT->begin(),
 										it2 = lm2->features[0]
 												  .descriptors.SIFT->begin();
-										 it1 != lm1->features[0]
-													.descriptors.SIFT->end();
+										 it1 !=
+										 lm1->features[0]
+											 .descriptors.SIFT->end();
 										 it1++, it2++)
 										distDesc += square(*it1 - *it2);
 
@@ -2057,7 +2019,7 @@ double CLandmarksMap::computeLikelihood_SIFT_LandmarkMap(
 								}
 								likByDesc = exp(K_desc * distDesc);
 								lik_i += likByDist *
-										 likByDesc;  // Cumulative Likelihood
+									likByDesc;	// Cumulative Likelihood
 							}
 							else
 							{
@@ -2068,13 +2030,13 @@ double CLandmarksMap::computeLikelihood_SIFT_LandmarkMap(
 							}
 						}  // end if
 					}  // end for "lm2"
-					lik *= (0.1 + 0.9 * lik_i);  // (TRADITIONAL) Total
+					lik *= (0.1 + 0.9 * lik_i);	 // (TRADITIONAL) Total
 				}
 			}  // end for "lm1"
 		}
 		break;
 
-		case 1:  // SIM, ELINAS, GRIFFIN, LITTLE
+		case 1:	 // SIM, ELINAS, GRIFFIN, LITTLE
 			double dist;
 			TMatchingPairList::iterator itCorr;
 
@@ -2094,8 +2056,8 @@ double CLandmarksMap::computeLikelihood_SIFT_LandmarkMap(
 			for (itCorr = correspondences->begin();
 				 itCorr != correspondences->end(); itCorr++)
 			{
-				CLandmark* lm1 = theMap->landmarks.get(itCorr->other_idx);
-				CLandmark* lm2 = landmarks.get(itCorr->this_idx);
+				auto lm1 = theMap->landmarks.get(itCorr->localIdx);
+				auto lm2 = landmarks.get(itCorr->globalIdx);
 
 				dij(0, 0) = lm1->pose_mean.x - lm2->pose_mean.x;
 				dij(0, 1) = lm1->pose_mean.y - lm2->pose_mean.y;
@@ -2411,7 +2373,7 @@ void CLandmarksMap::simulateBeaconReadings(
 
 			// Add noise:
 			range += out_Observations.stdError *
-					 getRandomGenerator().drawGaussian1D_normalized();
+				getRandomGenerator().drawGaussian1D_normalized();
 			range = max(0.0f, range);
 
 			if (range >= out_Observations.minSensorDistance &&
@@ -2444,14 +2406,11 @@ void CLandmarksMap::saveMetricMapRepresentationToFile(
 
 	// 3D Scene:
 	opengl::COpenGLScene scene;
-	mrpt::opengl::CSetOfObjects::Ptr obj3D =
-		mrpt::opengl::CSetOfObjects::Create();
-	getAs3DObject(obj3D);
 
 	opengl::CGridPlaneXY::Ptr objGround =
 		std::make_shared<opengl::CGridPlaneXY>(-100, 100, -100, 100, 0, 1);
 
-	scene.insert(obj3D);
+	scene.insert(getVisualization());
 	scene.insert(objGround);
 
 	std::string fil2(filNamePrefix + std::string("_3D.3Dscene"));
@@ -2463,8 +2422,7 @@ void CLandmarksMap::saveMetricMapRepresentationToFile(
 /*---------------------------------------------------------------
 						getAs3DObject
   ---------------------------------------------------------------*/
-void CLandmarksMap::getAs3DObject(
-	mrpt::opengl::CSetOfObjects::Ptr& outObj) const
+void CLandmarksMap::getVisualizationInto(mrpt::opengl::CSetOfObjects& o) const
 {
 	if (!genericMapParams.enableSaveAs3DObject) return;
 
@@ -2489,7 +2447,7 @@ void CLandmarksMap::getAs3DObject(
 			mrpt::format("LM.ID=%u", static_cast<unsigned int>(landmark.ID)));
 		ellip->enableShowName(true);
 
-		outObj->insert(ellip);
+		o.insert(ellip);
 	}
 }
 /**** FAMD ****/
@@ -2654,14 +2612,13 @@ float CLandmarksMap::compute3DMatchingRatio(
 						 it1++, it2++)
 						descrDist += square(*it1 - *it2);
 
-					float descrDist_f =
-						sqrt(d2f(descrDist)) /
+					float descrDist_f = sqrt(d2f(descrDist)) /
 						itThis->features[0].descriptors.SIFT->size();
 
 					if (descrDist_f < 1.5f)
 					{
 						otherLandmarkWithCorrespondence++;
-						break;  // Go to the next "other" LM
+						break;	// Go to the next "other" LM
 					}
 				}
 			}
@@ -2740,8 +2697,7 @@ void CLandmarksMap::simulateRangeBearingReadings(
 			fabs(pitch) <= 0.5f * out_Observations.fieldOfView_pitch)
 		{
 			// Fill out:
-			if (sensorDetectsIDs)
-				newMeas.landmarkID = it->ID;
+			if (sensorDetectsIDs) newMeas.landmarkID = it->ID;
 			else
 				newMeas.landmarkID = INVALID_LANDMARK_ID;
 			newMeas.range = range;
@@ -2752,7 +2708,7 @@ void CLandmarksMap::simulateRangeBearingReadings(
 			out_Observations.sensedData.push_back(newMeas);
 
 			if (out_real_associations)
-				out_real_associations->push_back(idx);  // Real indices.
+				out_real_associations->push_back(idx);	// Real indices.
 		}
 	}  // end for it
 
@@ -2774,16 +2730,15 @@ void CLandmarksMap::simulateRangeBearingReadings(
 			out_Observations.minSensorDistance,
 			out_Observations.maxSensorDistance);
 		const double yaw = (out_Observations.sensor_std_yaw == 0)
-							   ? 0
-							   : getRandomGenerator().drawUniform(
-									 -0.5f * out_Observations.fieldOfView_yaw,
-									 0.5f * out_Observations.fieldOfView_yaw);
-		const double pitch =
-			(out_Observations.sensor_std_pitch == 0)
-				? 0
-				: getRandomGenerator().drawUniform(
-					  -0.5f * out_Observations.fieldOfView_pitch,
-					  0.5f * out_Observations.fieldOfView_pitch);
+			? 0
+			: getRandomGenerator().drawUniform(
+				  -0.5f * out_Observations.fieldOfView_yaw,
+				  0.5f * out_Observations.fieldOfView_yaw);
+		const double pitch = (out_Observations.sensor_std_pitch == 0)
+			? 0
+			: getRandomGenerator().drawUniform(
+				  -0.5f * out_Observations.fieldOfView_pitch,
+				  0.5f * out_Observations.fieldOfView_pitch);
 
 		// Fill out:
 		newMeas.landmarkID =
@@ -2797,7 +2752,7 @@ void CLandmarksMap::simulateRangeBearingReadings(
 
 		if (out_real_associations)
 			out_real_associations->push_back(
-				std::string::npos);  // Real index: spurious
+				std::string::npos);	 // Real index: spurious
 	}  // end for it
 
 	// Done!

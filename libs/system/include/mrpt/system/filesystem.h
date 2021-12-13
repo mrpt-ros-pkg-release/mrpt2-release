@@ -2,13 +2,14 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 #pragma once
 
 #include <mrpt/core/exceptions.h>  //ASSERTMSG_
+
 #include <string>
 
 namespace mrpt::system
@@ -19,15 +20,15 @@ namespace mrpt::system
  * \ingroup mrpt_system_grp
  * @{ */
 
-#define ASSERT_FILE_EXISTS_(FIL)       \
-	ASSERTMSG_(                        \
-		mrpt::system::fileExists(FIL), \
+#define ASSERT_FILE_EXISTS_(FIL)                                               \
+	ASSERTMSG_(                                                                \
+		mrpt::system::fileExists(FIL),                                         \
 		std::string("Assert file existence failed: ") + ::std::string(FIL))
 
-#define ASSERT_DIRECTORY_EXISTS_(DIR)                        \
-	ASSERTMSG_(                                              \
-		mrpt::system::directoryExists(DIR),                  \
-		std::string("Assert directory existence failed: ") + \
+#define ASSERT_DIRECTORY_EXISTS_(DIR)                                          \
+	ASSERTMSG_(                                                                \
+		mrpt::system::directoryExists(DIR),                                    \
+		std::string("Assert directory existence failed: ") +                   \
 			::std::string(DIR))
 
 /** Returns the name of a proposed temporary file name */
@@ -39,7 +40,7 @@ std::string getcwd();
 /** Attempts to find the directory `[PREFIX/]share/mrpt/` and returns its
  * absolute path, or empty string if not found.
  * Example return paths: Linux after installing = `/usr/share/mrpt/`;
- * manually-built system = `[CMAKE_SOURCE_DIR]/share/mrpt/`, etc.  */
+ * manually-built system = `[MRPT_SOURCE_DIR]/share/mrpt/`, etc.  */
 std::string getShareMRPTDir();
 
 /** Creates a directory

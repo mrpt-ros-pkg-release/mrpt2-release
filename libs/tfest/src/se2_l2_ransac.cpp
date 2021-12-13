@@ -2,12 +2,12 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
-#include "tfest-precomp.h"  // Precompiled headers
+#include "tfest-precomp.h"	// Precompiled headers
 //
 #include <mrpt/core/round.h>
 #include <mrpt/math/distributions.h>
@@ -39,20 +39,20 @@ void markAsPicked(
 #endif
 )
 {
-	ASSERTDEB_(c.this_idx < alreadySelectedThis.size());
-	ASSERTDEB_(c.other_idx < alreadySelectedOther.size());
+	ASSERTDEB_(c.globalIdx < alreadySelectedThis.size());
+	ASSERTDEB_(c.localIdx < alreadySelectedOther.size());
 
 #ifndef AVOID_MULTIPLE_CORRESPONDENCES
-	alreadySelectedThis[c.this_idx] = true;
-	alreadySelectedOther[c.other_idx] = true;
+	alreadySelectedThis[c.globalIdx] = true;
+	alreadySelectedOther[c.localIdx] = true;
 #else
 	for (std::vector<int>::iterator it1 =
-			 listDuplicatedLandmarksThis[c.this_idx].begin();
-		 it1 != listDuplicatedLandmarksThis[c.this_idx].end(); it1++)
+			 listDuplicatedLandmarksThis[c.globalIdx].begin();
+		 it1 != listDuplicatedLandmarksThis[c.globalIdx].end(); it1++)
 		alreadySelectedThis[*it1] = true;
 	for (std::vector<int>::iterator it2 =
-			 listDuplicatedLandmarksOther[c.other_idx].begin();
-		 it2 != listDuplicatedLandmarksOther[c.other_idx].end(); it2++)
+			 listDuplicatedLandmarksOther[c.localIdx].begin();
+		 it2 != listDuplicatedLandmarksOther[c.localIdx].end(); it2++)
 		alreadySelectedOther[*it2] = true;
 #endif
 }
@@ -113,8 +113,8 @@ bool tfest::se2_l2_robust(
 	unsigned int maxThis = 0, maxOther = 0;
 	for (const auto& in_correspondence : in_correspondences)
 	{
-		maxThis = max(maxThis, in_correspondence.this_idx);
-		maxOther = max(maxOther, in_correspondence.other_idx);
+		maxThis = max(maxThis, in_correspondence.globalIdx);
+		maxOther = max(maxOther, in_correspondence.localIdx);
 	}
 #ifdef DO_PROFILING
 	timlog.leave("ransac.find_max*");
@@ -130,11 +130,11 @@ bool tfest::se2_l2_robust(
 	unsigned int howManyDifCorrs = 0;
 	for (const auto& in_correspondence : in_correspondences)
 	{
-		if (!hasCorrThis[in_correspondence.this_idx] &&
-			!hasCorrOther[in_correspondence.other_idx])
+		if (!hasCorrThis[in_correspondence.globalIdx] &&
+			!hasCorrOther[in_correspondence.localIdx])
 		{
-			hasCorrThis[in_correspondence.this_idx] = true;
-			hasCorrOther[in_correspondence.other_idx] = true;
+			hasCorrThis[in_correspondence.globalIdx] = true;
+			hasCorrOther[in_correspondence.localIdx] = true;
 			howManyDifCorrs++;
 		}
 	}
@@ -169,12 +169,15 @@ bool tfest::se2_l2_robust(
 		std::vector<int> duplis;
 		for (unsigned j = k; j < nCorrs - 1; j++)
 		{
-			if (in_correspondences[k].this_x == in_correspondences[j].this_x &&
-				in_correspondences[k].this_y == in_correspondences[j].this_y &&
-				in_correspondences[k].this_z == in_correspondences[j].this_z)
-				duplis.push_back(in_correspondences[j].this_idx);
+			if (in_correspondences[k].global.x ==
+					in_correspondences[j].global.x &&
+				in_correspondences[k].global.y ==
+					in_correspondences[j].global.y &&
+				in_correspondences[k].global.z ==
+					in_correspondences[j].global.z)
+				duplis.push_back(in_correspondences[j].globalIdx);
 		}
-		listDuplicatedLandmarksThis[in_correspondences[k].this_idx] = duplis;
+		listDuplicatedLandmarksThis[in_correspondences[k].globalIdx] = duplis;
 	}
 
 	std::vector<std::vector<int>> listDuplicatedLandmarksOther(maxOther + 1);
@@ -183,14 +186,14 @@ bool tfest::se2_l2_robust(
 		std::vector<int> duplis;
 		for (unsigned j = k; j < nCorrs - 1; j++)
 		{
-			if (in_correspondences[k].other_x ==
-					in_correspondences[j].other_x &&
-				in_correspondences[k].other_y ==
-					in_correspondences[j].other_y &&
-				in_correspondences[k].other_z == in_correspondences[j].other_z)
-				duplis.push_back(in_correspondences[j].other_idx);
+			if (in_correspondences[k].local.x ==
+					in_correspondences[j].local.x &&
+				in_correspondences[k].local.y ==
+					in_correspondences[j].local.y &&
+				in_correspondences[k].local.z == in_correspondences[j].local.z)
+				duplis.push_back(in_correspondences[j].localIdx);
 		}
-		listDuplicatedLandmarksOther[in_correspondences[k].other_idx] = duplis;
+		listDuplicatedLandmarksOther[in_correspondences[k].localIdx] = duplis;
 	}
 #endif
 
@@ -217,7 +220,7 @@ bool tfest::se2_l2_robust(
 			params.probability_find_good_model > 0 &&
 			params.probability_find_good_model < 1);
 		// Set an initial # of iterations:
-		results.ransac_iters = 10;  // It doesn't matter actually, since will be
+		results.ransac_iters = 10;	// It doesn't matter actually, since will be
 		// changed in the first loop
 	}
 
@@ -233,7 +236,8 @@ bool tfest::se2_l2_robust(
 	// First: Build a permutation of the correspondences to pick from it
 	// sequentially:
 	std::vector<size_t> corrsIdxs(nCorrs), corrsIdxsPermutation;
-	for (size_t i = 0; i < nCorrs; i++) corrsIdxs[i] = i;
+	for (size_t i = 0; i < nCorrs; i++)
+		corrsIdxs[i] = i;
 
 	size_t iter_idx;
 	for (iter_idx = 0; iter_idx < results.ransac_iters;
@@ -285,16 +289,16 @@ bool tfest::se2_l2_robust(
 			const auto& corr_j = in_correspondences[idx];
 
 			// Don't pick the same features twice!
-			if (alreadySelectedThis[corr_j.this_idx] ||
-				alreadySelectedOther[corr_j.other_idx])
+			if (alreadySelectedThis[corr_j.globalIdx] ||
+				alreadySelectedOther[corr_j.localIdx])
 				continue;
 
 			// Additional user-provided filter:
 			if (params.user_individual_compat_callback)
 			{
 				mrpt::tfest::TPotentialMatch pm;
-				pm.idx_this = corr_j.this_idx;
-				pm.idx_other = corr_j.other_idx;
+				pm.idx_this = corr_j.globalIdx;
+				pm.idx_other = corr_j.localIdx;
 				if (!params.user_individual_compat_callback(pm))
 					continue;  // Skip this one!
 			}
@@ -318,13 +322,13 @@ bool tfest::se2_l2_robust(
 					//   to that of their correspondences in MAP2:
 					const double corrs_dist1 =
 						mrpt::math::distanceBetweenPoints(
-							subSet[0].this_x, subSet[0].this_y,
-							subSet[1].this_x, subSet[1].this_y);
+							subSet[0].global.x, subSet[0].global.y,
+							subSet[1].global.x, subSet[1].global.y);
 
 					const double corrs_dist2 =
 						mrpt::math::distanceBetweenPoints(
-							subSet[0].other_x, subSet[0].other_y,
-							subSet[1].other_x, subSet[1].other_y);
+							subSet[0].local.x, subSet[0].local.y,
+							subSet[1].local.x, subSet[1].local.y);
 
 					// Is is a consistent possibility?
 					//  We use a chi2 test (see paper for the derivation)
@@ -381,11 +385,11 @@ bool tfest::se2_l2_robust(
 				// Test for the mahalanobis distance between:
 				//  "referenceEstimation (+) point_other" AND "point_this"
 				referenceEstimation.composePoint(
-					mrpt::math::TPoint2D(corr_j.other_x, corr_j.other_y),
+					mrpt::math::TPoint2D(corr_j.local.x, corr_j.local.y),
 					pt_this);
 
 				const double maha_dist = pt_this.mahalanobisDistanceToPoint(
-					corr_j.this_x, corr_j.this_y);
+					corr_j.global.x, corr_j.global.y);
 
 				const bool passTest =
 					maha_dist < params.ransac_mahalanobisDistanceThreshold;
@@ -430,11 +434,11 @@ bool tfest::se2_l2_robust(
 			{
 				double gx, gy;
 				referenceEstimation.mean.composePoint(
-					subSet[k].other_x, subSet[k].other_y, gx, gy);
+					subSet[k].local.x, subSet[k].local.y, gx, gy);
 
 				this_subset_RMSE +=
 					mrpt::math::distanceSqrBetweenPoints<double>(
-						subSet[k].this_x, subSet[k].this_y, gx, gy);
+						subSet[k].global.x, subSet[k].global.y, gx, gy);
 			}
 			this_subset_RMSE /= std::max(static_cast<size_t>(1), subSet.size());
 		}
@@ -537,12 +541,11 @@ bool tfest::se2_l2_robust(
 				// Update estimate of nCorrs, the number of trials to ensure we
 				// pick,
 				// with probability p, a data set with no outliers.
-				const double fracinliers =
-					ninliers /
+				const double fracinliers = ninliers /
 					static_cast<double>(howManyDifCorrs);  // corrsIdxs.size());
-				double pNoOutliers =
-					1 - pow(fracinliers, static_cast<double>(
-											 2.0 /*minimumSizeSamplesToFit*/));
+				double pNoOutliers = 1 -
+					pow(fracinliers,
+						static_cast<double>(2.0 /*minimumSizeSamplesToFit*/));
 
 				pNoOutliers = std::max(
 					std::numeric_limits<double>::epsilon(),
@@ -583,7 +586,7 @@ bool tfest::se2_l2_robust(
 		if (subSet.size() >= params.ransac_minSetSize &&
 			this_subset_RMSE < MAX_RMSE_TO_END)
 		{
-			break;  // end RANSAC iterations.
+			break;	// end RANSAC iterations.
 		}
 
 #ifdef DO_PROFILING

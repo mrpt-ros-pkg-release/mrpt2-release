@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -10,6 +10,7 @@
 #include <mrpt/gui.h>
 #include <mrpt/math/geometry.h>
 #include <mrpt/system/datetime.h>
+
 #include <iostream>
 
 using namespace std;
@@ -25,8 +26,10 @@ const double DIFF_RADIUS = MAX_RADIUS - MIN_RADIUS;
 
 inline double randomDouble(size_t precision = 1000)
 {
-	return MIN_RADIUS + DIFF_RADIUS * (static_cast<double>(rand() % precision) /
-									   static_cast<double>(precision - 1));
+	return MIN_RADIUS +
+		DIFF_RADIUS *
+		(static_cast<double>(rand() % precision) /
+		 static_cast<double>(precision - 1));
 }
 
 void display()

@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -49,10 +49,13 @@ class WorkerThreadsPool
 	};
 
 	WorkerThreadsPool() = default;
-	WorkerThreadsPool(std::size_t num_threads, queue_policy_t p = POLICY_FIFO)
+	WorkerThreadsPool(
+		std::size_t num_threads, queue_policy_t p = POLICY_FIFO,
+		const std::string& threadsName = "WorkerThreadsPool")
 		: policy_(p)
 	{
 		resize(num_threads);
+		name(threadsName);
 	}
 	~WorkerThreadsPool() { clear(); }
 	void resize(std::size_t num_threads);
@@ -62,12 +65,22 @@ class WorkerThreadsPool
 	/** Enqueue one new working item, to be executed by threads when any is
 	 * available. */
 	template <class F, class... Args>
-	auto enqueue(F&& f, Args&&... args)
+	[[nodiscard]] auto enqueue(F&& f, Args&&... args)
 		-> std::future<typename std::result_of<F(Args...)>::type>;
 
 	/** Returns the number of enqueued tasks, currently waiting for a free
 	 * working thread to process them.  */
 	std::size_t pendingTasks() const noexcept;
+
+	/** Sets the private thread names of threads in this pool.
+	 * Names can be seen from debuggers, profilers, etc. and will follow
+	 * the format `${name}[i]` with `${name}` the value supplied in this method
+	 * \note (Method new in MRPT 2.1.5)
+	 */
+	void name(const std::string& name);
+
+	/** Returns the base name of threads in this pool */
+	std::string name() const { return name_; }
 
    private:
 	std::vector<std::thread> threads_;
@@ -76,6 +89,7 @@ class WorkerThreadsPool
 	std::condition_variable condition_;
 	std::queue<std::function<void()>> tasks_;
 	queue_policy_t policy_{POLICY_FIFO};
+	std::string name_{"WorkerThreadsPool"};
 };
 
 template <class F, class... Args>

@@ -2,12 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 #pragma once
 
+#include <mrpt/core/Stringifyable.h>
 #include <mrpt/poses/CPose3D.h>
 #include <mrpt/poses/CPose3DPDF.h>
 
@@ -36,7 +37,7 @@ class CPose3DQuatPDFGaussian;
  * \sa CPose3D, CPose3DPDF, CPose3DPDFParticles
  * \ingroup poses_pdf_grp
  */
-class CPose3DPDFGaussian : public CPose3DPDF
+class CPose3DPDFGaussian : public CPose3DPDF, public mrpt::Stringifyable
 {
 	DEFINE_SERIALIZABLE(CPose3DPDFGaussian, mrpt::poses)
 
@@ -97,13 +98,7 @@ class CPose3DPDFGaussian : public CPose3DPDF
 		return {this->cov, this->mean};
 	}
 
-	void asString(std::string& s) const;
-	inline std::string asString() const
-	{
-		std::string s;
-		asString(s);
-		return s;
-	}
+	std::string asString() const override;
 
 	/** Copy operator, translating if necesary (for example, between particles
 	 * and gaussian representations)
@@ -149,8 +144,8 @@ class CPose3DPDFGaussian : public CPose3DPDF
 	 *		- (x2,S2): Mean and variance of the p2 distribution.
 	 *		- (x,S): Mean and variance of the resulting distribution.
 	 *
-	 *    S = (S1<sup>-1</sup> + S2<sup>-1</sup>)<sup>-1</sup>;
-	 *    x = S * ( S1<sup>-1</sup>*x1 + S2<sup>-1</sup>*x2 );
+	 *    \f$ S = (S_1^{-1} + S_2^{-1})^{-1} \f$
+	 *    \f$ x = S ( S_1^{-1} x_1 + S_2^{-1} x_2 ) \f$
 	 */
 	void bayesianFusion(const CPose3DPDF& p1, const CPose3DPDF& p2) override;
 
@@ -203,7 +198,7 @@ class CPose3DPDFGaussian : public CPose3DPDF
 	 */
 	void getCovSubmatrix2D(mrpt::math::CMatrixDouble& out_cov) const;
 
-};  // End of class def.
+};	// End of class def.
 /** Pose composition for two 3D pose Gaussians  \sa CPose3DPDFGaussian::operator
  * +=  */
 inline CPose3DPDFGaussian operator+(

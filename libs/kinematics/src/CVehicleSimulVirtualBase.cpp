@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
-#include "kinematics-precomp.h"  // Precompiled header
-
+#include "kinematics-precomp.h"	 // Precompiled header
+//
 #include <mrpt/kinematics/CVehicleSimulVirtualBase.h>
 #include <mrpt/math/wrap2pi.h>
 #include <mrpt/random.h>
@@ -52,14 +52,17 @@ void CVehicleSimulVirtualBase::simulateOneTimeStep(const double dt)
 		if (m_use_odo_error)
 		{
 			nextGT.x += m_Ax_err_bias +
-						m_Ax_err_std * mrpt::random::getRandomGenerator()
-										   .drawGaussian1D_normalized();
+				m_Ax_err_std *
+					mrpt::random::getRandomGenerator()
+						.drawGaussian1D_normalized();
 			nextGT.y += m_Ay_err_bias +
-						m_Ay_err_std * mrpt::random::getRandomGenerator()
-										   .drawGaussian1D_normalized();
+				m_Ay_err_std *
+					mrpt::random::getRandomGenerator()
+						.drawGaussian1D_normalized();
 			nextGT.phi += m_Aphi_err_bias +
-						  m_Aphi_err_std * mrpt::random::getRandomGenerator()
-											   .drawGaussian1D_normalized();
+				m_Aphi_err_std *
+					mrpt::random::getRandomGenerator()
+						.drawGaussian1D_normalized();
 			mrpt::math::wrapToPiInPlace(nextGT.phi);
 		}
 

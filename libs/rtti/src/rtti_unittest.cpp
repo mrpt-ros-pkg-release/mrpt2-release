@@ -2,13 +2,14 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include <gtest/gtest.h>
 #include <mrpt/core/aligned_allocator.h>
+#include <mrpt/rtti/CListOfClasses.h>
 #include <mrpt/rtti/CObject.h>
 
 namespace MyNS
@@ -111,5 +112,43 @@ TEST(rtti, CreateSmartPointerTypes)
 		auto p = T::CreateAlloc(alloc, 123);
 		EXPECT_TRUE(p);
 		EXPECT_EQ(p->m_value, 123);
+	}
+}
+
+TEST(rtti, CListOfClasses)
+{
+	using T1 = MyNS::MyDerived1;
+	using T2 = MyNS::MyDerived2;
+
+	{
+		mrpt::rtti::CListOfClasses l;
+		EXPECT_TRUE(l.data.empty());
+	}
+	{
+		mrpt::rtti::CListOfClasses l;
+		EXPECT_FALSE(l.contains(CLASS_ID(T1)));
+		EXPECT_FALSE(l.containsDerivedFrom(CLASS_ID(T1)));
+	}
+	{
+		mrpt::rtti::CListOfClasses l;
+		l.insert(CLASS_ID(T1));
+		EXPECT_FALSE(l.data.empty());
+
+		EXPECT_TRUE(l.contains(CLASS_ID(T1)));
+		EXPECT_FALSE(l.contains(CLASS_ID(T2)));
+		EXPECT_TRUE(l.containsDerivedFrom(CLASS_ID(T1)));
+		EXPECT_FALSE(l.containsDerivedFrom(CLASS_ID(T2)));
+		EXPECT_TRUE(l.containsDerivedFrom(CLASS_ID(mrpt::rtti::CObject)));
+		EXPECT_EQ(l.asString(), "MyNS::MyDerived1");
+	}
+	{
+		mrpt::rtti::CListOfClasses l;
+		l.fromString("MyNS::MyDerived1");
+		EXPECT_FALSE(l.data.empty());
+		EXPECT_TRUE(l.contains(CLASS_ID(T1)));
+	}
+	{
+		mrpt::rtti::CListOfClasses l;
+		EXPECT_ANY_THROW(l.fromString("foooo"));
 	}
 }

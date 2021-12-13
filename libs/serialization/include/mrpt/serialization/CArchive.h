@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -13,12 +13,14 @@
 #include <mrpt/core/is_shared_ptr.h>
 #include <mrpt/core/reverse_bytes.h>
 #include <mrpt/serialization/CSerializable.h>
+#include <mrpt/typemeta/TEnumType.h>
 #include <mrpt/typemeta/TTypeName.h>
+
 #include <cstdint>
-#include <cstring>  // memcpy
+#include <cstring>	// memcpy
 #include <stdexcept>
 #include <string>
-#include <type_traits>  // remove_reference_t, is_polymorphic
+#include <type_traits>	// remove_reference_t, is_polymorphic
 #include <variant>
 #include <vector>
 
@@ -137,7 +139,8 @@ class CArchive
 		return WriteBuffer(ptr, ElementCount * sizeof(T));
 #else
 		// big endian: the individual "<<" functions already convert endiannes
-		for (size_t i = 0; i < ElementCount; i++) (*this) << ptr[i];
+		for (size_t i = 0; i < ElementCount; i++)
+			(*this) << ptr[i];
 #endif
 	}
 	/** Read a value from a stream stored in a type different of the target
@@ -168,6 +171,10 @@ class CArchive
 	 */
 	void WriteObject(const CSerializable* o);
 	void WriteObject(const CSerializable& o) { WriteObject(&o); }
+
+	/** Requires to serialize variants without a proper value. */
+	CArchive& operator<<(const std::monostate&);
+
 	/** Reads an object from stream, its class determined at runtime, and
 	 * returns a smart pointer to the object.
 	 * \exception std::exception On I/O error or undefined class.
@@ -205,14 +212,18 @@ class CArchive
 		internal_ReadObject(
 			obj.get() /* may be nullptr */, strClassName, isOldFormat,
 			version);  // must be called to read the END FLAG byte
-		if (!obj)
-		{
-			return typename T::Ptr();
-		}
+		if (!obj) { return typename T::Ptr(); }
 		else
 		{
 			return std::dynamic_pointer_cast<T>(obj);
 		}
+	}
+
+	/** If redefined in derived classes, allows finding a human-friendly
+	 * description of the underlying stream (e.g. filename) */
+	virtual std::string getArchiveDescription() const
+	{
+		return "generic CArchive";
 	}
 
    private:
@@ -262,6 +273,7 @@ class CArchive
 		bool isOldFormat;
 		int8_t version;
 		internal_ReadObjectHeader(strClassName, isOldFormat, version);
+		if (strClassName == "std::monostate") return {};
 		const mrpt::rtti::TRuntimeClassId* classId =
 			mrpt::rtti::findRegisteredClass(strClassName);
 		if (!classId)
@@ -273,10 +285,7 @@ class CArchive
 			obj = mrpt::ptr_cast<CSerializable>::from(classId->createObject());
 		}
 		internal_ReadObject(obj.get(), strClassName, isOldFormat, version);
-		if (!obj)
-		{
-			return std::variant<T...>();
-		}
+		if (!obj) { return std::variant<T...>(); }
 		else
 		{
 			return ReadVariant_helper<std::variant<T...>, T...>(obj);
@@ -288,7 +297,7 @@ class CArchive
 	template <typename T>
 	void WriteVariant(T t)
 	{
-		std::visit([&](auto& o) { this->WriteObject(o); }, t);
+		std::visit([&](auto& o) { *this << o; }, t);
 	}
 #endif
 
@@ -442,13 +451,13 @@ CArchive& operator>>(CArchive& in, T& a)
 CArchive& operator<<(CArchive& out, const mrpt::Clock::time_point& a);
 CArchive& operator>>(CArchive& in, mrpt::Clock::time_point& a);
 
-#define MRPT_READ_POD(_STREAM, _VARIABLE)                                    \
-	do                                                                       \
-	{                                                                        \
-		const std::remove_cv_t<std::remove_reference_t<decltype(_VARIABLE)>> \
-			val = _STREAM.ReadPOD<std::remove_cv_t<                          \
-				std::remove_reference_t<decltype(_VARIABLE)>>>();            \
-		std::memcpy(&_VARIABLE, &val, sizeof(val));                          \
+#define MRPT_READ_POD(_STREAM, _VARIABLE)                                      \
+	do                                                                         \
+	{                                                                          \
+		const std::remove_cv_t<std::remove_reference_t<decltype(_VARIABLE)>>   \
+			val = _STREAM.ReadPOD<std::remove_cv_t<                            \
+				std::remove_reference_t<decltype(_VARIABLE)>>>();              \
+		std::memcpy(&_VARIABLE, &val, sizeof(val));                            \
 	} while (0)
 
 // Why this shouldn't be templatized?: There's a more modern system
@@ -502,8 +511,9 @@ CArchive& operator>>(CArchive& s, std::vector<size_t>& a);
 //
 
 template <
-	typename T, std::enable_if_t<std::is_base_of_v<
-					mrpt::serialization::CSerializable, T>>* = nullptr>
+	typename T,
+	std::enable_if_t<
+		std::is_base_of_v<mrpt::serialization::CSerializable, T>>* = nullptr>
 CArchive& operator>>(CArchive& in, typename std::shared_ptr<T>& pObj)
 {
 	pObj = in.ReadObject<T>();
@@ -520,14 +530,15 @@ CArchive& operator>>(CArchive& in, typename std::variant<T...>& pObj)
 template <typename... T>
 CArchive& operator<<(CArchive& out, const typename std::variant<T...>& pObj)
 {
-	pObj.match([&](auto& t) { out << t; });
+	std::visit([&](auto& o) { out << o; }, pObj);
 	return out;
 }
 
 /** Write a shared_ptr to a non-CSerializable object */
 template <
-	class T, std::enable_if_t<!std::is_base_of_v<
-				 mrpt::serialization::CSerializable, T>>* = nullptr>
+	class T,
+	std::enable_if_t<
+		!std::is_base_of_v<mrpt::serialization::CSerializable, T>>* = nullptr>
 CArchive& operator<<(CArchive& out, const std::shared_ptr<T>& pObj)
 {
 	if (pObj)
@@ -544,24 +555,46 @@ CArchive& operator<<(CArchive& out, const std::shared_ptr<T>& pObj)
 
 /** Read a smart pointer to a non-CSerializable (POD,...) data type*/
 template <
-	class T, std::enable_if_t<!std::is_base_of_v<
-				 mrpt::serialization::CSerializable, T>>* = nullptr>
+	class T,
+	std::enable_if_t<
+		!std::is_base_of_v<mrpt::serialization::CSerializable, T>>* = nullptr>
 CArchive& operator>>(CArchive& in, std::shared_ptr<T>& pObj)
 {
 	std::string stored_name;
 	in >> stored_name;
 	const std::string expected_name =
 		mrpt::typemeta::TTypeName<T>::get().c_str();
-	if (stored_name == std::string("nullptr"))
-	{
-		pObj.reset();
-	}
+	if (stored_name == std::string("nullptr")) { pObj.reset(); }
 	else
 	{
 		ASSERT_EQUAL_(expected_name, stored_name);
 		pObj.reset(new T);
 		in >> *pObj;
 	}
+	return in;
+}
+
+template <
+	class ENUM_TYPE, std::enable_if_t<std::is_enum_v<ENUM_TYPE>>* = nullptr>
+CArchive& operator<<(CArchive& out, const ENUM_TYPE& pEnum)
+{
+	const std::string value =
+		mrpt::typemeta::TEnumType<std::remove_cv_t<ENUM_TYPE>>::value2name(
+			pEnum);
+
+	out << value;
+	return out;
+}
+
+template <
+	class ENUM_TYPE, std::enable_if_t<std::is_enum_v<ENUM_TYPE>>* = nullptr>
+CArchive& operator>>(CArchive& in, ENUM_TYPE& pEnum)
+{
+	std::string readValue;
+	in >> readValue;
+
+	pEnum = mrpt::typemeta::TEnumType<std::remove_cv_t<ENUM_TYPE>>::name2value(
+		readValue);
 	return in;
 }
 
@@ -575,6 +608,11 @@ class CArchiveStreamBase : public CArchive
    public:
 	CArchiveStreamBase(STREAM& s) : m_s(s) {}
 
+	std::string getArchiveDescription() const override
+	{
+		return m_s.getStreamDescription();
+	}
+
    protected:
 	size_t write(const void* d, size_t n) override { return m_s.Write(d, n); }
 	size_t read(void* d, size_t n) override { return m_s.Read(d, n); }
@@ -583,8 +621,8 @@ class CArchiveStreamBase : public CArchive
 /** Helper function to create a templatized wrapper CArchive object for a:
  * MRPT's `CStream`, `std::istream`, `std::ostream`, `std::stringstream`.
  * \note Use with `std::{.*}stream` requires including
- * `<mrpt/serialization/archiveFrom_std_streams.h>` and explicitly specifying
- * the template parameter like: `archiveFrom<std::istream>` or
+ * `<mrpt/serialization/archiveFrom_std_streams.h>` and explicitly
+ * specifying the template parameter like: `archiveFrom<std::istream>` or
  * `archiveFrom<std::ostream>`.
  * \sa \ref mrpt_serialization_grp, and example serialization_stl/test.cpp
  */

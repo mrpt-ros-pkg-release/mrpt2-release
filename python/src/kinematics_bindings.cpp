@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -20,25 +20,24 @@ using namespace mrpt::poses;
 using namespace mrpt::math;
 
 // CVehicleSimul_DiffDriven
-CPose2D CVehicleSimul_DiffDriven_getOdometry(CVehicleSimul_DiffDriven& self)
+CPose2D CVehicleSimul_DiffDriven_getOdometry(CVehicleSimul_DiffDriven& me)
 {
-	return CPose2D(self.getCurrentOdometricPose());
+	return CPose2D(me.getCurrentOdometricPose());
 }
 
-CPose2D CVehicleSimul_DiffDriven_getRealPose(CVehicleSimul_DiffDriven& self)
+CPose2D CVehicleSimul_DiffDriven_getRealPose(CVehicleSimul_DiffDriven& me)
 {
-	return CPose2D(self.getCurrentGTPose());
+	return CPose2D(me.getCurrentGTPose());
 }
 
-TTwist2D CVehicleSimul_DiffDriven_getCurrentGTVel(
-	CVehicleSimul_DiffDriven& self)
+TTwist2D CVehicleSimul_DiffDriven_getCurrentGTVel(CVehicleSimul_DiffDriven& me)
 {
-	return self.getCurrentGTVel();
+	return me.getCurrentGTVel();
 }
 TTwist2D CVehicleSimul_DiffDriven_getCurrentGTVelLocal(
-	CVehicleSimul_DiffDriven& self)
+	CVehicleSimul_DiffDriven& me)
 {
-	return self.getCurrentGTVelLocal();
+	return me.getCurrentGTVelLocal();
 }
 
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(

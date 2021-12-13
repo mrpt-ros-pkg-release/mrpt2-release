@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "nav-precomp.h"  // Precomp header
-
+//
 #include <mrpt/core/round.h>
 #include <mrpt/nav/tpspace/CParameterizedTrajectoryGenerator.h>
 #include <mrpt/opengl/CSetOfLines.h>
@@ -43,11 +43,11 @@ void CPTG_RobotShape_Circular::saveToConfigFile(
 		sSection, "robot_radius", m_robotRadius, WN, WV, "Robot radius [m].");
 }
 
-void CPTG_RobotShape_Circular::add_robotShape_to_setOfLines(
-	mrpt::opengl::CSetOfLines& gl_shape,
-	const mrpt::poses::CPose2D& origin) const
+void CPTG_RobotShape_Circular::static_add_robotShape_to_setOfLines(
+	mrpt::opengl::CSetOfLines& gl_shape, const mrpt::poses::CPose2D& origin,
+	const double robotRadius)
 {
-	const double R = m_robotRadius;
+	const double R = robotRadius;
 	const int N = 17;
 	// Transform coordinates:
 	std::vector<double> shap_x(N), shap_y(N), shap_z(N);
@@ -74,6 +74,13 @@ void CPTG_RobotShape_Circular::add_robotShape_to_setOfLines(
 		origin.y() + R * 0.02, .0);
 }
 
+void CPTG_RobotShape_Circular::add_robotShape_to_setOfLines(
+	mrpt::opengl::CSetOfLines& gl_shape,
+	const mrpt::poses::CPose2D& origin) const
+{
+	static_add_robotShape_to_setOfLines(gl_shape, origin, m_robotRadius);
+}
+
 void CPTG_RobotShape_Circular::internal_shape_loadFromStream(
 	mrpt::serialization::CArchive& in)
 {
@@ -82,11 +89,8 @@ void CPTG_RobotShape_Circular::internal_shape_loadFromStream(
 
 	switch (version)
 	{
-		case 0:
-			in >> m_robotRadius;
-			break;
-		default:
-			MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+		case 0: in >> m_robotRadius; break;
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
 	}
 }
 

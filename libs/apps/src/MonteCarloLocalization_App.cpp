@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "apps-precomp.h"  // Precompiled headers
-
+//
 #include <mrpt/apps/MonteCarloLocalization_App.h>
 #include <mrpt/bayes/CParticleFilter.h>
 #include <mrpt/config/CConfigFile.h>
@@ -24,7 +24,7 @@
 #include <mrpt/maps/CSimplePointsMap.h>
 #include <mrpt/math/data_utils.h>
 #include <mrpt/math/distributions.h>
-#include <mrpt/math/ops_vectors.h>  // << for vector<>
+#include <mrpt/math/ops_vectors.h>	// << for vector<>
 #include <mrpt/math/utils.h>
 #include <mrpt/obs/CActionCollection.h>
 #include <mrpt/obs/CActionRobotMovement2D.h>
@@ -46,6 +46,7 @@
 #include <mrpt/system/CTicTac.h>
 #include <mrpt/system/filesystem.h>
 #include <mrpt/system/os.h>
+
 #include <Eigen/Dense>
 
 using namespace mrpt::apps;
@@ -71,9 +72,7 @@ void MonteCarloLocalization_Base::initialize(int argc, const char** argv)
 
 	// Process arguments:
 	if (argc < 2)
-	{
-		THROW_EXCEPTION_FMT("Usage: %s", impl_get_usage().c_str());
-	}
+	{ THROW_EXCEPTION_FMT("Usage: %s", impl_get_usage().c_str()); }
 
 	// Config file:
 	const std::string configFile = std::string(argv[1]);
@@ -257,8 +256,8 @@ void MonteCarloLocalization_Base::do_pf_localization()
 	CParticleFilter::TParticleFilterStats PF_stats;
 
 	// Load the set of metric maps to consider in the experiments:
-	CMultiMetricMap metricMap;
-	metricMap.setListOfMaps(mapList);
+	auto metricMap = CMultiMetricMap::Create();
+	metricMap->setListOfMaps(mapList);
 
 	{
 		std::stringstream ss;
@@ -298,7 +297,7 @@ void MonteCarloLocalization_Base::do_pf_localization()
 			// Build metric map:
 			// ------------------------------
 			MRPT_LOG_INFO("Building metric map(s) from '.simplemap'...");
-			metricMap.loadFromProbabilisticPosesAndObservations(simpleMap);
+			metricMap->loadFromProbabilisticPosesAndObservations(simpleMap);
 			MRPT_LOG_INFO("Done.");
 		}
 		else if (!mapExt.compare("gridmap"))
@@ -306,7 +305,7 @@ void MonteCarloLocalization_Base::do_pf_localization()
 			// It's a ".gridmap":
 			// -------------------------
 			MRPT_LOG_INFO("Loading gridmap from '.gridmap'...");
-			auto grid = metricMap.mapByClass<COccupancyGridMap2D>();
+			auto grid = metricMap->mapByClass<COccupancyGridMap2D>();
 			ASSERT_(grid);
 			{
 				CFileGZInputStream f(MAP_FILE);
@@ -357,7 +356,7 @@ void MonteCarloLocalization_Base::do_pf_localization()
 
 	// Gridmap / area of initial uncertainty:
 	COccupancyGridMap2D::TEntropyInfo gridInfo;
-	if (auto grid = metricMap.mapByClass<COccupancyGridMap2D>(); grid)
+	if (auto grid = metricMap->mapByClass<COccupancyGridMap2D>(); grid)
 	{
 		grid->computeEntropy(gridInfo);
 		MRPT_LOG_INFO_FMT(
@@ -417,31 +416,27 @@ void MonteCarloLocalization_Base::do_pf_localization()
 			COpenGLScene scene;
 			if (SCENE3D_FREQ > 0 || SHOW_PROGRESS_3D_REAL_TIME)
 			{
-				mrpt::math::TPoint3D bbox_max(50, 50, 0), bbox_min(-50, -50, 0);
-				if (auto pts = metricMap.getAsSimplePointsMap(); pts)
-				{
-					pts->boundingBox(bbox_min, bbox_max);
-				}
+				mrpt::math::TBoundingBoxf bbox({-50, -50, 0}, {50, 50, 0});
+				if (auto pts = metricMap->getAsSimplePointsMap(); pts)
+					bbox = pts->boundingBox();
 
 				scene.insert(mrpt::opengl::CGridPlaneXY::Create(
-					bbox_min.x, bbox_max.x, bbox_min.y, bbox_max.y, 0, 5));
+					bbox.min.x, bbox.max.x, bbox.min.y, bbox.max.y, 0, 5));
 
 				if (win3D)
 					win3D->setCameraZoom(
 						2 *
 						std::max(
-							bbox_max.x - bbox_min.x, bbox_max.y - bbox_min.y));
+							bbox.max.x - bbox.min.x, bbox.max.y - bbox.min.y));
 
-				CSetOfObjects::Ptr gl_obj = std::make_shared<CSetOfObjects>();
-				metricMap.getAs3DObject(gl_obj);
-				scene.insert(gl_obj);
+				scene.insert(metricMap->getVisualization());
 			}
 
 			// The experiment directory is:
 			string sOUT_DIR_PARTS, sOUT_DIR_3D;
 			const auto sOUT_DIR = format(
-				"%s_%03u_%07i", OUT_DIR_PREFIX.c_str(), repetition,
-				PARTICLE_COUNT);
+				"%s_%03u_%07i", OUT_DIR_PREFIX.c_str(),
+				static_cast<unsigned int>(repetition), PARTICLE_COUNT);
 			MRPT_LOG_INFO_FMT("Creating directory: %s", sOUT_DIR.c_str());
 			deleteFilesInDirectory(sOUT_DIR);
 			createDirectory(sOUT_DIR);
@@ -465,7 +460,8 @@ void MonteCarloLocalization_Base::do_pf_localization()
 				ASSERT_DIRECTORY_EXISTS_(sOUT_DIR_3D);
 
 				using namespace std::string_literals;
-				metricMap.saveMetricMapRepresentationToFile(sOUT_DIR + "/map"s);
+				metricMap->saveMetricMapRepresentationToFile(
+					sOUT_DIR + "/map"s);
 			}
 
 			MONTECARLO_TYPE pdf;
@@ -473,7 +469,7 @@ void MonteCarloLocalization_Base::do_pf_localization()
 			// PDF Options:
 			pdf.options = pdfPredictionOptions;
 
-			pdf.options.metricMap = &metricMap;
+			pdf.options.metricMap = metricMap;
 
 			// Create the PF object:
 			CParticleFilter PF;
@@ -491,7 +487,7 @@ void MonteCarloLocalization_Base::do_pf_localization()
 			{
 				// Reset uniform on free space:
 				pf2gauss_t<MONTECARLO_TYPE>::resetOnFreeSpace(
-					pdf, metricMap, PARTICLE_COUNT, init_min, init_max);
+					pdf, *metricMap, PARTICLE_COUNT, init_min, init_max);
 			}
 			else
 			{
@@ -765,7 +761,7 @@ void MonteCarloLocalization_Base::do_pf_localization()
 					PF.executeOn(
 						pdf,
 						action.get(),  // Action
-						observations.get(),  // Obs.
+						observations.get(),	 // Obs.
 						&PF_stats  // Output statistics
 					);
 
@@ -785,8 +781,7 @@ void MonteCarloLocalization_Base::do_pf_localization()
 					action->getBestMovementEstimation();
 				if (best_mov_estim)
 				{
-					odometryEstimation =
-						odometryEstimation +
+					odometryEstimation = odometryEstimation +
 						best_mov_estim->poseChange->getMeanVal();
 				}
 
@@ -817,7 +812,7 @@ void MonteCarloLocalization_Base::do_pf_localization()
 						locErr += mrpt::hypot_fast(
 									  expectedPose.x() - pk.x,
 									  expectedPose.y() - pk.y) *
-								  exp(pdf.getW(k)) / sumW;
+							exp(pdf.getW(k)) / sumW;
 					}
 					convergenceErrors_mtx.lock();
 					convergenceErrors.push_back(locErr);
@@ -862,7 +857,7 @@ void MonteCarloLocalization_Base::do_pf_localization()
 					// several are
 					// present.
 					COccupancyGridMap2D::Ptr gridmap =
-						metricMap.mapByClass<COccupancyGridMap2D>();
+						metricMap->mapByClass<COccupancyGridMap2D>();
 					if (obs_scan && gridmap)  // We have both, go on:
 					{
 						// Simulate scan + uncertainty:
@@ -914,14 +909,16 @@ void MonteCarloLocalization_Base::do_pf_localization()
 
 							Eigen::VectorXd ci1 =
 								ssu_out.scanWithUncert.rangesMean.asEigen() +
-								3 * ssu_out.scanWithUncert.rangesCovar.asEigen()
+								3 *
+									ssu_out.scanWithUncert.rangesCovar.asEigen()
 										.diagonal()
 										.array()
 										.sqrt()
 										.matrix();
 							Eigen::VectorXd ci2 =
 								ssu_out.scanWithUncert.rangesMean.asEigen() -
-								3 * ssu_out.scanWithUncert.rangesCovar.asEigen()
+								3 *
+									ssu_out.scanWithUncert.rangesCovar.asEigen()
 										.diagonal()
 										.array()
 										.sqrt()
@@ -1009,7 +1006,7 @@ void MonteCarloLocalization_Base::do_pf_localization()
 						CPose3D robotPose3D(meanPose);
 
 						map.clear();
-						observations->insertObservationsInto(&map);
+						observations->insertObservationsInto(map);
 
 						mrpt::ptr_cast<CPointCloud>::from(scanPts)
 							->loadFromPointsMap(&map);
@@ -1048,14 +1045,14 @@ void MonteCarloLocalization_Base::do_pf_localization()
 						(unsigned)step));
 				}
 
-			};  // while rawlogEntries
+			};	// while rawlogEntries
 
 			indivConvergenceErrors.saveToTextFile(sOUT_DIR + "/GT_error.txt");
 			odoError.saveToTextFile(sOUT_DIR + "/ODO_error.txt");
 			executionTimes.saveToTextFile(sOUT_DIR + "/exec_times.txt");
 
 			if (win3D && NUM_REPS == 1) mrpt::system::pause();
-		};  // for repetitions
+		};	// for repetitions
 
 		CTicTac tictacGlobal;
 		tictacGlobal.Tic();
@@ -1075,7 +1072,7 @@ void MonteCarloLocalization_Base::do_pf_localization()
 		for (size_t r = 0; r < NUM_REPS; r += runs_per_thread)
 		{
 			auto runner = [&](size_t i_start, size_t i_end) {
-				if (i_end > NUM_REPS) i_end = NUM_REPS;  // sanity check
+				if (i_end > NUM_REPS) i_end = NUM_REPS;	 // sanity check
 				for (size_t i = i_start; i < i_end; i++)
 					run_localization_code(i);
 			};
@@ -1102,7 +1099,7 @@ void MonteCarloLocalization_Base::do_pf_localization()
 		{
 			CFileOutputStream f(
 				format("%s_SUMMARY.txt", OUT_DIR_PREFIX.c_str()),
-				true /* append */);
+				OpenMode::APPEND);
 
 			f.printf(
 				"%% Ratio_covergence_success  #particles  "
@@ -1262,8 +1259,7 @@ void MonteCarloLocalization_Rawlog::impl_initialize(int argc, const char** argv)
 {
 	MRPT_START
 	// Rawlog file: from args. line or from config file:
-	if (argc == 3)
-		m_rawlogFileName = std::string(argv[2]);
+	if (argc == 3) m_rawlogFileName = std::string(argv[2]);
 	else
 		m_rawlogFileName = params.read_string(
 			sect, "rawlog_file", std::string("log.rawlog"), true);

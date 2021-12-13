@@ -2,15 +2,16 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "math-precomp.h"  // Precompiled headers
-
+//
 #include <mrpt/core/bits_math.h>  // square
 #include <mrpt/math/TPose3DQuat.h>
+
 #include <cmath>
 
 using namespace mrpt::math;
@@ -21,10 +22,12 @@ void TPose3DQuat::fromString(const std::string& s)
 {
 	CMatrixDouble m;
 	if (!m.fromMatlabStringFormat(s))
-		THROW_EXCEPTION("Malformed expression in ::fromString");
+		THROW_EXCEPTION_FMT(
+			"Malformed expression in ::fromString, s=\"%s\"", s.c_str());
 	ASSERTMSG_(
 		m.rows() == 1 && m.cols() == 7, "Wrong size of vector in ::fromString");
-	for (int i = 0; i < m.cols(); i++) (*this)[i] = m(0, i);
+	for (int i = 0; i < m.cols(); i++)
+		(*this)[i] = m(0, i);
 }
 
 double TPose3DQuat::norm() const

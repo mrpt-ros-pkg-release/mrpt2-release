@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -19,6 +19,7 @@
 #include <mrpt/opengl/CText.h>
 #include <mrpt/system/CTicTac.h>
 #include <mrpt/system/os.h>
+
 #include <iostream>
 
 using namespace std;
@@ -53,7 +54,7 @@ void TestDisplay3D()
 		COpenGLViewport::Ptr vi = theScene->createViewport("myClone2");
 		vi->setViewportPosition(
 			/*x px*/ -250, /*y px*/ -250, /*width px*/ 250,
-			/*height px*/ 200);  // x,y negative means pixels from the
+			/*height px*/ 200);	 // x,y negative means pixels from the
 		// top/right, instead of from the bottom/left.
 		vi->setCloneView("main");
 		vi->setTransparent(false);
@@ -161,18 +162,18 @@ void TestDisplay3D()
 		const double t = timer.Tac();
 
 		// Move the scene:
-		COpenGLScene::Ptr& theScene = win.get3DSceneAndLock();
+		auto& scene = win.get3DSceneAndLock();
 
 		const double R1 = 8;
 		const double W1 = 5.0, Q1 = 3.3;
-		opengl::CRenderizable::Ptr obj1 = theScene->getByName("ball_1");
+		opengl::CRenderizable::Ptr obj1 = scene->getByName("ball_1");
 		obj1->setLocation(
 			R1 * cos(W1 * t) * sin(Q1 * t), R1 * sin(W1 * t),
 			R1 * cos(W1 * t) * cos(Q1 * t));
 
 		const double R2 = 6;
 		const double W2 = 1.3, Q2 = 7.2;
-		opengl::CRenderizable::Ptr obj2 = theScene->getByName("ball_2");
+		opengl::CRenderizable::Ptr obj2 = scene->getByName("ball_2");
 		obj2->setLocation(
 			R2 * cos(W2 * t) * sin(Q2 * t), R2 * sin(W2 * t),
 			R2 * cos(W2 * t) * cos(Q2 * t));
@@ -183,7 +184,7 @@ void TestDisplay3D()
 		fp2.vfont_scale = 14;
 
 		win.addTextMessage(
-			0.02, 0.02,  // X,Y<=1 means coordinates are factors over the entire
+			0.02, 0.02,	 // X,Y<=1 means coordinates are factors over the entire
 			// viewport area.
 			format(
 				"ball#1 pos: %.02f %.02f %.02f ", obj1->getPoseX(),
@@ -191,7 +192,7 @@ void TestDisplay3D()
 			10 /*id*/, fp2);
 
 		win.addTextMessage(
-			5, -15,  // |X|,|Y|>1 means absolute coordinates, negative means
+			5, -15,	 // |X|,|Y|>1 means absolute coordinates, negative means
 			// from the top instead of the bottom.
 			format(
 				"Time: %s",
@@ -204,11 +205,11 @@ void TestDisplay3D()
 		int mouse_x, mouse_y;
 		if (placeMode &&
 			win.getLastMousePosition(
-				mouse_x, mouse_y))  // See also: getLastMousePositionRay()
+				mouse_x, mouse_y))	// See also: getLastMousePositionRay()
 		{
 			// Get the ray in 3D for the latest mouse (X,Y):
 			mrpt::math::TLine3D ray;
-			theScene->getViewport("main")->get3DRayForPixelCoord(
+			scene->getViewport("main")->get3DRayForPixelCoord(
 				mouse_x, mouse_y, ray);
 
 			// Create a 3D plane, e.g. Z=0
@@ -226,7 +227,7 @@ void TestDisplay3D()
 			{
 				// Move an object to the position picked by the user:
 				// printf("PT: %f %f %f\n",);
-				theScene->getByName("USER_MOUSE_PICK")
+				scene->getByName("USER_MOUSE_PICK")
 					->setLocation(inters_pt.x, inters_pt.y, inters_pt.z);
 			}
 		}

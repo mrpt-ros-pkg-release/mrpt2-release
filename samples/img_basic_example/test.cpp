@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -11,6 +11,7 @@
 #include <mrpt/math/CMatrixF.h>
 #include <mrpt/system/CTicTac.h>
 #include <mrpt/system/CTimeLogger.h>
+
 #include <iostream>
 
 using namespace mrpt;
@@ -42,7 +43,7 @@ void TestImageConversion()
 	}
 	printf("Image loaded in %.03fms\n", 1000 * tictac.Tac());
 
-	if (false)  // A very simple test:
+	if (false)	// A very simple test:
 	{
 		CDisplayWindow win1("JPEG file, color");
 		win1.setPos(10, 10);

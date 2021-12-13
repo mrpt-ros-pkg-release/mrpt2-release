@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -13,6 +13,7 @@
 #include <mrpt/opengl/CAxis.h>
 #include <mrpt/opengl/CGridPlaneXY.h>
 #include <mrpt/opengl/CPolyhedron.h>
+
 #include <iostream>
 
 using namespace std;
@@ -65,7 +66,8 @@ void piThreadFunction(PIThreadParam& p)
 {
 	vector<TObject3D> ints;
 	CPolyhedron::getIntersection(p.polys->first, p.polys->second, ints);
-	TObject3D::getSegments(ints, p.intersection);
+	for (const auto& o : ints)
+		if (o.isSegment()) p.intersection.emplace_back(o.getAs<TSegment3D>());
 }
 
 inline std::thread piCreateThread(PIThreadParam& p)

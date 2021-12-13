@@ -2,18 +2,18 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
+#include <mrpt/examples_config.h>
 #include <mrpt/gui/CDisplayWindow3D.h>
 #include <mrpt/img/CImage.h>
 #include <mrpt/opengl/CText.h>
 #include <mrpt/opengl/CTexturedPlane.h>
-#include <iostream>
 
-#include <mrpt/examples_config.h>
+#include <iostream>
 const std::string myTestFile(
 	MRPT_EXAMPLES_BASE_DIRECTORY +
 	std::string("img_basic_example/frame_color.jpg"));

@@ -25,6 +25,18 @@ if(BUILD_mrpt-core)
 	endif()
 
 	if(WIN32)
-		target_link_libraries(core PRIVATE Dbghelp) # For mrpt::demangle()
+		target_link_libraries(core PRIVATE Dbghelp) # For mrpt::demangle(), mrpt::callStackBackTrace()
+	else()
+		target_link_libraries(core PRIVATE ${CMAKE_DL_LIBS}) # For mrpt::callStackBackTrace()
 	endif()
+
+	if (CMAKE_MRPT_HAS_BFD)
+		target_link_libraries(core PRIVATE ${BFD_LIBRARIES})
+	endif()
+
+	target_compile_definitions(core PRIVATE MRPT_EXCEPTIONS_CALL_STACK_MAX_DEPTH=${MRPT_EXCEPTIONS_CALL_STACK_MAX_DEPTH})
+	if (MRPT_EXCEPTIONS_WITH_CALL_STACK)
+		target_compile_definitions(core PRIVATE MRPT_EXCEPTIONS_WITH_CALL_STACK)
+	endif()
+
 endif()

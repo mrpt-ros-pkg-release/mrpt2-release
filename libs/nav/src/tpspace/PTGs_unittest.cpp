@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -107,8 +107,9 @@ TEST(NavTests, PTGs_tests)
 					// (0,0) in its domain
 
 					const double tolerance_dist = std::max(
-						0.10, 10.0 * std::sqrt(tx * tx + ty * ty) * M_PI * 2 /
-								  ptg->getPathCount());
+						0.10,
+						10.0 * std::sqrt(tx * tx + ty * ty) * M_PI * 2 /
+							ptg->getPathCount());
 
 					int k;
 					double normalized_d;
@@ -126,8 +127,8 @@ TEST(NavTests, PTGs_tests)
 							<< " normalized_d=" << normalized_d << endl;
 						if (step_ok)
 						{
-							mrpt::math::TPose2D pose;
-							ptg->getPathPose(k, step, pose);
+							const mrpt::math::TPose2D pose =
+								ptg->getPathPose(k, step);
 							EXPECT_NEAR(pose.x, tx, tolerance_dist)
 								<< "Test: inverseMap_WS2TP\n PTG#" << n << ": "
 								<< sPTGDesc << endl

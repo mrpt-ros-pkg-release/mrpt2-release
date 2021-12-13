@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -74,8 +74,9 @@ class CPlanarLaserScan : public CRenderizableShaderPoints,
 
 	virtual shader_list_t requiredShaders() const override
 	{
-		return {DefaultShaderID::WIREFRAME, DefaultShaderID::TRIANGLES,
-				DefaultShaderID::POINTS};
+		return {
+			DefaultShaderID::WIREFRAME, DefaultShaderID::TRIANGLES,
+			DefaultShaderID::POINTS};
 	}
 	void onUpdateBuffers_Wireframe() override;
 	void onUpdateBuffers_Triangles() override;
@@ -140,9 +141,7 @@ class CPlanarLaserScan : public CRenderizableShaderPoints,
 		m_scan = scan;
 	}
 
-	void getBoundingBox(
-		mrpt::math::TPoint3D& bb_min,
-		mrpt::math::TPoint3D& bb_max) const override;
+	auto getBoundingBox() const -> mrpt::math::TBoundingBox override;
 
    protected:
 	mrpt::obs::CObservation2DRangeScan m_scan;

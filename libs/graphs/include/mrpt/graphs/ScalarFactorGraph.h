@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -11,6 +11,7 @@
 #include <mrpt/math/CVectorDynamic.h>
 #include <mrpt/system/COutputLogger.h>
 #include <mrpt/system/CTimeLogger.h>
+
 #include <deque>
 
 namespace mrpt::graphs
@@ -111,6 +112,6 @@ class ScalarFactorGraph : public mrpt::system::COutputLogger
 	mrpt::system::CTimeLogger m_timelogger;
 	bool m_enable_profiler{false};
 
-};  // End of class def.
+};	// End of class def.
 
 }  // namespace mrpt::graphs

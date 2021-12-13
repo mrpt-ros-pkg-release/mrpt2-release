@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -10,6 +10,7 @@
 #include <mrpt/gui.h>
 #include <mrpt/vision/CFeatureExtraction.h>
 #include <mrpt/vision/tracking.h>
+
 #include <iostream>
 
 using namespace mrpt::gui;
@@ -35,11 +36,11 @@ void TestExtractMatchProjectAndPaint()
 	CImage imL, imR;
 
 	string imgL = MRPT_EXAMPLES_BASE_DIRECTORY +
-				  string("vision_feature_extraction/") +
-				  string("imgs/imL_p01.jpg");  // Left image
+		string("vision_feature_extraction/") +
+		string("imgs/imL_p01.jpg");	 // Left image
 	string imgR = MRPT_EXAMPLES_BASE_DIRECTORY +
-				  string("vision_feature_extraction/") +
-				  string("imgs/imR_p01.jpg");  // Right image
+		string("vision_feature_extraction/") +
+		string("imgs/imR_p01.jpg");	 // Right image
 
 	// Load and check images
 	if (!imL.loadFromFile(imgL))
@@ -100,11 +101,11 @@ void TestMatchFeatures()
 	CImage imL, imR;
 
 	string imgL = MRPT_EXAMPLES_BASE_DIRECTORY +
-				  string("vision_feature_extraction/") +
-				  string("imgs/imL_p01.jpg");  // Left image
+		string("vision_feature_extraction/") +
+		string("imgs/imL_p01.jpg");	 // Left image
 	string imgR = MRPT_EXAMPLES_BASE_DIRECTORY +
-				  string("vision_feature_extraction/") +
-				  string("imgs/imR_p01.jpg");  // Right image
+		string("vision_feature_extraction/") +
+		string("imgs/imR_p01.jpg");	 // Right image
 
 	//	string imgL = "../../bin/imgs/640x480_left_rect.jpg";		// Left
 	// image
@@ -144,15 +145,11 @@ void TestMatchFeatures()
 	// SIFT
 	cout << "Detecting SIFT features in LEFT image" << endl;
 	fExt.options.featsType = featSIFT;
-	// fExt.options.SIFTOptions.implementation = CFeatureExtraction::Hess;
-	fExt.options.SIFTOptions.implementation = CFeatureExtraction::OpenCV;
 	fExt.detectFeatures(imL, featsSIFT_L);
 	cout << "Detected " << featsSIFT_L.size() << endl;
 
 	cout << "Detecting SIFT features in RIGHT image" << endl;
 	fExt.options.featsType = featSIFT;
-	// fExt.options.SIFTOptions.implementation = CFeatureExtraction::Hess;
-	fExt.options.SIFTOptions.implementation = CFeatureExtraction::OpenCV;
 	fExt.detectFeatures(imR, featsSIFT_R);
 	cout << "Detected " << featsSIFT_R.size() << endl;
 	cout << "***************************************************" << endl;
@@ -252,11 +249,11 @@ void TestMatchingComparative()
 {
 	// Take two images
 	string imgL = MRPT_EXAMPLES_BASE_DIRECTORY +
-				  string("vision_feature_extraction/") +
-				  string("imgs/imL_p01.jpg");  // Left image
+		string("vision_feature_extraction/") +
+		string("imgs/imL_p01.jpg");	 // Left image
 	string imgR = MRPT_EXAMPLES_BASE_DIRECTORY +
-				  string("vision_feature_extraction/") +
-				  string("imgs/imR_p01.jpg");  // Right image
+		string("vision_feature_extraction/") +
+		string("imgs/imR_p01.jpg");	 // Right image
 
 	CImage im1, im2;
 	im1.loadFromFile(imgL);
@@ -268,7 +265,6 @@ void TestMatchingComparative()
 	CFeatureExtraction fExt;
 	fExt.options.featsType = featFAST;
 	fExt.options.patchSize = 21;
-	fExt.options.SIFTOptions.implementation = CFeatureExtraction::Hess;
 
 	// Find FAST features
 	CFeatureList list1, list2;
@@ -316,7 +312,7 @@ void TestMatchingComparative()
 			TColor::green());  // Epipolar
 		copyjoinimage.drawCircle(
 			pt1.x, pt1.y, 4, TColor::green(),
-			2);  // Keypoint
+			2);	 // Keypoint
 
 		copyInfoImage.update_patch(*it1->patch, 0, 0);
 		bool firstMatch = true;
@@ -379,7 +375,7 @@ void TestMatchingComparative()
 
 				copyjoinimage.drawCircle(
 					pt2.x + imW, pt2.y, 4, TColor::blue(),
-					2);  // Keypoint
+					2);	 // Keypoint
 				double rx0, rx1, ry0, ry1, tx, ty;
 				rx0 = pt2.x + imW - 15;
 				rx1 = pt2.x + imW;
@@ -494,7 +490,6 @@ void TestExtractFeatures()
 
 	cout << "Computing SIFT descriptors only ... [f_harris+sift.txt]" << endl;
 	tictac.Tic();
-	fExt.options.SIFTOptions.implementation = CFeatureExtraction::Hess;
 	fExt.computeDescriptors(img, featsHarris, descSIFT);
 	cout << format("  %.03fms", tictac.Tac() * 1000) << endl << endl;
 	featsHarris.saveToTextFile("f_harris+sift.txt");
@@ -514,7 +509,6 @@ void TestExtractFeatures()
 	cout << "Extracting SIFT features... [f_sift_hess.txt]" << endl;
 	tictac.Tic();
 	fExt.options.featsType = featSIFT;
-	fExt.options.SIFTOptions.implementation = CFeatureExtraction::Hess;
 	fExt.detectFeatures(img, featsSIFT_Hess);
 	cout << "Detected " << featsSIFT_Hess.size() << " features in ";
 	cout << format("  %.03fms", tictac.Tac() * 1000) << endl << endl;

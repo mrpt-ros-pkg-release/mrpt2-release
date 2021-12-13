@@ -2,13 +2,13 @@
 |                     Mobile Robot Programming Toolkit (MRPT)            |
 |                          https://www.mrpt.org/                         |
 |                                                                        |
-| Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+| Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
 | See: https://www.mrpt.org/Authors - All rights reserved.               |
 | Released under BSD License. See: https://www.mrpt.org/License          |
 +------------------------------------------------------------------------+ */
 
 #include "maps-precomp.h"  // Precomp header
-
+//
 #include <mrpt/core/bits_mem.h>
 #include <mrpt/img/color_maps.h>
 #include <mrpt/maps/CColouredPointsMap.h>
@@ -136,7 +136,7 @@ void CColouredPointsMap::serializeTo(mrpt::serialization::CArchive& out) const
 		out.WriteBufferFixEndianness(&m_y[0], n);
 		out.WriteBufferFixEndianness(&m_z[0], n);
 	}
-	out << m_color_R << m_color_G << m_color_B;  // added in v4
+	out << m_color_R << m_color_G << m_color_B;	 // added in v4
 
 	out << genericMapParams;  // v9
 	insertionOptions.writeToStream(
@@ -168,8 +168,7 @@ void CColouredPointsMap::serializeFrom(
 			}
 			in >> m_color_R >> m_color_G >> m_color_B;
 
-			if (version >= 9)
-				in >> genericMapParams;
+			if (version >= 9) in >> genericMapParams;
 			else
 			{
 				bool disableSaveAs3DObject;
@@ -259,10 +258,7 @@ void CColouredPointsMap::serializeFrom(
 				}
 			}
 
-			if (version >= 3)
-			{
-				in >> insertionOptions.horizontalTolerance;
-			}
+			if (version >= 3) { in >> insertionOptions.horizontalTolerance; }
 
 			if (version >= 4)  // Color data
 			{
@@ -292,8 +288,7 @@ void CColouredPointsMap::serializeFrom(
 				in >> insertionOptions.insertInvalidPoints;
 		}
 		break;
-		default:
-			MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
 	};
 }
 
@@ -367,14 +362,9 @@ void CColouredPointsMap::insertPointRGB(
 	mark_as_modified();
 }
 
-/*---------------------------------------------------------------
-getAs3DObject
----------------------------------------------------------------*/
-void CColouredPointsMap::getAs3DObject(
-	mrpt::opengl::CSetOfObjects::Ptr& outObj) const
+void CColouredPointsMap::getVisualizationInto(
+	mrpt::opengl::CSetOfObjects& o) const
 {
-	ASSERT_(outObj);
-
 	if (!genericMapParams.enableSaveAs3DObject) return;
 
 	opengl::CPointCloudColoured::Ptr obj =
@@ -385,7 +375,7 @@ void CColouredPointsMap::getAs3DObject(
 
 	obj->setPointSize(this->renderOptions.point_size);
 
-	outObj->insert(obj);
+	o.insert(obj);
 }
 
 /*---------------------------------------------------------------
@@ -459,15 +449,19 @@ static void aux_projectPoint_with_distortion(
 	const double r6 = r2 * r4;
 
 	pixel.x = params.cx() +
-			  params.fx() * (x * (1 + params.dist[0] * r2 +
-								  params.dist[1] * r4 + params.dist[4] * r6) +
-							 2 * params.dist[2] * x * y +
-							 params.dist[3] * (r2 + 2 * square(x)));
+		params.fx() *
+			(x *
+				 (1 + params.dist[0] * r2 + params.dist[1] * r4 +
+				  params.dist[4] * r6) +
+			 2 * params.dist[2] * x * y +
+			 params.dist[3] * (r2 + 2 * square(x)));
 	pixel.y = params.cy() +
-			  params.fy() * (y * (1 + params.dist[0] * r2 +
-								  params.dist[1] * r4 + params.dist[4] * r6) +
-							 2 * params.dist[3] * x * y +
-							 params.dist[2] * (r2 + 2 * square(y)));
+		params.fy() *
+			(y *
+				 (1 + params.dist[0] * r2 + params.dist[1] * r4 +
+				  params.dist[4] * r6) +
+			 2 * params.dist[3] * x * y +
+			 params.dist[2] * (r2 + 2 * square(y)));
 }
 
 /*---------------------------------------------------------------
@@ -483,7 +477,7 @@ bool CColouredPointsMap::colourFromObservation(
 	CPose3D cameraPoseW;  // World Camera Pose
 
 	obs.getSensorPose(cameraPoseR);
-	cameraPoseW = robotPose + cameraPoseR;  // Camera Global Coordinates
+	cameraPoseW = robotPose + cameraPoseR;	// Camera Global Coordinates
 
 	// Image Information
 	unsigned int imgW = obs.image.getWidth();
@@ -501,15 +495,15 @@ bool CColouredPointsMap::colourFromObservation(
 	// Get the N closest points
 	kdTreeNClosestPoint2DIdx(
 		cameraPoseW.x(), cameraPoseW.y(),  // query point
-		200000,  // number of points to search
-		p_idx, p_dist);  // indexes and distances of the returned points
+		200000,	 // number of points to search
+		p_idx, p_dist);	 // indexes and distances of the returned points
 
 	// Fill p3D vector
 	for (size_t k = 0; k < p_idx.size(); k++)
 	{
 		float d = sqrt(p_dist[k]);
 		size_t idx = p_idx[k];
-		if (d < colorScheme.d_max)  //  && d < m_min_dist[idx] )
+		if (d < colorScheme.d_max)	//  && d < m_min_dist[idx] )
 		{
 			TPixelCoordf px;
 			aux_projectPoint_with_distortion(
@@ -686,7 +680,7 @@ struct pointmap_traits<CColouredPointsMap>
 		mrpt::maps::CPointsMap::TLaserRange2DInsertContext& lric)
 	{
 		// Relative height of the point wrt the sensor:
-		const float rel_z = gz - lric.HM(2, 3);  // m23;
+		const float rel_z = gz - lric.HM(2, 3);	 // m23;
 
 		// Variable renaming:
 		float& pR = lric.fVars[0];
@@ -702,16 +696,13 @@ struct pointmap_traits<CColouredPointsMap>
 			case CColouredPointsMap::cmFromHeightRelativeToSensorGray:
 			{
 				float q = (rel_z - me.colorScheme.z_min) * Az_1_color;
-				if (q < 0)
-					q = 0;
+				if (q < 0) q = 0;
 				else if (q > 1)
 					q = 1;
 
 				if (me.colorScheme.scheme ==
 					CColouredPointsMap::cmFromHeightRelativeToSensorGray)
-				{
-					pR = pG = pB = q;
-				}
+				{ pR = pG = pB = q; }
 				else
 				{
 					jet2rgb(q, pR, pG, pB);
@@ -724,8 +715,7 @@ struct pointmap_traits<CColouredPointsMap>
 				pR = pG = pB = 1.0;
 			}
 			break;
-			default:
-				THROW_EXCEPTION("Unknown color scheme");
+			default: THROW_EXCEPTION("Unknown color scheme");
 		}
 	}
 	/** Helper method fot the generic implementation of
@@ -789,9 +779,9 @@ struct pointmap_traits<CColouredPointsMap>
 		uint8_t& simple_3d_to_color_relation = lric.bVars[2];
 
 		ASSERT_NOT_EQUAL_(me.colorScheme.z_max, me.colorScheme.z_min);
-		lric.fVars[3] = 1.0 / (me.colorScheme.z_max -
-							   me.colorScheme.z_min);  // Az_1_color = ...
-		lric.fVars[4] = 1.0f / 255;  // K_8u
+		lric.fVars[3] = 1.0 /
+			(me.colorScheme.z_max - me.colorScheme.z_min);	// Az_1_color = ...
+		lric.fVars[4] = 1.0f / 255;	 // K_8u
 
 		hasValidIntensityImage = false;
 		imgW = 0;
@@ -860,7 +850,7 @@ struct pointmap_traits<CColouredPointsMap>
 		const uint8_t& simple_3d_to_color_relation = lric.bVars[2];
 
 		// Relative height of the point wrt the sensor:
-		const float rel_z = gz - lric.HM(2, 3);  // m23;
+		const float rel_z = gz - lric.HM(2, 3);	 // m23;
 
 		// Compute color:
 		switch (me.colorScheme.scheme)
@@ -870,16 +860,13 @@ struct pointmap_traits<CColouredPointsMap>
 			case CColouredPointsMap::cmFromHeightRelativeToSensorGray:
 			{
 				float q = (rel_z - me.colorScheme.z_min) * Az_1_color;
-				if (q < 0)
-					q = 0;
+				if (q < 0) q = 0;
 				else if (q > 1)
 					q = 1;
 
 				if (me.colorScheme.scheme ==
 					CColouredPointsMap::cmFromHeightRelativeToSensorGray)
-				{
-					pR = pG = pB = q;
-				}
+				{ pR = pG = pB = q; }
 				else
 				{
 					jet2rgb(q, pR, pG, pB);
@@ -890,10 +877,7 @@ struct pointmap_traits<CColouredPointsMap>
 			{
 				// Do we have to project the 3D point into the image plane??
 				bool hasValidColor = false;
-				if (simple_3d_to_color_relation)
-				{
-					hasValidColor = true;
-				}
+				if (simple_3d_to_color_relation) { hasValidColor = true; }
 				else
 				{
 					// Do projection:
@@ -909,10 +893,10 @@ struct pointmap_traits<CColouredPointsMap>
 						img_idx_x = cx + fx * pt.x / pt.z;
 						img_idx_y = cy + fy * pt.y / pt.z;
 
-						hasValidColor = img_idx_x < imgW &&  // img_idx_x>=0
+						hasValidColor = img_idx_x < imgW &&	 // img_idx_x>=0
 															 // isn't needed for
 															 // unsigned.
-										img_idx_y < imgH;
+							img_idx_y < imgH;
 					}
 				}
 
@@ -935,8 +919,7 @@ struct pointmap_traits<CColouredPointsMap>
 				}
 			}
 			break;
-			default:
-				THROW_EXCEPTION("Unknown color scheme");
+			default: THROW_EXCEPTION("Unknown color scheme");
 		}
 	}
 
@@ -987,7 +970,8 @@ struct pointmap_traits<CColouredPointsMap>
 }  // namespace mrpt::maps::detail
 /** See CPointsMap::loadFromRangeScan() */
 void CColouredPointsMap::loadFromRangeScan(
-	const CObservation2DRangeScan& rangeScan, const CPose3D* robotPose)
+	const CObservation2DRangeScan& rangeScan,
+	const std::optional<const mrpt::poses::CPose3D>& robotPose)
 {
 	mrpt::maps::detail::loadFromRangeImpl<CColouredPointsMap>::
 		templ_loadFromRangeScan(*this, rangeScan, robotPose);
@@ -995,7 +979,8 @@ void CColouredPointsMap::loadFromRangeScan(
 
 /** See CPointsMap::loadFromRangeScan() */
 void CColouredPointsMap::loadFromRangeScan(
-	const CObservation3DRangeScan& rangeScan, const CPose3D* robotPose)
+	const CObservation3DRangeScan& rangeScan,
+	const std::optional<const mrpt::poses::CPose3D>& robotPose)
 {
 	mrpt::maps::detail::loadFromRangeImpl<CColouredPointsMap>::
 		templ_loadFromRangeScan(*this, rangeScan, robotPose);

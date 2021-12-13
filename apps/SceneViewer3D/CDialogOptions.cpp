@@ -2,15 +2,16 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 //#include "_DSceneViewerMain.h"
 
-#include <wx/app.h>
+#include "CDialogOptions.h"
 
+#include <wx/app.h>
 #include <wx/artprov.h>
 #include <wx/bitmap.h>
 #include <wx/busyinfo.h>
@@ -28,7 +29,6 @@
 #include <wx/string.h>
 #include <wx/textdlg.h>
 
-#include "CDialogOptions.h"
 #include "_DSceneViewerMain.h"
 
 //(*InternalHeaders(CDialogOptions)

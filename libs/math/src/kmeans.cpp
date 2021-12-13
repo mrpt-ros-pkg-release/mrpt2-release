@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "math-precomp.h"  // Precompiled headers
-
+//
 #include <mrpt/math/kmeans.h>
 
 // This file is just a stub for the k-means++ library so MRPT users don't need
@@ -46,7 +46,8 @@ double internal_kmeans<float>(
 	std::vector<double> points_d(nPoints * dims);
 	std::vector<double> centers_d(k * dims);
 	// Convert: float -> double
-	for (size_t i = 0; i < nPoints * dims; i++) points_d[i] = double(points[i]);
+	for (size_t i = 0; i < nPoints * dims; i++)
+		points_d[i] = double(points[i]);
 
 	const double ret = RunKMeans(
 		nPoints, k, dims, &points_d[0], attempts, &centers_d[0],

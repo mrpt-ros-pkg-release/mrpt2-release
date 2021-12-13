@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -79,7 +79,7 @@ class CIbeoLuxETH : public mrpt::hwdrivers::CGenericSensor
 	unsigned int m_scanFrequency;  // in hertz
 	double m_angleResolution;  // in degrees
 	double m_startAngle;  // degrees
-	double m_stopAngle;  // degrees
+	double m_stopAngle;	 // degrees
 	mrpt::poses::CPose3D m_sensorPose;
 	double m_maxRange{200.0};
 	double m_beamApperture;
