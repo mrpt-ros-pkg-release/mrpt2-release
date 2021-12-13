@@ -2,20 +2,22 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "gui-precomp.h"  // Precompiled headers
-
+//
 #include <mrpt/config.h>
+
 #if MRPT_HAS_Qt5
 
 #include <QLabel>
 #include <QTabWidget>
 #include <QTextEdit>
 #include <QVBoxLayout>
+
 #include "CAboutBoxQt.h"
 
 CAboutBoxQt::CAboutBoxQt(
@@ -49,4 +51,4 @@ QTextEdit* CAboutBoxQt::widgetForTabs(
 	return action;
 }
 
-#endif  // MRPT_HAS_Qt5
+#endif	// MRPT_HAS_Qt5

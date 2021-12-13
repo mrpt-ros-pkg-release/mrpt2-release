@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "nav-precomp.h"  // Precomp header
-
+//
 #include <mrpt/config/CConfigFilePrefixer.h>
 #include <mrpt/nav/tpspace/CParameterizedTrajectoryGenerator.h>
 #include <mrpt/system/string_utils.h>
@@ -34,21 +34,11 @@ CParameterizedTrajectoryGenerator::Ptr
 	{
 		switch (ptgClassName[0])
 		{
-			case '1':
-				ptgClassName = "CPTG_DiffDrive_C";
-				break;
-			case '2':
-				ptgClassName = "CPTG_DiffDrive_alpha";
-				break;
-			case '3':
-				ptgClassName = "CPTG_DiffDrive_CCS";
-				break;
-			case '4':
-				ptgClassName = "CPTG_DiffDrive_CC";
-				break;
-			case '5':
-				ptgClassName = "CPTG_DiffDrive_CS";
-				break;
+			case '1': ptgClassName = "CPTG_DiffDrive_C"; break;
+			case '2': ptgClassName = "CPTG_DiffDrive_alpha"; break;
+			case '3': ptgClassName = "CPTG_DiffDrive_CCS"; break;
+			case '4': ptgClassName = "CPTG_DiffDrive_CC"; break;
+			case '5': ptgClassName = "CPTG_DiffDrive_CS"; break;
 		};
 	}
 

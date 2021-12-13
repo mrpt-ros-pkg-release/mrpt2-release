@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "math-precomp.h"  // Precompiled headers
-
+//
 #include <mrpt/math/TPoint2D.h>
 #include <mrpt/math/TPoint3D.h>
 #include <mrpt/math/TPose2D.h>
@@ -41,8 +41,7 @@ TPoint2D_<T>::TPoint2D_(const TPose3D& p)
 template <typename T>
 bool TPoint2D_<T>::operator<(const TPoint2D_<T>& p) const
 {
-	if (this->x < p.x)
-		return true;
+	if (this->x < p.x) return true;
 	else if (this->x > p.x)
 		return false;
 	else
@@ -54,7 +53,8 @@ void TPoint2D_<T>::fromString(const std::string& s)
 {
 	CMatrixDynamic<T> m;
 	if (!m.fromMatlabStringFormat(s))
-		THROW_EXCEPTION("Malformed expression in ::fromString");
+		THROW_EXCEPTION_FMT(
+			"Malformed expression in ::fromString, s=\"%s\"", s.c_str());
 	ASSERTMSG_(
 		m.rows() == 1 && m.cols() == 2, "Wrong size of vector in ::fromString");
 	this->x = m(0, 0);

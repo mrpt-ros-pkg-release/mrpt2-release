@@ -2,18 +2,19 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 #pragma once
 
 #include <mrpt/config.h>
+
 #include <cstdint>
-#if (                                                \
-	!defined(OCCUPANCY_GRIDMAP_CELL_SIZE_8BITS) &&   \
-	!defined(OCCUPANCY_GRIDMAP_CELL_SIZE_16BITS)) || \
-	(defined(OCCUPANCY_GRIDMAP_CELL_SIZE_8BITS) &&   \
+#if (                                                                          \
+	!defined(OCCUPANCY_GRIDMAP_CELL_SIZE_8BITS) &&                             \
+	!defined(OCCUPANCY_GRIDMAP_CELL_SIZE_16BITS)) ||                           \
+	(defined(OCCUPANCY_GRIDMAP_CELL_SIZE_8BITS) &&                             \
 	 defined(OCCUPANCY_GRIDMAP_CELL_SIZE_16BITS))
 #error One of OCCUPANCY_GRIDMAP_CELL_SIZE_16BITS or OCCUPANCY_GRIDMAP_CELL_SIZE_8BITS must be defined.
 #endif

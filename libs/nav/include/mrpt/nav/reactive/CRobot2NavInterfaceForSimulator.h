@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -83,7 +83,7 @@ class CRobot2NavInterfaceForSimulator_Holo : public CRobot2NavInterface
 				relative_heading_radians,  // local_dir
 				0.5,  // ramp_time
 				mrpt::signWithZero(relative_heading_radians) *
-					mrpt::DEG2RAD(40.0)  // rotvel
+					mrpt::DEG2RAD(40.0)	 // rotvel
 				));
 	}
 

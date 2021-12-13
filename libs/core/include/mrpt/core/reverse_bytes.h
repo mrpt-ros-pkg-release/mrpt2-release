@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -10,6 +10,7 @@
 
 #include <mrpt/config.h>
 #include <mrpt/core/Clock.h>
+
 #include <cstdint>
 
 namespace mrpt
@@ -30,7 +31,6 @@ void reverseBytesInPlace(uint64_t& v_in_out);
 void reverseBytesInPlace(int64_t& v_in_out);
 void reverseBytesInPlace(float& v_in_out);
 void reverseBytesInPlace(double& v_in_out);
-void reverseBytesInPlace(long double& v_in_out);
 void reverseBytesInPlace(std::chrono::time_point<mrpt::Clock>& v_in_out);
 
 /** Reverse the order of the bytes of a given type (useful for transforming btw

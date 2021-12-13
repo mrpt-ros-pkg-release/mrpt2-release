@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -22,7 +22,7 @@ using namespace mrpt::hwdrivers;
 using namespace mrpt::config;
 using namespace std;
 
-string SERIAL_NAME;  // Name of the serial port to open
+string SERIAL_NAME;	 // Name of the serial port to open
 
 // ------------------------------------------------------
 //				Test_GPS
@@ -74,10 +74,7 @@ void Test_GPS()
 
 		gps.getObservations(lstObs);
 
-		if (lstObs.empty())
-		{
-			printf("[Test_GPS] Waiting for data...\n");
-		}
+		if (lstObs.empty()) { printf("[Test_GPS] Waiting for data...\n"); }
 		else
 		{
 			for (itObs = lstObs.begin(); itObs != lstObs.end(); itObs++)

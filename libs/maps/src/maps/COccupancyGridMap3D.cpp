@@ -2,17 +2,18 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "maps-precomp.h"  // Precomp header
-
+//
 #include <mrpt/config/CConfigFileBase.h>
 #include <mrpt/maps/COccupancyGridMap3D.h>
 #include <mrpt/maps/CSimplePointsMap.h>
 #include <mrpt/opengl/COctoMapVoxels.h>
+#include <mrpt/opengl/CSetOfObjects.h>
 #include <mrpt/poses/CPose3D.h>
 #include <mrpt/serialization/CArchive.h>
 
@@ -225,7 +226,7 @@ void COccupancyGridMap3D::getAsOctoMapVoxels(
 	const TColor general_color_u = general_color.asTColor();
 
 	gl_obj.clear();
-	gl_obj.resizeVoxelSets(2);  // 2 sets of voxels: occupied & free
+	gl_obj.resizeVoxelSets(2);	// 2 sets of voxels: occupied & free
 	if (renderingOptions.generateGridLines) gl_obj.reserveGridCubes(N);
 
 	gl_obj.showVoxels(
@@ -288,10 +289,7 @@ void COccupancyGridMap3D::getAsOctoMapVoxels(
 
 						case COctoMapVoxels::TRANSPARENCY_FROM_OCCUPANCY:
 							coeft = 255 - 510 * (1 - occ);
-							if (coeft < 0)
-							{
-								coeft = 0;
-							}
+							if (coeft < 0) { coeft = 0; }
 							vx_color = general_color.asTColor();
 							vx_color.A = mrpt::round(coeft);
 							break;
@@ -307,10 +305,7 @@ void COccupancyGridMap3D::getAsOctoMapVoxels(
 						case COctoMapVoxels::MIXED:
 							coefc = d2f(255 * inv_dz * (z - bbmin.z));
 							coeft = d2f(255 - 510 * (1 - occ));
-							if (coeft < 0)
-							{
-								coeft = 0;
-							}
+							if (coeft < 0) { coeft = 0; }
 							vx_color = TColor(
 								f2u8(coefc * general_color.R),
 								f2u8(coefc * general_color.G),
@@ -318,8 +313,7 @@ void COccupancyGridMap3D::getAsOctoMapVoxels(
 								static_cast<uint8_t>(coeft));
 							break;
 
-						default:
-							THROW_EXCEPTION("Unknown coloring scheme!");
+						default: THROW_EXCEPTION("Unknown coloring scheme!");
 					}
 
 					const size_t vx_set =
@@ -353,12 +347,12 @@ void COccupancyGridMap3D::getAsOctoMapVoxels(
 	MRPT_END
 }
 
-void COccupancyGridMap3D::getAs3DObject(
-	mrpt::opengl::CSetOfObjects::Ptr& outObj) const
+void COccupancyGridMap3D::getVisualizationInto(
+	mrpt::opengl::CSetOfObjects& o) const
 {
 	auto gl_obj = mrpt::opengl::COctoMapVoxels::Create();
 	this->getAsOctoMapVoxels(*gl_obj);
-	outObj->insert(gl_obj);
+	o.insert(gl_obj);
 }
 
 uint8_t COccupancyGridMap3D::serializeGetVersion() const { return 0; }
@@ -379,9 +373,9 @@ void COccupancyGridMap3D::serializeTo(mrpt::serialization::CArchive& out) const
 #else
 	out.WriteBufferFixEndianness
 #endif
-		(m_grid.cellByIndex(0, 0, 0), sizeof(cell_t) * m_grid.getSizeX() *
-										  m_grid.getSizeY() *
-										  m_grid.getSizeZ());
+		(m_grid.cellByIndex(0, 0, 0),
+		 sizeof(cell_t) * m_grid.getSizeX() * m_grid.getSizeY() *
+			 m_grid.getSizeZ());
 
 	// insertionOptions:
 	out << insertionOptions.maxDistanceInsertion
@@ -458,8 +452,7 @@ void COccupancyGridMap3D::serializeFrom(
 			renderingOptions.readFromStream(in);
 		}
 		break;
-		default:
-			MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
 	};
 }
 
@@ -486,8 +479,7 @@ void COccupancyGridMap3D::TRenderingOptions::readFromStream(
 				visibleFreeVoxels;
 		}
 		break;
-		default:
-			MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
 	}
 }
 

@@ -2,18 +2,17 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
-#include "hwdrivers-precomp.h"  // Precompiled headers
-
+#include "hwdrivers-precomp.h"	// Precompiled headers
+//
+#include <mrpt/3rdparty/do_opencv_includes.h>
 #include <mrpt/hwdrivers/CDUO3DCamera.h>
 #include <mrpt/system/filesystem.h>
 #include <mrpt/system/os.h>
-
-#include <mrpt/3rdparty/do_opencv_includes.h>
 
 #include <map>
 
@@ -63,7 +62,7 @@ TCaptureOptions_DUO3D::TCaptureOptions_DUO3D()
 
 TCaptureOptions_DUO3D::~TCaptureOptions_DUO3D()
 {
-	duo_params.erase(this);  // Remove entry
+	duo_params.erase(this);	 // Remove entry
 }
 
 TCaptureOptions_DUO3D::TYMLReadResult
@@ -208,7 +207,7 @@ TCaptureOptions_DUO3D::TYMLReadResult
 		empty = true;
 		m_stereo_camera.leftCamera.dist.fill(0);
 	}
-	m_stereo_camera.leftCamera.setDistortionParamsFromValues(
+	m_stereo_camera.leftCamera.setDistortionPlumbBob(
 		aux_mat.at<double>(0, 0), aux_mat.at<double>(0, 1),
 		aux_mat.at<double>(0, 2), aux_mat.at<double>(0, 3),
 		aux_mat.at<double>(0, 4));
@@ -229,7 +228,7 @@ TCaptureOptions_DUO3D::TYMLReadResult
 		empty = true;
 		m_stereo_camera.rightCamera.dist.fill(0);
 	}
-	m_stereo_camera.rightCamera.setDistortionParamsFromValues(
+	m_stereo_camera.rightCamera.setDistortionPlumbBob(
 		aux_mat.at<double>(0, 0), aux_mat.at<double>(0, 1),
 		aux_mat.at<double>(0, 2), aux_mat.at<double>(0, 3),
 		aux_mat.at<double>(0, 4));
@@ -295,7 +294,7 @@ CDUO3DCamera::CDUO3DCamera() : m_options(TCaptureOptions_DUO3D())
 {
 #if MRPT_HAS_DUO3D
 	m_duo = new DUOInstance[1];
-	M_DUO_VALUE = nullptr;  // m_duo = nullptr;
+	M_DUO_VALUE = nullptr;	// m_duo = nullptr;
 
 	m_pframe_data = nullptr;
 	m_evFrame = CreateEvent(nullptr, FALSE, FALSE, nullptr);
@@ -312,7 +311,7 @@ CDUO3DCamera::CDUO3DCamera(const TCaptureOptions_DUO3D& options)
 {
 #if MRPT_HAS_DUO3D
 	m_duo = new DUOInstance[1];
-	M_DUO_VALUE = nullptr;  // m_duo = nullptr;
+	M_DUO_VALUE = nullptr;	// m_duo = nullptr;
 
 	m_pframe_data = nullptr;
 	m_evFrame = CreateEvent(nullptr, FALSE, FALSE, nullptr);
@@ -438,8 +437,7 @@ void CDUO3DCamera::open(
 	// This maximizes sensor imaging area for given resolution
 	int binning = DUO_BIN_NONE;
 	if (this->m_options.m_img_width <= 752 / 2) binning += DUO_BIN_HORIZONTAL2;
-	if (this->m_options.m_img_height <= 480 / 4)
-		binning += DUO_BIN_VERTICAL4;
+	if (this->m_options.m_img_height <= 480 / 4) binning += DUO_BIN_VERTICAL4;
 	else if (this->m_options.m_img_height <= 480 / 2)
 		binning += DUO_BIN_VERTICAL2;
 
@@ -450,7 +448,7 @@ void CDUO3DCamera::open(
 			binning, this->m_options.m_fps))
 		THROW_EXCEPTION("[CDUO3DCamera] Error: Resolution not supported.");
 
-	if (!OpenDUO(&M_DUO_VALUE))  // was: m_duo
+	if (!OpenDUO(&M_DUO_VALUE))	 // was: m_duo
 		THROW_EXCEPTION("[CDUO3DCamera] Error: Camera could not be opened.");
 
 	// Get and print some DUO parameter values
@@ -566,7 +564,7 @@ void* CDUO3DCamera::m_get_duo_frame()
 	else
 		return nullptr;
 #else
-	return nullptr;  // return something to silent compiler warnings.
+	return nullptr;	 // return something to silent compiler warnings.
 #endif
 }
 

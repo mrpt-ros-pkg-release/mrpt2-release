@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -27,6 +27,7 @@
 #include <mrpt/serialization/CArchive.h>
 #include <mrpt/system/filesystem.h>
 #include <mrpt/system/os.h>
+
 #include <iostream>
 
 using namespace mrpt;
@@ -64,7 +65,7 @@ void TestLaser2Imgs()
 	// Set relative path for externally-stored images in rawlogs:
 	string rawlog_images_path = extractFileDirectory(RAWLOG_FILE);
 	rawlog_images_path += "/Images";
-	CImage::setImagesPathBase(rawlog_images_path);  // Set it.
+	CImage::setImagesPathBase(rawlog_images_path);	// Set it.
 
 	mrpt::io::CFileGZInputStream rawlogFile(RAWLOG_FILE);
 
@@ -82,7 +83,7 @@ void TestLaser2Imgs()
 		auto arch = mrpt::serialization::archiveFrom(rawlogFile);
 		if (!CRawlog::readActionObservationPair(
 				arch, action, observations, rawlogEntry))
-			break;  // file EOF
+			break;	// file EOF
 
 		// CAMERA............
 		// Get CObservationStereoImages
@@ -96,8 +97,8 @@ void TestLaser2Imgs()
 			if (!Img) continue;
 		}
 
-		CPose3D cameraPose;  // Get Camera Pose (B) (CPose3D)
-		CMatrixDouble33 K;  // Get Calibration matrix (K)
+		CPose3D cameraPose;	 // Get Camera Pose (B) (CPose3D)
+		CMatrixDouble33 K;	// Get Calibration matrix (K)
 
 		sImgs ? sImgs->getSensorPose(cameraPose)
 			  : Img->getSensorPose(cameraPose);
@@ -119,15 +120,15 @@ void TestLaser2Imgs()
 
 		// Get 3D Point relative to the Laser coordinate Frame (P1) (CPoint3D)
 		CPoint3D point;
-		CSimplePointsMap mapa;
-		mapa.insertionOptions.minDistBetweenLaserPoints = 0;
-		observations->insertObservationsInto(
-			&mapa);  // <- The map contains the pose of the points (P1)
+		CSimplePointsMap m;
+		m.insertionOptions.minDistBetweenLaserPoints = 0;
+		// <- The map contains the pose of the points (P1)
+		observations->insertObservationsInto(m);
 
 		// Get the points into the map
 		vector<float> X, Y, Z;
 		vector<float>::iterator itX, itY, itZ;
-		mapa.getAllPoints(X, Y, Z);
+		m.getAllPoints(X, Y, Z);
 
 		unsigned int imgW =
 			sImgs ? sImgs->imageLeft.getWidth() : Img->image.getWidth();
@@ -172,7 +173,7 @@ void TestLaser2Imgs()
 		wind.showImage(image);
 
 		std::this_thread::sleep_for(50ms);
-	};  // end for
+	};	// end for
 
 	mrpt::system::pause();
 }
@@ -184,10 +185,7 @@ int main(int argc, char** argv)
 {
 	try
 	{
-		if (argc > 1)
-		{
-			RAWLOG_FILE = std::string(argv[1]);
-		}
+		if (argc > 1) { RAWLOG_FILE = std::string(argv[1]); }
 
 		TestLaser2Imgs();
 		return 0;

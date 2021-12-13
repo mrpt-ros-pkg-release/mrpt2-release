@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -47,6 +47,8 @@ class CFileGZInputStream : public CStream
 	/** Dtor */
 	~CFileGZInputStream() override;
 
+	std::string getStreamDescription() const override;
+
 	/** Opens the file for read.
 	 * \param fileName The file to be open in this stream
 	 * \return false if there's an error opening the file, true otherwise
@@ -74,5 +76,5 @@ class CFileGZInputStream : public CStream
 	uint64_t Seek(int64_t, CStream::TSeekOrigin = sFromBeginning) override;
 	size_t Read(void* Buffer, size_t Count) override;
 	size_t Write(const void* Buffer, size_t Count) override;
-};  // End of class def.
+};	// End of class def.
 }  // namespace mrpt::io

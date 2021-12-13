@@ -2,15 +2,17 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include <mrpt/config/CConfigFile.h>
 #include <mrpt/config/CConfigFileMemory.h>
+
 #include <fstream>
 #include <iostream>
+
 #include "ReactiveNav3D_demo.h"
 
 using namespace std;

@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -18,13 +18,14 @@ namespace mrpt::opengl
 /** Lighting parameters, mostly for triangle shaders.
  * Refer to standard OpenGL literature and tutorials for the meaning of each
  * field, and to the shader GLSL code itself.
+ * \ingroup mrpt_opengl_grp
  */
 struct TLightParameters
 {
 	TLightParameters() = default;
 	~TLightParameters() = default;
 
-	mrpt::img::TColorf diffuse = {0.8f, 0.8f, 0.8f, 0.0f};
+	mrpt::img::TColorf diffuse = {0.8f, 0.8f, 0.8f, 1.0f};
 	mrpt::img::TColorf ambient = {0.2f, 0.2f, 0.2f, 1.0f};
 	mrpt::img::TColorf specular = {1.0f, 1.0f, 1.0f, 1.0f};
 

@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -38,7 +38,7 @@ class CObservationPointCloud : public CObservation
 	enum class ExternalStorageFormat : uint8_t
 	{
 		None = 0,  //!< is always stored in memory
-		MRPT_Serialization,  //!< Uses mrpt-serialization binary file
+		MRPT_Serialization,	 //!< Uses mrpt-serialization binary file
 		KittiBinFile,  //!< Uses Kitti .bin file format
 		PlainTextFile  //!< Plain text, each line has "x y z [i]" coords
 	};
@@ -70,7 +70,7 @@ class CObservationPointCloud : public CObservation
 		@{ */
 	// See base class docs.
 	void load() const override;
-	void unload() override;
+	void unload() const override;
 	/** @} */
 
 	/** \name Point cloud external storage functions
@@ -92,6 +92,6 @@ class CObservationPointCloud : public CObservation
 	}
 	/** @} */
 
-};  // End of class def.
+};	// End of class def.
 
 }  // namespace mrpt::obs

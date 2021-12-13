@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -26,20 +26,19 @@ namespace gui
 
 #include <wx/artprov.h>
 #include <wx/bitmap.h>
-#include <wx/icon.h>
-#include <wx/image.h>
-#include <wx/intl.h>
-#include <wx/string.h>
-
 #include <wx/busyinfo.h>
 #include <wx/colordlg.h>
 #include <wx/dcmemory.h>
 #include <wx/dirdlg.h>
 #include <wx/filedlg.h>
+#include <wx/icon.h>
+#include <wx/image.h>
 #include <wx/imaglist.h>
+#include <wx/intl.h>
 #include <wx/log.h>
 #include <wx/msgdlg.h>
 #include <wx/progdlg.h>
+#include <wx/string.h>
 #include <wx/textdlg.h>
 
 #if wxUSE_GLCANVAS && MRPT_HAS_OPENGL_GLUT
@@ -105,8 +104,11 @@ class CWxGLCanvasBase : public CGlCanvasBase, public wxGLCanvas
 
 	virtual void OnRenderError([[maybe_unused]] const wxString& str) {}
 
+	bool is_GL_context_created() const { return m_init; }
+
    protected:
 	std::unique_ptr<wxGLContext> m_gl_context;
+	bool m_gl_context_assigned = false;
 	bool m_init = false;
 
 	long m_Key = 0;
@@ -121,10 +123,10 @@ class CWxGLCanvasBase : public CGlCanvasBase, public wxGLCanvas
 	void postRender() override;
 	void renderError(const std::string& err_msg) override;
 
-};  // end of class
+};	// end of class
 
 }  // namespace gui
 }  // namespace mrpt
 
-#endif  // wxUSE_GLCANVAS
-#endif  // MRPT_HAS_WXWIDGETS
+#endif	// wxUSE_GLCANVAS
+#endif	// MRPT_HAS_WXWIDGETS

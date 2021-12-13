@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "hmtslam-precomp.h"  // Precomp header
-
+//
 using namespace mrpt::hmtslam;
 
 IMPLEMENTS_SERIALIZABLE(THypothesisIDSet, CSerializable, mrpt::hmtslam)
@@ -18,7 +18,8 @@ void THypothesisIDSet::serializeTo(mrpt::serialization::CArchive& out) const
 {
 	auto N = (uint32_t)size();
 	out << N;
-	for (THypothesisID it : *this) out << it;
+	for (THypothesisID it : *this)
+		out << it;
 }
 
 void THypothesisIDSet::serializeFrom(
@@ -40,7 +41,6 @@ void THypothesisIDSet::serializeFrom(
 			}
 		}
 		break;
-		default:
-			MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
 	};
 }

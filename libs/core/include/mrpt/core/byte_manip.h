@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -14,7 +14,7 @@
 #define SELBYTE3(v) ((v >> 24) & 0xff)
 
 #define MAKEWORD16B(__LOBYTE, __HILOBYTE) ((__LOBYTE) | ((__HILOBYTE) << 8))
-#define MAKEWORD32B(__LOWORD16, __HIWORD16) \
+#define MAKEWORD32B(__LOWORD16, __HIWORD16)                                    \
 	((__LOWORD16) | ((__HIWORD16) << 16))
-#define MAKEWORD64B(__LOWORD32, __HIWORD32) \
+#define MAKEWORD64B(__LOWORD32, __HIWORD32)                                    \
 	((__LOWORD32) | ((__HIWORD32) << 32))

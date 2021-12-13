@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "obs-precomp.h"  // Precompiled headers
-
+//
 #include <mrpt/obs/CObservationBeaconRanges.h>
 #include <mrpt/serialization/CArchive.h>
 #include <mrpt/system/os.h>
@@ -69,19 +69,16 @@ void CObservationBeaconRanges::serializeFrom(
 
 			if (version >= 1) in >> auxEstimatePose;
 
-			if (version >= 2)
-				in >> sensorLabel;
+			if (version >= 2) in >> sensorLabel;
 			else
 				sensorLabel = "";
 
-			if (version >= 3)
-				in >> timestamp;
+			if (version >= 3) in >> timestamp;
 			else
 				timestamp = INVALID_TIMESTAMP;
 		}
 		break;
-		default:
-			MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
 	};
 }
 
@@ -155,11 +152,28 @@ void CObservationBeaconRanges::getDescriptionAsText(std::ostream& o) const
 
 	o << "  BEACON   RANGE     SENSOR POSITION ON ROBOT \n";
 	o << "------------------------------------------------\n";
-	for (const auto& it : sensedData)
+	for (const auto& d : sensedData)
 	{
 		o << format(
-			"   %i      %.04f      (%.03f,%.03f,%.03f)\n", (int)it.beaconID,
-			it.sensedDistance, it.sensorLocationOnRobot.x(),
-			it.sensorLocationOnRobot.y(), it.sensorLocationOnRobot.z());
+			"   %i      %.04f      (%.03f,%.03f,%.03f)\n", (int)d.beaconID,
+			d.sensedDistance, d.sensorLocationOnRobot.x(),
+			d.sensorLocationOnRobot.y(), d.sensorLocationOnRobot.z());
 	}
+}
+
+std::string CObservationBeaconRanges::exportTxtHeader() const
+{
+	return "[BEACON_ID  RANGE  SENSOR_LOCATION_ON_ROBOT] x N \n";
+}
+std::string CObservationBeaconRanges::exportTxtDataRow() const
+{
+	std::stringstream o;
+	for (const auto& d : sensedData)
+	{
+		o << format(
+			"   %i      %.04f      %.03f %.03f %.03f", (int)d.beaconID,
+			d.sensedDistance, d.sensorLocationOnRobot.x(),
+			d.sensorLocationOnRobot.y(), d.sensorLocationOnRobot.z());
+	}
+	return o.str();
 }

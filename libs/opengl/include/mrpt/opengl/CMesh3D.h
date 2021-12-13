@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -14,22 +14,17 @@
 #include <mrpt/opengl/CRenderizableShaderPoints.h>
 #include <mrpt/opengl/CRenderizableShaderTriangles.h>
 #include <mrpt/opengl/CRenderizableShaderWireFrame.h>
+
 #include <array>
 
 namespace mrpt::opengl
 {
-/** A 3D mesh composed of Triangles and/or Quads.
+/** A 3D mesh composed of triangles and/or quads.
  * A typical usage example would be a 3D model of an object.
- *  \sa opengl::COpenGLScene,opengl::CMesh,opengl::CAssimpModel
  *
- *  <div align="center">
- *  <table border="0" cellspan="4" cellspacing="4" style="border-width: 1px;
- * border-style: solid;">
- *   <tr> <td> mrpt::opengl::CMesh3D </td> <td> \image html preview_CMesh3D.png
- * </td> </tr>
- *  </table>
- *  </div>
+ * ![mrpt::opengl::CMesh3D](preview_CMesh3D.png)
  *
+ * \sa opengl::COpenGLScene,opengl::CMesh,opengl::CAssimpModel
  * \ingroup mrpt_opengl_grp
  */
 class CMesh3D : public CRenderizableShaderTriangles,
@@ -52,8 +47,9 @@ class CMesh3D : public CRenderizableShaderTriangles,
 
 	virtual shader_list_t requiredShaders() const override
 	{
-		return {DefaultShaderID::WIREFRAME, DefaultShaderID::TRIANGLES,
-				DefaultShaderID::POINTS};
+		return {
+			DefaultShaderID::WIREFRAME, DefaultShaderID::TRIANGLES,
+			DefaultShaderID::POINTS};
 	}
 	void onUpdateBuffers_Wireframe() override;
 	void onUpdateBuffers_Triangles() override;
@@ -130,9 +126,7 @@ class CMesh3D : public CRenderizableShaderTriangles,
 		vert_color = mrpt::img::TColorf(r, g, b, a);
 	}
 
-	void getBoundingBox(
-		mrpt::math::TPoint3D& bb_min,
-		mrpt::math::TPoint3D& bb_max) const override;
+	mrpt::math::TBoundingBox getBoundingBox() const override;
 
    protected:
 	using vertex_indices_t = mrpt::math::CMatrixFixed<uint32_t, 1, 4>;

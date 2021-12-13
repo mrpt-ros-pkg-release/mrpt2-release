@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -70,7 +70,7 @@ class CPose3DQuatPDF
 		const CPose3D& newReferenceBase) = 0;
 
 	/** This static method computes the two Jacobians of a pose composition
-	 * operation $f(x,u)= x \oplus u$
+	 * operation \f$ (x,u)= x \oplus u \f$
 	 *  \param out_x_oplus_u If set to !=nullptr, the result of "x+u" will be
 	 * stored here (it will be computed internally anyway).
 	 *  To see the mathematical derivation of the formulas, refer to the
@@ -109,5 +109,5 @@ class CPose3DQuatPDF
 		return SETOFOBJECTS::posePDF2opengl(*this);
 	}
 
-};  // End of class def.
+};	// End of class def.
 }  // namespace mrpt::poses

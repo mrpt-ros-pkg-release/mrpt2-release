@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -18,7 +18,7 @@ TEST(PlannerSimple2D, findPath)
 	using namespace std::string_literals;
 
 	const auto fil = mrpt::UNITTEST_BASEDIR +
-					 "/share/mrpt/datasets/2006-MalagaCampus.gridmap.gz"s;
+		"/share/mrpt/datasets/2006-MalagaCampus.gridmap.gz"s;
 
 	// Load the gridmap:
 	mrpt::maps::COccupancyGridMap2D gridmap;

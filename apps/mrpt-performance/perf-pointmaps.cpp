@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -47,7 +47,7 @@ double pointmap_test_0(int a1, int a2)
 		{
 			pose.setFromValues(
 				pose.x() + 0.04, pose.y() + 0.08, 0, pose.yaw() + 0.02);
-			pt_map.insertObservation(scan1, &pose);
+			pt_map.insertObservation(scan1, pose);
 		}
 	}
 	return tictac.Tac() / a2;
@@ -73,13 +73,12 @@ double pointmap_test_1(int a1, int a2)
 		pose.setFromValues(
 			pose.x() + 0.04, pose.y() + 0.08, 0, pose.yaw() + 0.02);
 
-		pt_map.insertObservation(scan1, &pose);
+		pt_map.insertObservation(scan1, pose);
 	}
 
 	const unsigned N_REPS = 25;
 
-	if (a2 == 0)
-		return tictac.Tac();
+	if (a2 == 0) return tictac.Tac();
 	else if (a2 == 1)
 	{  // 2d kd-tree
 		float x, y, dist2;
@@ -127,7 +126,7 @@ double pointmap_test_2(int a1, int a2)
 		{
 			pose.setFromValues(
 				pose.x() + 0.04, pose.y() + 0.08, 0, pose.yaw() + 0.02);
-			pt_map.insertObservation(scan1, &pose);
+			pt_map.insertObservation(scan1, pose);
 			if (a2 == 1)
 			{  // 2d kd-tree
 				float x, y, dist2;
@@ -163,7 +162,7 @@ double pointmap_test_3(int a1, int a2)
 	{
 		pose.setFromValues(
 			pose.x() + 0.04, pose.y() + 0.08, 0, pose.yaw() + 0.02);
-		pt_map.insertObservation(scan1, &pose);
+		pt_map.insertObservation(scan1, pose);
 	}
 
 	CTicTac tictac;
@@ -200,10 +199,10 @@ double pointmap_test_4(int a1, int a2)
 	pt_map2.insertionOptions.minDistBetweenLaserPoints = 0.03f;
 
 	CPose3D pose;
-	pt_map.insertObservation(scan1, &pose);
+	pt_map.insertObservation(scan1, pose);
 
 	CPose3D pose2(0.05, 0.04, 0, 4.0_deg, 0, 0);
-	pt_map2.insertObservation(scan1, &pose2);
+	pt_map2.insertObservation(scan1, pose2);
 
 	const CPose2D nullPose(0, 0, 0);
 	TMatchingPairList correspondences;
@@ -240,18 +239,18 @@ double pointmap_test_5(int a1, int a2)
 	{
 		pose.setFromValues(
 			pose.x() + 0.04, pose.y() + 0.08, 0, pose.yaw() + 0.02);
-		pt_map.insertObservation(scan1, &pose);
+		pt_map.insertObservation(scan1, pose);
 	}
 
 	CTicTac tictac;
 
-	float x0, x1, y0, y1, z0, z1;
 	for (long i = 0; i < a2; i++)
 	{
 		// Modify the map so the bounding box cache is invalidated:
 		pt_map.setPoint(0, 0, 0, 0);
 
-		pt_map.boundingBox(x0, x1, y0, y1, z0, z1);
+		// auto bb =
+		pt_map.boundingBox();
 	}
 
 	return tictac.Tac() / a2;

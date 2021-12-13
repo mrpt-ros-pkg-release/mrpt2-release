@@ -2,22 +2,14 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "CMainWindow.h"
-#include "CDocument.h"
-#include "CUndoManager.h"
-#include "ui_CMainWindow.h"
 
-#include "gui/observationTree/CPosesNode.h"
-#include "observationTree/CObservationImageNode.h"
-#include "observationTree/CObservationStereoImageNode.h"
-#include "observationTree/CObservationTreeModel.h"
-#include "observationTree/CObservationsNode.h"
-#include "observationTree/CPairNode.h"
+#include <mrpt/core/bits_math.h>
 
 #include <QAction>
 #include <QDebug>
@@ -27,12 +19,20 @@
 #include <QMenuBar>
 #include <QTreeWidgetItem>
 
-#include <mrpt/core/bits_math.h>
+#include "CDocument.h"
+#include "CUndoManager.h"
+#include "gui/observationTree/CPosesNode.h"
 #include "mrpt/gui/CQtGlCanvasBase.h"
 #include "mrpt/gui/about_box.h"
 #include "mrpt/gui/error_box.h"
 #include "mrpt/math/wrap2pi.h"
 #include "mrpt/poses/CPose3D.h"
+#include "observationTree/CObservationImageNode.h"
+#include "observationTree/CObservationStereoImageNode.h"
+#include "observationTree/CObservationTreeModel.h"
+#include "observationTree/CObservationsNode.h"
+#include "observationTree/CPairNode.h"
+#include "ui_CMainWindow.h"
 
 using mrpt::DEG2RAD;
 using mrpt::RAD2DEG;
@@ -283,8 +283,7 @@ void CMainWindow::itemClicked(const QModelIndex& index)
 			m_ui->m_viewer->showRobotDirection(stereoImageNode->getPose());
 			break;
 		}
-		default:
-			break;
+		default: break;
 	}
 }
 
@@ -366,10 +365,10 @@ void CMainWindow::moveRobotPosesOnMap(
 
 	mrpt::maps::CSimpleMap::TPosePDFSensFramePairList posesObsPairs =
 		m_document->get(idx);
-	for (size_t i = 0; i < idx.size(); ++i)
+	for (auto& poseSf : posesObsPairs)
 	{
-		mrpt::poses::CPose3DPDF::Ptr posePDF = posesObsPairs.at(i).first;
-		mrpt::poses::CPose3D pose = posePDF->getMeanVal();
+		mrpt::poses::CPose3DPDF::Ptr& posePDF = poseSf.pose;
+		mrpt::poses::CPose3D pose = poseSf.pose->getMeanVal();
 
 		pose.setFromValues(
 			pose[0], pose[1], pose[2], pose.yaw(), pose.pitch(), pose.roll());
@@ -470,9 +469,9 @@ void CMainWindow::updateDirection(
 {
 	if (!m_document) return;
 
-	auto posesObsPair = m_document->get(index);
+	mrpt::maps::CSimpleMap::Pair posesObsPair = m_document->get(index);
 
-	auto posePDF = posesObsPair.first;
+	auto posePDF = posesObsPair.pose;
 	auto pose = posePDF->getMeanVal();
 
 	pose.setFromValues(
@@ -480,7 +479,7 @@ void CMainWindow::updateDirection(
 	auto newPosePDF =
 		mrpt::poses::CPose3DPDFGaussian::Create(pose, posePDF->getCovariance());
 
-	posesObsPair.first = newPosePDF;
+	posesObsPair.pose = newPosePDF;
 	m_document->move(index, posesObsPair);
 
 	updateSaveButtonState();
@@ -520,7 +519,7 @@ void CMainWindow::updateRenderMapFromConfig()
 	for (auto& it : renderizableMaps)
 	{
 		QString name = QString::fromStdString(typeToName(it.first.type)) +
-					   QString::number(it.first.index);
+			QString::number(it.first.index);
 
 		auto action = m_ui->m_saveMetricMapRepresentation->addAction(name);
 		connect(
@@ -554,7 +553,8 @@ void CMainWindow::clearObservationsViewer()
 {
 	QLayout* layout = m_ui->m_contentsNodeViewer->layout();
 	QLayoutItem* child;
-	while ((child = layout->takeAt(0)) != 0) delete child;
+	while ((child = layout->takeAt(0)) != 0)
+		delete child;
 }
 
 void CMainWindow::addToRecent(const std::string& fileName)

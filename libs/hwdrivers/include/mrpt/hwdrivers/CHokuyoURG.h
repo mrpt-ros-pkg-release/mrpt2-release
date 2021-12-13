@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -57,6 +57,9 @@ namespace mrpt::hwdrivers
  *    # Sets decimation of scans directly at the Hokuyo scanner.
  *    # 0=means send all scans, 1=means send 50% of scans, etc.
  *    # scan_interval = 0
+ *
+ *    # Overrides communication timeout [milliseconds]
+ *    # comms_timeout_ms = 100
  *
  *    #preview = true // Enable GUI visualization of captured data
  *
@@ -163,17 +166,26 @@ class CHokuyoURG : public C2DRangeFinderAbstract
 	/** Parses the response from the device from raw bytes in m_rx_buffer, and
 	 * stored the received frame in m_rcv_data. Status codes are stored in
 	 * m_rcv_status0 and m_rcv_status1.
+	 *
+	 * If additionalWaitForData is true, a minimum 100ms timeout is applied, if
+	 * m_comms_timeout_ms is smaller than that.
+	 *
 	 * \return false on any error or if received frame is incomplete and needs
 	 * more input bytes.
 	 */
-	bool parseResponse();
+	bool parseResponse(bool additionalWaitForData = true);
 
 	/** Assures a minimum number of bytes in the input buffer, reading from the
-	 * serial port only if required.
+	 * serial port or socket only if required.
+	 *
+	 * If additionalWaitForData is true, a minimum 100ms timeout is applied, if
+	 * m_comms_timeout_ms is smaller than that.
+	 *
 	 * \return false if the number of bytes are not available, even after
 	 * trying to fetch more data from the serial port.
 	 */
-	bool ensureBufferHasBytes(const size_t nDesiredBytes);
+	bool ensureBufferHasBytes(
+		const size_t nDesiredBytes, bool additionalWaitForData);
 
    public:
 	/** Constructor
@@ -288,12 +300,14 @@ class CHokuyoURG : public C2DRangeFinderAbstract
 	/** Get intensity from lidar scan (default: false) */
 	bool m_intensity{false};
 	unsigned int m_scan_interval{0};
+	int m_comms_timeout_ms = 100;
+	int m_comms_between_timeout_ms = 1;
 
 	/** See the class documentation at the top for expected parameters */
 	void loadConfig_sensorSpecific(
 		const mrpt::config::CConfigFileBase& configSource,
 		const std::string& iniSection) override;
 
-};  // End of class
+};	// End of class
 
 }  // namespace mrpt::hwdrivers

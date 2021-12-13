@@ -2,19 +2,20 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
-#include "poses-precomp.h"  // Precompiled headers
-
+#include "poses-precomp.h"	// Precompiled headers
+//
 #include <mrpt/math/TPoint2D.h>
 #include <mrpt/math/TPoint3D.h>
 #include <mrpt/poses/CPoint2D.h>
 #include <mrpt/poses/CPose2D.h>
 #include <mrpt/serialization/CArchive.h>
 #include <mrpt/serialization/CSchemeArchiveBase.h>
+
 #include <iostream>
 #include <limits>
 
@@ -48,8 +49,7 @@ void CPoint2D::serializeFrom(mrpt::serialization::CArchive& in, uint8_t version)
 			in >> m_coords[0] >> m_coords[1];
 		}
 		break;
-		default:
-			MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
 	};
 }
 void CPoint2D::serializeTo(mrpt::serialization::CSchemeArchiveBase& out) const
@@ -70,8 +70,7 @@ void CPoint2D::serializeFrom(mrpt::serialization::CSchemeArchiveBase& in)
 			m_coords[1] = static_cast<double>(in["y"]);
 		}
 		break;
-		default:
-			MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
 	}
 }
 /*---------------------------------------------------------------

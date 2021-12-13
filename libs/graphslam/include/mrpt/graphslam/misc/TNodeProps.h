@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -21,14 +21,6 @@ struct TNodeProps
 	mrpt::obs::CObservation2DRangeScan::Ptr scan;
 
 	TNodeProps() = default;
-	TNodeProps(const TNodeProps& o) { *this = o; }
-
-	TNodeProps operator=(const TNodeProps& other)
-	{
-		this->pose = other.pose;
-		this->scan = other.scan;
-		return *this;
-	}
 
 	void getAsString(std::string* str) const
 	{
@@ -36,9 +28,7 @@ struct TNodeProps
 		str->clear();
 		*str += mrpt::format("Pose: %s|\t", this->pose.asString().c_str());
 		if (this->scan)
-		{
-			*str += mrpt::format("Scan #%lu", this->scan->getScanSize());
-		}
+		{ *str += mrpt::format("Scan #%lu", this->scan->getScanSize()); }
 		else
 		{
 			*str += "Scan: NONE";

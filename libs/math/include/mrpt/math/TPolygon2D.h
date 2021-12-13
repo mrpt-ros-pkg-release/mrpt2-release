@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -10,6 +10,7 @@
 
 #include <mrpt/math/TPoint2D.h>
 #include <mrpt/math/TPoseOrPoint.h>
+
 #include <vector>
 
 namespace mrpt::math
@@ -17,6 +18,7 @@ namespace mrpt::math
 /**
  * 2D polygon, inheriting from std::vector<TPoint2D>.
  * \sa TPolygon3D,TSegment2D,TLine2D,TPoint2D, CPolygon
+ * \ingroup geometry_grp
  */
 class TPolygon2D : public std::vector<TPoint2D>
 {
@@ -68,6 +70,9 @@ class TPolygon2D : public std::vector<TPoint2D>
 		size_t numEdges, double radius, TPolygon2D& poly,
 		const mrpt::math::TPose2D& pose);
 };
+
+/** Text streaming function */
+std::ostream& operator<<(std::ostream& o, const TPolygon2D& p);
 
 }  // namespace mrpt::math
 

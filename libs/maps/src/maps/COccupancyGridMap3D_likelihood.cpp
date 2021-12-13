@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "maps-precomp.h"  // Precomp header
-
+//
 #include <mrpt/maps/COccupancyGridMap3D.h>
 #include <mrpt/obs/CObservation2DRangeScan.h>
 #include <mrpt/obs/CObservation3DRangeScan.h>
@@ -16,7 +16,8 @@
 using namespace mrpt::maps;
 
 double COccupancyGridMap3D::internal_computeObservationLikelihood(
-	const mrpt::obs::CObservation& obs, const mrpt::poses::CPose3D& takenFrom3D)
+	const mrpt::obs::CObservation& obs,
+	const mrpt::poses::CPose3D& takenFrom3D) const
 {
 	THROW_EXCEPTION("Implement me!");
 	return .0;
@@ -27,9 +28,7 @@ bool COccupancyGridMap3D::internal_canComputeObservationLikelihood(
 {
 	if (auto* o = dynamic_cast<const mrpt::obs::CObservation2DRangeScan*>(&obs);
 		o != nullptr)
-	{
-		return true;
-	}
+	{ return true; }
 
 	return false;
 }

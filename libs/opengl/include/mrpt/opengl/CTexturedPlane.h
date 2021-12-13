@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -10,14 +10,17 @@
 
 #include <mrpt/math/TPolygonWithPlane.h>
 #include <mrpt/opengl/CRenderizableShaderTexturedTriangles.h>
+#include <mrpt/opengl/CRenderizableShaderTriangles.h>
 
 namespace mrpt::opengl
 {
 /** A 2D plane in the XY plane with a texture image.
+ *  Lighting is disabled by default in this class.
  *  \sa opengl::COpenGLScene
  * \ingroup mrpt_opengl_grp
  */
-class CTexturedPlane : public CRenderizableShaderTexturedTriangles
+class CTexturedPlane : public CRenderizableShaderTexturedTriangles,
+					   public CRenderizableShaderTriangles
 {
 	DEFINE_SERIALIZABLE(CTexturedPlane, mrpt::opengl)
 
@@ -29,12 +32,37 @@ class CTexturedPlane : public CRenderizableShaderTexturedTriangles
 	/** Used for ray-tracing */
 	mutable std::vector<mrpt::math::TPolygonWithPlane> tmpPoly;
 	void updatePoly() const;
-	void unloadTexture();
 
    public:
 	/** @name Renderizable shader API virtual methods
 	 * @{ */
+	void render(const RenderContext& rc) const override;
+	void renderUpdateBuffers() const override;
 	virtual void onUpdateBuffers_TexturedTriangles() override;
+	virtual void onUpdateBuffers_Triangles() override;
+	virtual shader_list_t requiredShaders() const override
+	{
+		return {
+			DefaultShaderID::TRIANGLES, DefaultShaderID::TEXTURED_TRIANGLES};
+	}
+	void freeOpenGLResources() override
+	{
+		CRenderizableShaderTriangles::freeOpenGLResources();
+		CRenderizableShaderTexturedTriangles::freeOpenGLResources();
+	}
+
+	/** Control whether to render the FRONT, BACK, or BOTH (default) set of
+	 * faces. Refer to docs for glCullFace() */
+	void cullFaces(const TCullFace& cf)
+	{
+		CRenderizableShaderTexturedTriangles::cullFaces(cf);
+		CRenderizableShaderTriangles::cullFaces(cf);
+	}
+	TCullFace cullFaces() const
+	{
+		return CRenderizableShaderTexturedTriangles::cullFaces();
+	}
+
 	/** @} */
 
 	CTexturedPlane(
@@ -45,6 +73,8 @@ class CTexturedPlane : public CRenderizableShaderTexturedTriangles
 	 * plane. */
 	void setPlaneCorners(float xMin, float xMax, float yMin, float yMax)
 	{
+		ASSERT_NOT_EQUAL_(xMin, xMax);
+		ASSERT_NOT_EQUAL_(yMin, yMax);
 		m_xMin = xMin;
 		m_xMax = xMax;
 		m_yMin = yMin;
@@ -65,9 +95,7 @@ class CTexturedPlane : public CRenderizableShaderTexturedTriangles
 	}
 
 	bool traceRay(const mrpt::poses::CPose3D& o, double& dist) const override;
-	void getBoundingBox(
-		mrpt::math::TPoint3D& bb_min,
-		mrpt::math::TPoint3D& bb_max) const override;
+	mrpt::math::TBoundingBox getBoundingBox() const override;
 };
 
 }  // namespace mrpt::opengl

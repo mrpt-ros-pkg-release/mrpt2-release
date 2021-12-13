@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -15,6 +15,7 @@
 #include <mrpt/system/CTicTac.h>
 #include <mrpt/system/filesystem.h>
 #include <mrpt/system/os.h>
+
 #include <iostream>
 
 using namespace mrpt;
@@ -108,7 +109,7 @@ void theMainThing()
 
 	float phi = (float)0.0_deg;
 
-	CPose2D nullPose(0, 0, phi);
+	auto nullPose = CPose3D(0, 0, 0, phi, 0, 0);
 
 	for (float y = evalgrid_y_min; y < evalgrid_y_max; y += res)
 	{

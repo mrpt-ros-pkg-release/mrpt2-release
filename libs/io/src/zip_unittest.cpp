@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -22,7 +22,7 @@ TEST(Compress, DataBlockGZ)
 	std::vector<uint8_t> in_data(N);
 	for (size_t i = 0; i < N; i++)
 		in_data[i] = static_cast<uint8_t>(
-			i);  // We need low entropy for compression to have something to do!
+			i);	 // We need low entropy for compression to have something to do!
 
 	// Compress it:
 	std::vector<uint8_t> compress_data;

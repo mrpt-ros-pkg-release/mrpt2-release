@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "slam-precomp.h"  // Precompiled headers
-
+//
 #include <mrpt/config/CConfigFilePrefixer.h>
 #include <mrpt/graphs/CGraphPartitioner.h>
 #include <mrpt/maps/CMultiMetricMap.h>
@@ -22,6 +22,7 @@
 #include <mrpt/slam/CIncrementalMapPartitioner.h>
 #include <mrpt/slam/observations_overlap.h>
 #include <mrpt/system/CTicTac.h>
+
 #include <Eigen/Dense>
 
 using namespace mrpt::slam;
@@ -112,7 +113,7 @@ void CIncrementalMapPartitioner::clear()
 {
 	m_last_last_partition_are_new_ones = false;
 	m_A.setSize(0, 0);
-	m_individualFrames.clear();  // Free the map...
+	m_individualFrames.clear();	 // Free the map...
 	m_individualMaps.clear();
 	m_last_partition.clear();  // Delete last partitions
 }
@@ -132,10 +133,10 @@ uint32_t CIncrementalMapPartitioner::addMapFrame(
 	newMetricMap->setListOfMaps(options.metricmap);
 
 	// Build robo-centric map for each keyframe:
-	frame.insertObservationsInto(newMetricMap.get());
+	frame.insertObservationsInto(*newMetricMap);
 
 	// Add tuple (pose,SF) to "simplemap":
-	m_individualFrames.insert(&robotPose, frame);
+	m_individualFrames.insert(robotPose, frame);
 
 	// Expand the adjacency matrix (pads with 0)
 	m_A.setSize(n, n);
@@ -145,7 +146,7 @@ uint32_t CIncrementalMapPartitioner::addMapFrame(
 
 	// Select method to evaluate similarity:
 	similarity_func_t sim_func;
-	using namespace std::placeholders;  // for _1, _2 etc.
+	using namespace std::placeholders;	// for _1, _2 etc.
 	switch (options.simil_method)
 	{
 		case smMETRIC_MAP_MATCHING:
@@ -155,11 +156,8 @@ uint32_t CIncrementalMapPartitioner::addMapFrame(
 		case smOBSERVATION_OVERLAP:
 			sim_func = &eval_similarity_observation_overlap;
 			break;
-		case smCUSTOM_FUNCTION:
-			sim_func = m_sim_func;
-			break;
-		default:
-			THROW_EXCEPTION("Invalid value for `simil_method`");
+		case smCUSTOM_FUNCTION: sim_func = m_sim_func; break;
+		default: THROW_EXCEPTION("Invalid value for `simil_method`");
 	};
 
 	// Evaluate the similarity metric for the last row & column:
@@ -301,7 +299,8 @@ void CIncrementalMapPartitioner::removeSetOfNodes(
 	// --------------------------------------------------
 	m_last_partition.resize(1);
 	m_last_partition[0].resize(nNew);
-	for (i = 0; i < nNew; i++) m_last_partition[0][i] = i;
+	for (i = 0; i < nNew; i++)
+		m_last_partition[0][i] = i;
 
 	m_last_last_partition_are_new_ones = false;
 
@@ -373,9 +372,8 @@ void CIncrementalMapPartitioner::getAs3DScene(
 
 	for (size_t i = 0; i < m_individualFrames.size(); i++)
 	{
-		CPose3DPDF::Ptr i_pdf;
-		CSensoryFrame::Ptr i_sf;
-		m_individualFrames.get(i, i_pdf, i_sf);
+		const auto [i_pdf, i_sf] = m_individualFrames.get(i);
+		(void)i_sf;	 // unused
 
 		CPose3D i_mean;
 		i_pdf->getMean(i_mean);
@@ -407,9 +405,8 @@ void CIncrementalMapPartitioner::getAs3DScene(
 		// Arcs:
 		for (size_t j = i + 1; j < m_individualFrames.size(); j++)
 		{
-			CPose3DPDF::Ptr j_pdf;
-			CSensoryFrame::Ptr j_sf;
-			m_individualFrames.get(j, j_pdf, j_sf);
+			const auto [j_pdf, j_sf] = m_individualFrames.get(j);
+			(void)j_sf;	 // unused
 
 			CPose3D j_mean;
 			j_pdf->getMean(j_mean);
@@ -453,8 +450,7 @@ void CIncrementalMapPartitioner::serializeFrom(
 			}
 		}
 		break;
-		default:
-			MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
 	};
 }
 

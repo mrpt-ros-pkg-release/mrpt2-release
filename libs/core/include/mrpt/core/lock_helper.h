@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -37,6 +37,16 @@ class LockHelper
 		l_ = o.l;
 		o.l = nullptr;
 		return *this;
+	}
+
+	/** Can be used to unlock the mutex before this object dtor
+	 * \note [New in MRPT 2.1.5]
+	 */
+	void unlock()
+	{
+		if (!l_) return;
+		l_->unlock();
+		l_ = nullptr;
 	}
 
    private:

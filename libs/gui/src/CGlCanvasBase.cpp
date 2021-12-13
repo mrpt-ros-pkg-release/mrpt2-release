@@ -2,17 +2,19 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "gui-precomp.h"  // Precompiled headers
-
+//
 #include <mrpt/gui/CGlCanvasBase.h>
 #include <mrpt/opengl/opengl_api.h>
 #include <mrpt/system/CTicTac.h>
+
 #include <cstdlib>
+#include <iostream>
 
 #if MRPT_HAS_OPENGL_GLUT
 #ifdef _WIN32
@@ -32,7 +34,7 @@
 #include <GL/freeglut_ext.h>
 #endif
 #endif
-#endif  // MRPT_HAS_OPENGL_GLUT
+#endif	// MRPT_HAS_OPENGL_GLUT
 
 using namespace mrpt;
 using namespace mrpt::gui;
@@ -41,8 +43,6 @@ using namespace std;
 using mrpt::system::CTicTac;
 
 float CGlCanvasBase::SENSIBILITY_DEG_PER_PIXEL = 0.1f;
-
-CGlCanvasBase::CGlCanvasBase() {}
 
 CGlCanvasBase::~CGlCanvasBase()
 {
@@ -94,12 +94,12 @@ void CGlCanvasBase::updateRotate(CamaraParams& params, int x, int y) const
 	mouseGlitchFilter(x, y, m_mouseClickX, m_mouseClickY);
 
 	const float dis = max(0.01f, (params.cameraZoomDistance));
-	float eye_x =
-		params.cameraPointingX + dis * cos(DEG2RAD(params.cameraAzimuthDeg)) *
-									 cos(DEG2RAD(params.cameraElevationDeg));
-	float eye_y =
-		params.cameraPointingY + dis * sin(DEG2RAD(params.cameraAzimuthDeg)) *
-									 cos(DEG2RAD(params.cameraElevationDeg));
+	float eye_x = params.cameraPointingX +
+		dis * cos(DEG2RAD(params.cameraAzimuthDeg)) *
+			cos(DEG2RAD(params.cameraElevationDeg));
+	float eye_y = params.cameraPointingY +
+		dis * sin(DEG2RAD(params.cameraAzimuthDeg)) *
+			cos(DEG2RAD(params.cameraElevationDeg));
 	float eye_z =
 		params.cameraPointingZ + dis * sin(DEG2RAD(params.cameraElevationDeg));
 
@@ -111,12 +111,12 @@ void CGlCanvasBase::updateRotate(CamaraParams& params, int x, int y) const
 	params.setElevationDeg(params.cameraElevationDeg + A_ElevationDeg);
 
 	// Move cameraPointing pos:
-	params.cameraPointingX =
-		eye_x - dis * cos(DEG2RAD(params.cameraAzimuthDeg)) *
-					cos(DEG2RAD(params.cameraElevationDeg));
-	params.cameraPointingY =
-		eye_y - dis * sin(DEG2RAD(params.cameraAzimuthDeg)) *
-					cos(DEG2RAD(params.cameraElevationDeg));
+	params.cameraPointingX = eye_x -
+		dis * cos(DEG2RAD(params.cameraAzimuthDeg)) *
+			cos(DEG2RAD(params.cameraElevationDeg));
+	params.cameraPointingY = eye_y -
+		dis * sin(DEG2RAD(params.cameraAzimuthDeg)) *
+			cos(DEG2RAD(params.cameraElevationDeg));
 	params.cameraPointingZ =
 		eye_z - dis * sin(DEG2RAD(params.cameraElevationDeg));
 }
@@ -157,10 +157,12 @@ void CGlCanvasBase::updatePan(CamaraParams& params, int x, int y) const
 	float Ay = -(x - m_mouseClickX);
 	float Ax = -(y - m_mouseClickY);
 	float D = 0.001f * params.cameraZoomDistance;
-	params.cameraPointingX += D * (Ax * cos(DEG2RAD(params.cameraAzimuthDeg)) -
-								   Ay * sin(DEG2RAD(params.cameraAzimuthDeg)));
-	params.cameraPointingY += D * (Ax * sin(DEG2RAD(params.cameraAzimuthDeg)) +
-								   Ay * cos(DEG2RAD(params.cameraAzimuthDeg)));
+	params.cameraPointingX += D *
+		(Ax * cos(DEG2RAD(params.cameraAzimuthDeg)) -
+		 Ay * sin(DEG2RAD(params.cameraAzimuthDeg)));
+	params.cameraPointingY += D *
+		(Ax * sin(DEG2RAD(params.cameraAzimuthDeg)) +
+		 Ay * cos(DEG2RAD(params.cameraAzimuthDeg)));
 }
 
 CGlCanvasBase::CamaraParams CGlCanvasBase::cameraParams() const
@@ -302,16 +304,19 @@ double CGlCanvasBase::renderCanvas(int width, int height)
 			// Set the camera params in the scene:
 			if (!useCameraFromScene)
 			{
-				COpenGLViewport::Ptr view = m_openGLScene->getViewport("main");
-				if (!view)
+				if (COpenGLViewport::Ptr view =
+						m_openGLScene->getViewport("main");
+					view)
 				{
-					THROW_EXCEPTION(
-						"Fatal error: there is no 'main' viewport in the 3D "
-						"scene!");
+					mrpt::opengl::CCamera& cam = view->getCamera();
+					updateCameraParams(cam);
 				}
-
-				mrpt::opengl::CCamera& cam = view->getCamera();
-				updateCameraParams(cam);
+				else
+				{
+					std::cerr << "[CGlCanvasBase::renderCanvas] Warning: there "
+								 "is no 'main' viewport in the 3D scene!"
+							  << std::endl;
+				}
 			}
 
 			tictac.Tic();
@@ -349,10 +354,25 @@ void CGlCanvasBase::CamaraParams::setElevationDeg(float deg)
 {
 	cameraElevationDeg = deg;
 
-	if (cameraElevationDeg < -90.0f)
-		cameraElevationDeg = -90.0f;
+	if (cameraElevationDeg < -90.0f) cameraElevationDeg = -90.0f;
 	else if (cameraElevationDeg > 90.0f)
 		cameraElevationDeg = 90.0f;
+}
+
+CGlCanvasBase::CamaraParams CGlCanvasBase::CamaraParams::FromCamera(
+	const mrpt::opengl::CCamera& c)
+{
+	CGlCanvasBase::CamaraParams p;
+	p.cameraAzimuthDeg = c.getAzimuthDegrees();
+	p.cameraElevationDeg = c.getElevationDegrees();
+	p.cameraFOV = c.getProjectiveFOVdeg();
+	p.cameraIsProjective = c.isProjective();
+	p.cameraPointingX = c.getPointingAtX();
+	p.cameraPointingY = c.getPointingAtY();
+	p.cameraPointingZ = c.getPointingAtZ();
+	p.cameraZoomDistance = c.getZoomDistance();
+
+	return p;
 }
 
 void CGlCanvasBaseHeadless::renderError(const std::string& e)

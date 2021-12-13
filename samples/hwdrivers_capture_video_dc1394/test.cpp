@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -10,6 +10,7 @@
 #include <mrpt/gui/CDisplayWindow.h>
 #include <mrpt/hwdrivers/CImageGrabber_dc1394.h>
 #include <mrpt/system/CTicTac.h>
+
 #include <iostream>
 
 using namespace mrpt::hwdrivers;
@@ -32,8 +33,8 @@ void TestCapture_1394()
 	uint64_t cameraGUID = 0;
 	uint16_t cameraUnit = 0;
 
-	options.frame_width = 1024;  // 640;
-	options.frame_height = 768;  // 480;
+	options.frame_width = 1024;	 // 640;
+	options.frame_height = 768;	 // 480;
 	options.color_coding = COLOR_CODING_YUV422;
 
 	// Other capture options:

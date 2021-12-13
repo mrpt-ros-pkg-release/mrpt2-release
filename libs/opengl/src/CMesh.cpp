@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
-#include "opengl-precomp.h"  // Precompiled header
-
+#include "opengl-precomp.h"	 // Precompiled header
+//
 #include <mrpt/img/color_maps.h>
 #include <mrpt/math/ops_containers.h>
 #include <mrpt/opengl/CMesh.h>
@@ -16,6 +16,7 @@
 #include <mrpt/opengl/opengl_api.h>
 #include <mrpt/poses/CPose3D.h>
 #include <mrpt/serialization/CArchive.h>
+
 #include <Eigen/Dense>
 
 using namespace mrpt;
@@ -74,7 +75,7 @@ void CMesh::updateTriangles() const
 	const auto rows = Z.rows();
 
 	actualMesh.clear();
-	if (cols == 0 && rows == 0) return;  // empty mesh
+	if (cols == 0 && rows == 0) return;	 // empty mesh
 
 	ASSERT_(cols > 0 && rows > 0);
 	ASSERT_GT_(m_xMax, m_xMin);
@@ -126,7 +127,8 @@ void CMesh::updateTriangles() const
 				tri.y(1) = tri.y(0);
 				tri.z(1) = Z(iX + 1, iY);
 				// Assign alpha channel
-				for (int i = 0; i < 3; i++) tri.a(i) = m_color.A;
+				for (int i = 0; i < 3; i++)
+					tri.a(i) = m_color.A;
 
 				if (m_colorFromZ)
 				{
@@ -466,8 +468,7 @@ void CMesh::serializeFrom(mrpt::serialization::CArchive& in, uint8_t version)
 		}
 			m_trianglesUpToDate = false;
 			break;
-		default:
-			MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
 	};
 	m_trianglesUpToDate = false;
 	CRenderizable::notifyChange();
@@ -574,7 +575,8 @@ mrpt::math::TPolygonWithPlane createPolygonFromTriangle(
 	const std::pair<mrpt::opengl::TTriangle, CMesh::TTriangleVertexIndices>& p)
 {
 	const mrpt::opengl::TTriangle& t = p.first;
-	for (size_t i = 0; i < 3; i++) tmpPoly[i] = t.vertex(i);
+	for (size_t i = 0; i < 3; i++)
+		tmpPoly[i] = t.vertex(i);
 	return mrpt::math::TPolygonWithPlane(tmpPoly);
 }
 
@@ -590,20 +592,9 @@ void CMesh::updatePolygons() const
 	CRenderizable::notifyChange();
 }
 
-void CMesh::getBoundingBox(
-	mrpt::math::TPoint3D& bb_min, mrpt::math::TPoint3D& bb_max) const
+auto CMesh::getBoundingBox() const -> mrpt::math::TBoundingBox
 {
-	bb_min.x = m_xMin;
-	bb_min.y = m_yMin;
-	bb_min.z = Z.minCoeff();
-
-	bb_max.x = m_xMax;
-	bb_max.y = m_yMax;
-	bb_max.z = Z.maxCoeff();
-
-	// Convert to coordinates of my parent:
-	m_pose.composePoint(bb_min, bb_min);
-	m_pose.composePoint(bb_max, bb_max);
+	return trianglesBoundingBox().compose(m_pose);
 }
 
 void CMesh::adjustGridToImageAR()
@@ -612,7 +603,7 @@ void CMesh::adjustGridToImageAR()
 	const float ycenter = 0.5f * (m_yMin + m_yMax);
 	const float xwidth = m_xMax - m_xMin;
 	const float newratio = float(getTextureImage().getWidth()) /
-						   float(getTextureImage().getHeight());
+		float(getTextureImage().getHeight());
 	m_yMax = ycenter + 0.5f * newratio * xwidth;
 	m_yMin = ycenter - 0.5f * newratio * xwidth;
 	CRenderizable::notifyChange();

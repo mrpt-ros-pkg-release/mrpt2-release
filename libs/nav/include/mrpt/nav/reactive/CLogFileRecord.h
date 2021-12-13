@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -15,6 +15,7 @@
 #include <mrpt/nav/holonomic/ClearanceDiagram.h>
 #include <mrpt/nav/tpspace/CParameterizedTrajectoryGenerator.h>
 #include <mrpt/serialization/CSerializable.h>
+
 #include <map>
 #include <vector>
 
@@ -93,7 +94,7 @@ class CLogFileRecord : public mrpt::serialization::CSerializable
 	/** The robot pose (from odometry and from the localization/SLAM system). */
 	mrpt::math::TPose2D robotPoseLocalization, robotPoseOdometry;
 	mrpt::math::TPose2D relPoseSense,
-		relPoseVelCmd;  //! Relative poses (wrt to robotPoseLocalization) for
+		relPoseVelCmd;	//! Relative poses (wrt to robotPoseLocalization) for
 	//! extrapolated paths at two instants: time of obstacle
 	//! sense, and future pose of motion comman
 	/** The relative location of target(s) in Workspace. */

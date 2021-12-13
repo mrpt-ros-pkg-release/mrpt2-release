@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -15,18 +15,11 @@
 namespace mrpt::opengl
 {
 /** A set of independent lines (or segments), one line with its own start and
- * end positions (X,Y,Z).
- * Optionally, the vertices can be also shown as dots.
- *  \sa opengl::COpenGLScene
+ * end positions (X,Y,Z). Optionally, the vertices can be also shown as dots.
  *
- *  <div align="center">
- *  <table border="0" cellspan="4" cellspacing="4" style="border-width: 1px;
- * border-style: solid;">
- *   <tr> <td> mrpt::opengl::CSetOfLines </td> <td> \image html
- * preview_CSetOfLines.png </td> </tr>
- *  </table>
- *  </div>
+ * ![mrpt::opengl::CSetOfLines](preview_CSetOfLines.png)
  *
+ * \sa opengl::COpenGLScene
  * \ingroup mrpt_opengl_grp
  */
 class CSetOfLines : public CRenderizableShaderWireFrame,
@@ -174,9 +167,10 @@ class CSetOfLines : public CRenderizableShaderWireFrame,
 		double z1)
 	{
 		setLineByIndex(
-			index, mrpt::math::TSegment3D(
-					   mrpt::math::TPoint3D(x0, y0, z0),
-					   mrpt::math::TPoint3D(x1, y1, z1)));
+			index,
+			mrpt::math::TSegment3D(
+				mrpt::math::TPoint3D(x0, y0, z0),
+				mrpt::math::TPoint3D(x1, y1, z1)));
 		CRenderizable::notifyChange();
 	}
 	/**
@@ -228,9 +222,7 @@ class CSetOfLines : public CRenderizableShaderWireFrame,
 	inline const_reverse_iterator rend() const { return m_Segments.rend(); }
 	/** Evaluates the bounding box of this object (including possible children)
 	 * in the coordinate frame of the object parent. */
-	void getBoundingBox(
-		mrpt::math::TPoint3D& bb_min,
-		mrpt::math::TPoint3D& bb_max) const override;
+	mrpt::math::TBoundingBox getBoundingBox() const override;
 
 	void enableAntiAliasing(bool enable = true)
 	{

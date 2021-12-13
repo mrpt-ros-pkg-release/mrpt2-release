@@ -2,21 +2,23 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
-#include "io-precomp.h"  // Precompiled headers
-
+#include "io-precomp.h"	 // Precompiled headers
+//
 #include <mrpt/core/exceptions.h>
 #include <mrpt/io/CPipe.h>
 
 #ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #else
 #include <sys/types.h>
 #include <unistd.h>
+
 #include <cstdio>
 #include <cstdlib>
 #endif
@@ -153,11 +155,10 @@ size_t CPipeBaseEndPoint::Read(void* Buffer, size_t Count)
 		{
 			// Use the "first" or "between" timeouts:
 			unsigned int curTimeout_us = alreadyRead == 0
-											 ? timeout_read_start_us
-											 : timeout_read_between_us;
+				? timeout_read_start_us
+				: timeout_read_between_us;
 
-			if (curTimeout_us == 0)
-				ptrTimeout = nullptr;
+			if (curTimeout_us == 0) ptrTimeout = nullptr;
 			else
 			{
 				timeoutSelect.tv_sec = curTimeout_us / 1000000;
@@ -168,10 +169,10 @@ size_t CPipeBaseEndPoint::Read(void* Buffer, size_t Count)
 			// Wait for received data
 			if (::select(
 					m_pipe_file + 1,  // __nfds
-					&read_fds,  // Wait for read
+					&read_fds,	// Wait for read
 					nullptr,  // Wait for write
 					nullptr,  // Wait for except.
-					ptrTimeout)  // Timeout
+					ptrTimeout)	 // Timeout
 				!= 1)
 			{  // Timeout:
 				timeoutExpired = true;

@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -47,8 +47,7 @@ struct CLogOddsGridMap3D : public detail::logoddscell_traits<TCELL>
 		cell_t* theCell, const cell_t logodd_obs, const cell_t thres)
 	{
 		if (theCell == nullptr) return;
-		if (*theCell > thres)
-			*theCell -= logodd_obs;
+		if (*theCell > thres) *theCell -= logodd_obs;
 		else
 			*theCell = traits_t::CELLTYPE_MIN;
 	}
@@ -84,8 +83,7 @@ struct CLogOddsGridMap3D : public detail::logoddscell_traits<TCELL>
 		cell_t* theCell, const cell_t logodd_obs, const cell_t thres)
 	{
 		if (theCell == nullptr) return;
-		if (*theCell < thres)
-			*theCell += logodd_obs;
+		if (*theCell < thres) *theCell += logodd_obs;
 		else
 			*theCell = traits_t::CELLTYPE_MAX;
 	}

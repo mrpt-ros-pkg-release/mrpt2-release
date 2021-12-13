@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -10,11 +10,15 @@
 
 #include <mrpt/bayes/CParticleFilterCapable.h>
 #include <mrpt/bayes/CParticleFilterData.h>
+#include <mrpt/core/Stringifyable.h>
 #include <mrpt/math/TPose3D.h>
 #include <mrpt/poses/CPose3DPDF.h>
 
 namespace mrpt::poses
 {
+using PFDataTPose3D = mrpt::bayes::CParticleFilterData<
+	mrpt::math::TPose3D, mrpt::bayes::particle_storage_mode::VALUE>;
+
 /** Declares a class that represents a Probability Density function (PDF) of a
  * 3D pose
  *
@@ -28,13 +32,10 @@ namespace mrpt::poses
  */
 class CPose3DPDFParticles
 	: public CPose3DPDF,
-	  public mrpt::bayes::CParticleFilterData<
-		  mrpt::math::TPose3D, mrpt::bayes::particle_storage_mode::VALUE>,
+	  public PFDataTPose3D,
 	  public mrpt::bayes::CParticleFilterDataImpl<
-		  CPose3DPDFParticles,
-		  mrpt::bayes::CParticleFilterData<
-			  mrpt::math::TPose3D,
-			  mrpt::bayes::particle_storage_mode::VALUE>::CParticleList>
+		  CPose3DPDFParticles, PFDataTPose3D::CParticleList>,
+	  public mrpt::Stringifyable
 {
 	DEFINE_SERIALIZABLE(CPose3DPDFParticles, mrpt::poses)
 
@@ -115,5 +116,7 @@ class CPose3DPDFParticles
 	/** Bayesian fusion */
 	void bayesianFusion(const CPose3DPDF& p1, const CPose3DPDF& p2) override;
 
-};  // End of class def.
+	std::string asString() const override;
+
+};	// End of class def.
 }  // namespace mrpt::poses

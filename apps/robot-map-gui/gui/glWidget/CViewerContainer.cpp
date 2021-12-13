@@ -2,18 +2,19 @@
    |                     Mobile Robot Programming Toolkit (MRPT)               |
    |                          https://www.mrpt.org/                            |
    |                                                                           |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file        |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file        |
    | See: https://www.mrpt.org/Authors - All rights reserved.                  |
    | Released under BSD License. See details in https://www.mrpt.org/License   |
    +---------------------------------------------------------------------------+
    */
 #include "CViewerContainer.h"
-#include "CGLWidget.h"
-#include "gui/observationTree/CRangeScanNode.h"
-#include "ui_CViewerContainer.h"
 
 #include <QDebug>
 #include <QTextEdit>
+
+#include "CGLWidget.h"
+#include "gui/observationTree/CRangeScanNode.h"
+#include "ui_CViewerContainer.h"
 
 CViewerContainer::CViewerContainer(QWidget* parent)
 	: QWidget(parent),
@@ -22,11 +23,10 @@ CViewerContainer::CViewerContainer(QWidget* parent)
 	  m_helpLoadMap(
 		  tr("For loading the map, press File -> Open simplemap or Ctrl + "
 			 "O.\n\n\n")),
-	  m_helpLoadConfig(
-		  tr("For display any maps you must download the configuration file. "
-			 "For this press File -> Load config or Ctrl + E.\n\n\n"
-			 "If you loaded simplemap, you can yourself add the map from "
-			 "Configuration widget"))
+	  m_helpLoadConfig(tr(
+		  "The list of metric maps is empty. Either:\n\n"
+		  "- Select File -> Load config or Ctrl + E; or\n"
+		  "- manually define the metric maps from the 'Configuration' button."))
 {
 	m_ui->setupUi(this);
 	connect(
@@ -136,12 +136,12 @@ void CViewerContainer::updateConfigChanges(
 	for (auto& it : renderizableMaps)
 	{
 		bool is2D = it.first.type == TypeOfConfig::PointsMap ||
-					it.first.type == TypeOfConfig::Occupancy;
+			it.first.type == TypeOfConfig::Occupancy;
 		CGlWidget* gl = new CGlWidget(is2D);
 		gl->fillMap(it.second);
 
 		QString name = QString::fromStdString(typeToName(it.first.type)) +
-					   QString::number(it.first.index);
+			QString::number(it.first.index);
 		int tabIndex = m_ui->m_tabWidget->addTab(gl, name);
 		m_tabsInfo.emplace(tabIndex, it.first);
 
@@ -202,7 +202,8 @@ void CViewerContainer::changedSelected(
 	const std::vector<CRobotPose::Ptr>& robotPoses)
 {
 	std::vector<size_t> indexes;
-	for (auto& pose : robotPoses) indexes.push_back(pose->getId());
+	for (auto& pose : robotPoses)
+		indexes.push_back(pose->getId());
 	emit selectedChanged(indexes);
 }
 

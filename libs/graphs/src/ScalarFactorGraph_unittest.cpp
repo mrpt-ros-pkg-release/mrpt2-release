@@ -2,20 +2,21 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include <gtest/gtest.h>
 #include <mrpt/graphs/ScalarFactorGraph.h>
+
 #include <Eigen/Dense>
 
 using namespace mrpt;
 using namespace mrpt::graphs;
 using namespace std;
 
-#if EIGEN_VERSION_AT_LEAST(3, 1, 0)  // Requires Eigen>=3.1
+#if EIGEN_VERSION_AT_LEAST(3, 1, 0)	 // Requires Eigen>=3.1
 
 struct MySimpleUnaryEdge : public ScalarFactorGraph::UnaryFactorVirtualBase
 {
@@ -85,7 +86,8 @@ TEST(ScalarFactorGraph, MiniMRF_UnaryEdges)
 	edges1.emplace_back(my_map, 2, 3.0, 4.0);
 	edges1.emplace_back(my_map, 3, 2.0, 16.0);
 
-	for (const auto& e : edges1) gmrf.addConstraint(e);
+	for (const auto& e : edges1)
+		gmrf.addConstraint(e);
 
 	// Test 1:
 	// --------------
@@ -176,4 +178,4 @@ TEST(ScalarFactorGraph, MiniMRF_BinaryEdges)
 	}
 }
 
-#endif  // Eigen>=3.1
+#endif	// Eigen>=3.1

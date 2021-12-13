@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -15,6 +15,7 @@
 #include <mrpt/gui.h>
 #include <mrpt/math/distributions.h>
 #include <mrpt/random.h>
+
 #include <iostream>
 
 using namespace mrpt;
@@ -33,7 +34,7 @@ void TestHist()
 	hist.add(45);
 
 	cout << "Histogram test:" << endl;
-	cout << "Should be 1: " << hist.getBinCount(0) << endl;  // Result: "1"
+	cout << "Should be 1: " << hist.getBinCount(0) << endl;	 // Result: "1"
 	cout << "Should be 0.33: " << hist.getBinRatio(0)
 		 << endl;  // Result: "0.33"
 }

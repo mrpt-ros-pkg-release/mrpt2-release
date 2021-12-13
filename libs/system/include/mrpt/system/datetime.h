@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -10,6 +10,7 @@
 
 #include <mrpt/core/Clock.h>
 #include <mrpt/core/exceptions.h>
+
 #include <cstdint>
 #include <iosfwd>
 #include <string>
@@ -39,22 +40,31 @@ namespace mrpt::system
  */
 using TTimeStamp = mrpt::Clock::time_point;
 
-/** Represents an invalid timestamp, where applicable. */
-#define INVALID_TIMESTAMP mrpt::Clock::time_point()
+/** Required to ensure INVALID_TIMESTAMP returns a "const T&"
+ *  \note (New in MRPT 2.3.3)
+ */
+const TTimeStamp& InvalidTimeStamp();
 
-/** The parts of a date/time (it's like the standard 'tm' but with fractions of
- * seconds).
- * \sa TTimeStamp, timestampToParts, buildTimestampFromParts
+/** Represents an invalid timestamp, where applicable.
+ *
+ * \note It returns a const reference to a thread_local static object of type
+ * mrpt::Clock::time_point initialized with the default constructor, which is
+ * used as the reference "invalid" timestamp.
+ */
+#define INVALID_TIMESTAMP mrpt::system::InvalidTimeStamp()
+
+/** The parts of a date/time, like the standard `tm` but with fractional
+ * (`double`) seconds. \sa TTimeStamp, timestampToParts, buildTimestampFromParts
  */
 struct TTimeParts
 {
-	uint16_t year{0}; /** The year */
-	uint8_t month{0}; /** Month (1-12) */
-	uint8_t day{0}; /** Day (1-31) */
-	uint8_t hour{0}; /** Hour (0-23) */
-	uint8_t minute{0}; /** Minute (0-59) */
-	double second{0}; /** Seconds (0.0000-59.9999) */
-	uint8_t day_of_week{0}; /** Day of week (1:Sunday, 7:Saturday) */
+	uint16_t year{0};  //!< The year (e.g. 2021)
+	uint8_t month{0};  //!< Month (1-12)
+	uint8_t day{0};	 //!<  Day (1-31)
+	uint8_t hour{0};  //!<  Hour (0-23)
+	uint8_t minute{0};	//!<  Minute (0-59)
+	double second{0};  //!<  Seconds (0.0000-59.9999)
+	uint8_t day_of_week{0};	 //!< Day of week (1:Sunday, 7:Saturday)
 	int daylight_saving{0};
 };
 
@@ -121,15 +131,15 @@ inline double timestampToDouble(const mrpt::system::TTimeStamp t) noexcept
 /** Returns the time difference from t1 to t2 (positive if t2 is posterior to
  * t1), in seconds  */
 inline double timeDifference(
-	const mrpt::system::TTimeStamp t_first,
-	const mrpt::system::TTimeStamp t_later)
+	const mrpt::system::TTimeStamp& t_first,
+	const mrpt::system::TTimeStamp& t_later)
 {
 	MRPT_START
 	ASSERT_(t_later != INVALID_TIMESTAMP);
 	ASSERT_(t_first != INVALID_TIMESTAMP);
-	return 1e-6 * std::chrono::duration_cast<std::chrono::microseconds>(
-					  t_later - t_first)
-					  .count();
+	return 1e-6 *
+		std::chrono::duration_cast<std::chrono::microseconds>(t_later - t_first)
+			.count();
 	MRPT_END
 }
 
@@ -147,7 +157,7 @@ inline mrpt::system::TTimeStamp timestampAdd(
 	const mrpt::system::TTimeStamp tim, const double num_seconds)
 {
 	return tim +
-		   std::chrono::microseconds(static_cast<int64_t>(num_seconds * 1e6));
+		std::chrono::microseconds(static_cast<int64_t>(num_seconds * 1e6));
 }
 
 /** Returns a formated string with the given time difference (passed as the
@@ -188,8 +198,14 @@ std::string timeLocalToString(
 /** This function implements time interval formatting: Given a time in seconds,
  * it will return a string describing the interval with the most appropriate
  * unit.
- * E.g.: 1.23 year, 3.50 days, 9.3 hours, 5.3 minutes, 3.34 sec, 178.1 ms,  87.1
- * us.
+ * E.g.:
+ *  - "1 year, 3 days, 4 minutes"
+ *  - "3 days, 8 hours"
+ *  - "9 hours, 4 minutes, 4.3 sec",
+ *  - "3.34 sec"
+ *  - "178.1 ms"
+ *  - "87.1 us"
+ *
  * \sa unitsFormat
  */
 std::string intervalFormat(const double seconds);

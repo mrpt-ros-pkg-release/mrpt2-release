@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
-#include "opengl-precomp.h"  // Precompiled header
-
+#include "opengl-precomp.h"	 // Precompiled header
+//
 #include <mrpt/math/geometry.h>
 #include <mrpt/opengl/CArrow.h>
 #include <mrpt/serialization/CArchive.h>
@@ -86,9 +86,9 @@ void CArrow::onUpdateBuffers_Triangles()
 			T.composePoint(P3f(r0 * cc[ip].x, r0 * cc[ip].y, .0f)),
 			T.composePoint(P3f(r0 * cc[i].x, r0 * cc[i].y, h0)),
 			// Normals:
-			T.rotateVector(V3f(-coswt * cc[i].y, coswt * cc[i].x, sinwt)),
-			T.rotateVector(V3f(-coswt * cc[ip].y, coswt * cc[ip].x, sinwt)),
-			T.rotateVector(V3f(-coswt * cc[i].y, coswt * cc[i].x, sinwt)));
+			T.rotateVector(V3f(coswt * cc[i].x, coswt * cc[i].y, sinwt)),
+			T.rotateVector(V3f(coswt * cc[ip].x, coswt * cc[ip].y, sinwt)),
+			T.rotateVector(V3f(coswt * cc[i].x, coswt * cc[i].y, sinwt)));
 
 		tris.emplace_back(
 			// Points:
@@ -96,9 +96,9 @@ void CArrow::onUpdateBuffers_Triangles()
 			T.composePoint(P3f(r0 * cc[ip].x, r0 * cc[ip].y, h0)),
 			T.composePoint(P3f(r0 * cc[i].x, r0 * cc[i].y, h0)),
 			// Normals:
-			T.rotateVector(V3f(-coswt * cc[ip].y, coswt * cc[ip].x, sinwt)),
-			T.rotateVector(V3f(-coswt * cc[ip].y, coswt * cc[ip].x, sinwt)),
-			T.rotateVector(V3f(-coswt * cc[i].y, coswt * cc[i].x, sinwt)));
+			T.rotateVector(V3f(coswt * cc[ip].x, coswt * cc[ip].y, sinwt)),
+			T.rotateVector(V3f(coswt * cc[ip].x, coswt * cc[ip].y, sinwt)),
+			T.rotateVector(V3f(coswt * cc[i].x, coswt * cc[i].y, sinwt)));
 	}
 
 	// top cone:
@@ -111,16 +111,17 @@ void CArrow::onUpdateBuffers_Triangles()
 			T.composePoint(P3f(r1 * cc[ip].x, r1 * cc[ip].y, h0)),
 			T.composePoint(P3f(.0f, .0f, h1)),
 			// Normals:
-			T.rotateVector(V3f(-cosht * cc[i].y, cosht * cc[i].x, sinht)),
-			T.rotateVector(V3f(-cosht * cc[ip].y, cosht * cc[ip].x, sinht)),
-			T.rotateVector(V3f(-cosht * cc[i].y, cosht * cc[i].x, sinht)));
+			T.rotateVector(V3f(cosht * cc[i].x, cosht * cc[i].y, sinht)),
+			T.rotateVector(V3f(cosht * cc[ip].x, cosht * cc[ip].y, sinht)),
+			T.rotateVector(V3f(0, 0, 1)));
 	}
 
 	// All faces, same color:
-	for (auto& t : tris) t.setColor(m_color);
+	for (auto& t : tris)
+		t.setColor(m_color);
 }
 
-uint8_t CArrow::serializeGetVersion() const { return 2; }
+uint8_t CArrow::serializeGetVersion() const { return 3; }
 void CArrow::serializeTo(mrpt::serialization::CArchive& out) const
 {
 	writeToStreamRender(out);
@@ -128,6 +129,7 @@ void CArrow::serializeTo(mrpt::serialization::CArchive& out) const
 	out << m_x1 << m_y1 << m_z1;
 	out << m_headRatio << m_smallRadius << m_largeRadius;
 	out << m_slices;
+	CRenderizableShaderTriangles::params_serialize(out);  // v3
 }
 
 void CArrow::serializeFrom(mrpt::serialization::CArchive& in, uint8_t version)
@@ -137,6 +139,7 @@ void CArrow::serializeFrom(mrpt::serialization::CArchive& in, uint8_t version)
 		case 0:
 		case 1:
 		case 2:
+		case 3:
 		{
 			readFromStreamRender(in);
 			in >> m_x0 >> m_y0 >> m_z0;
@@ -148,10 +151,11 @@ void CArrow::serializeFrom(mrpt::serialization::CArchive& in, uint8_t version)
 				in >> arrow_roll >> arrow_pitch >> arrow_yaw;
 			}
 			if (version >= 2) in >> m_slices;
+			if (version >= 3)
+				CRenderizableShaderTriangles::params_deserialize(in);
 		}
 		break;
-		default:
-			MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
 	};
 	CRenderizable::notifyChange();
 }
@@ -191,22 +195,15 @@ void CArrow::serializeFrom(mrpt::serialization::CSchemeArchiveBase& in)
 			m_slices = static_cast<unsigned int>(in["slices"]);
 		}
 		break;
-		default:
-			MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
 	}
 }
-void CArrow::getBoundingBox(
-	mrpt::math::TPoint3D& bb_min, mrpt::math::TPoint3D& bb_max) const
+auto CArrow::getBoundingBox() const -> mrpt::math::TBoundingBox
 {
-	bb_min.x = std::min(m_x0, m_x1);
-	bb_min.y = std::min(m_y0, m_y1);
-	bb_min.z = std::min(m_z0, m_z1);
-
-	bb_max.x = std::max(m_x0, m_x1);
-	bb_max.y = std::max(m_y0, m_y1);
-	bb_max.z = std::max(m_z0, m_z1);
-
-	// Convert to coordinates of my parent:
-	m_pose.composePoint(bb_min, bb_min);
-	m_pose.composePoint(bb_max, bb_max);
+	return mrpt::math::TBoundingBox(
+			   {std::min(m_x0, m_x1), std::min(m_y0, m_y1),
+				std::min(m_z0, m_z1)},
+			   {std::max(m_x0, m_x1), std::max(m_y0, m_y1),
+				std::max(m_z0, m_z1)})
+		.compose(m_pose);
 }

@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -10,6 +10,7 @@
 
 #include <mrpt/core/integer_select.h>
 #include <mrpt/serialization/CSerializable.h>
+
 #include <map>
 #include <memory>
 #include <string>
@@ -172,6 +173,6 @@ struct TPixelLabelInfo : public TPixelLabelInfoBase
 	void internal_writeToStream(
 		mrpt::serialization::CArchive& out) const override;
 	void Print(std::ostream& out) const override;
-};  // end TPixelLabelInfo
+};	// end TPixelLabelInfo
 
 }  // namespace mrpt::obs

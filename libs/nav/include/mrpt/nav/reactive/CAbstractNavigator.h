@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -87,7 +87,7 @@ class CAbstractNavigator : public mrpt::system::COutputLogger
 		 * straight-line Euclidean distances. */
 		double targetDesiredRelSpeed{.05};
 		bool targetIsIntermediaryWaypoint{
-			false};  // !< (Default=false) If true, event
+			false};	 // !< (Default=false) If true, event
 		// callback
 		// `sendWaypointReachedEvent()` will
 		// be called instead of
@@ -265,8 +265,8 @@ class CAbstractNavigator : public mrpt::system::COutputLogger
 	}
 
 	/** Publicly available time profiling object. Default: disabled */
-	mrpt::system::CTimeLogger m_navProfiler{false,
-											"mrpt::nav::CAbstractNavigator"};
+	mrpt::system::CTimeLogger m_navProfiler{
+		false, "mrpt::nav::CAbstractNavigator"};
 
    private:
 	/** Last internal state of navigator: */

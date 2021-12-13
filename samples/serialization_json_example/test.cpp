@@ -2,20 +2,20 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 /** \example serialization_json_example/test.cpp */
 
-#include <iostream>  // cout
-#include <sstream>  // stringstream
+#include <iostream>	 // cout
+#include <sstream>	// stringstream
 
 //! [example]
 #include <mrpt/poses/CPosePDFGaussian.h>
 #include <mrpt/serialization/CSchemeArchive.h>
 
-#include <iostream>  // cout
+#include <iostream>	 // cout
 
 void WriteAndReadExample()
 {

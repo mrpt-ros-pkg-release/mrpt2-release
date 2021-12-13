@@ -2,12 +2,12 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
-#include "tfest-precomp.h"  // Precompiled headers
+#include "tfest-precomp.h"	// Precompiled headers
 //
 #include <mrpt/poses/CPose3D.h>
 #include <mrpt/poses/CPose3DQuat.h>
@@ -95,7 +95,7 @@ static bool se3_l2_internal(
 	ct_others *= F;
 	ct_this *= F;
 
-	CMatrixDouble33 S;  // Zeroed by default
+	CMatrixDouble33 S;	// Zeroed by default
 
 	// Substract the centroid and compute the S matrix of cross products
 	for (size_t i = 0; i < nMatches; i++)
@@ -117,7 +117,7 @@ static bool se3_l2_internal(
 	}
 
 	// Construct the N matrix
-	CMatrixDouble44 N;  // Zeroed by default
+	CMatrixDouble44 N;	// Zeroed by default
 
 	N(0, 0) = S(0, 0) + S(1, 1) + S(2, 2);
 	N(0, 1) = S(1, 2) - S(2, 1);
@@ -178,9 +178,9 @@ static bool se3_l2_internal(
 		for (size_t i = 0; i < nMatches; i++)
 		{
 			num += square(points_other[i].x) + square(points_other[i].y) +
-				   square(points_other[i].z);
+				square(points_other[i].z);
 			den += square(points_this[i].x) + square(points_this[i].y) +
-				   square(points_this[i].z);
+				square(points_this[i].z);
 		}  // end-for
 
 		// The scale:
@@ -196,7 +196,7 @@ static bool se3_l2_internal(
 	out_transform[1] = ct_this.y - pp.y;  // Y
 	out_transform[2] = ct_this.z - pp.z;  // Z
 
-	out_scale = s;  // return scale
+	out_scale = s;	// return scale
 	return true;
 
 	MRPT_END
@@ -227,12 +227,12 @@ bool tfest::se3_l2(
 	std::vector<mrpt::math::TPoint3D> points_this(N), points_other(N);
 	for (size_t i = 0; i < N; i++)
 	{
-		points_this[i].x = corrs[i].this_x;
-		points_this[i].y = corrs[i].this_y;
-		points_this[i].z = corrs[i].this_z;
-		points_other[i].x = corrs[i].other_x;
-		points_other[i].y = corrs[i].other_y;
-		points_other[i].z = corrs[i].other_z;
+		points_this[i].x = corrs[i].global.x;
+		points_this[i].y = corrs[i].global.y;
+		points_this[i].z = corrs[i].global.z;
+		points_other[i].x = corrs[i].local.x;
+		points_other[i].y = corrs[i].local.y;
+		points_other[i].z = corrs[i].local.z;
 	}
 	return se3_l2_internal(
 		points_this, points_other, out_transform, out_scale, forceScaleToUnity);
@@ -248,12 +248,12 @@ bool tfest::se3_l2(
 	std::vector<mrpt::math::TPoint3D> points_this(N), points_other(N);
 	for (size_t i = 0; i < N; i++)
 	{
-		points_this[i].x = corrs[i].this_x;
-		points_this[i].y = corrs[i].this_y;
-		points_this[i].z = corrs[i].this_z;
-		points_other[i].x = corrs[i].other_x;
-		points_other[i].y = corrs[i].other_y;
-		points_other[i].z = corrs[i].other_z;
+		points_this[i].x = corrs[i].global.x;
+		points_this[i].y = corrs[i].global.y;
+		points_this[i].z = corrs[i].global.z;
+		points_other[i].x = corrs[i].local.x;
+		points_other[i].y = corrs[i].local.y;
+		points_other[i].z = corrs[i].local.z;
 	}
 	return se3_l2_internal(
 		points_this, points_other, out_transform, out_scale, forceScaleToUnity);

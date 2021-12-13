@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -61,18 +61,10 @@ class CActionCollection : public mrpt::serialization::CSerializable
 	 * \endcode
 	 */
 	const_iterator begin() const { return m_actions.begin(); }
-	/** Returns a iterator to the first action: this is an example of usage:
-	 * \code
-	 *   CActionCollection  acts;
-	 *   ...
-	 *   for (CActionCollection::iterator it=acts.begin();it!=acts.end();++it)
-	 *	  {
-	 *      (*it)->... // (*it) is a "CAction::Ptr"
-	 *   }
-	 *
-	 * \endcode
-	 */
+
+	/// \overload
 	iterator begin() { return m_actions.begin(); }
+
 	/** Returns a iterator pointing to the end of the list: this is an example
 	 *of usage:
 	 * \code
@@ -86,26 +78,16 @@ class CActionCollection : public mrpt::serialization::CSerializable
 	 * \endcode
 	 */
 	const_iterator end() const { return m_actions.end(); }
-	/** Returns a iterator pointing to the end of the list: this is an example
-	 *of usage:
-	 * \code
-	 *   CActionCollection  acts;
-	 *   ...
-	 *   for (CActionCollection::iterator it=acts.begin();it!=acts.end();++it)
-	 *	  {
-	 *      (*it)->... // (*it) is a "CAction::Ptr"
-	 *   }
-	 *
-	 * \endcode
-	 */
+
+	/// \overload
 	iterator end() { return m_actions.end(); }
+
 	/** Removes the given action in the list, and return an iterator to the next
 	 * element (or this->end() if it was the last one).
 	 */
 	iterator erase(const iterator& it);
 
-	/** Erase all actions from the list.
-	 */
+	/** Erase all actions from the list */
 	void clear();
 
 	/** Access the i'th action.DO NOT MODIFY the returned object, make a copy of
@@ -140,13 +122,16 @@ class CActionCollection : public mrpt::serialization::CSerializable
 		MRPT_END
 	}
 
-	/** Add a new object to the list.
-	 */
-	void insert(CAction& action);
+	/** Add a new object to the list, making a deep copy. */
+	void insert(const CAction& action);
+
+	/** Add a new object to the list (no deep copy).
+	 * \note (New in MRPT 2.3.1) */
+	void insertPtr(const CAction::Ptr& action);
 
 	/** Returns the actions count in the collection.
 	 */
-	size_t size();
+	size_t size() const;
 
 	/** Returns the best pose increment estimator in the collection, based on
 	 * the determinant of its pose change covariance matrix.
@@ -181,6 +166,6 @@ class CActionCollection : public mrpt::serialization::CSerializable
 	 */
 	void eraseByIndex(size_t index);
 
-};  // End of class def.
+};	// End of class def.
 
 }  // namespace mrpt::obs

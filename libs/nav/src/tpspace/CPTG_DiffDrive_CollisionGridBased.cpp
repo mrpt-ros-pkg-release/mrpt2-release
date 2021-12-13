@@ -2,22 +2,22 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "nav-precomp.h"  // Precomp header
-
-#include <mrpt/nav/tpspace/CPTG_DiffDrive_CollisionGridBased.h>
-
+//
 #include <mrpt/io/CFileGZInputStream.h>
 #include <mrpt/io/CFileGZOutputStream.h>
 #include <mrpt/kinematics/CVehicleVelCmd_DiffDriven.h>
 #include <mrpt/math/geometry.h>
+#include <mrpt/nav/tpspace/CPTG_DiffDrive_CollisionGridBased.h>
 #include <mrpt/serialization/CArchive.h>
 #include <mrpt/serialization/stl_serialization.h>
 #include <mrpt/system/CTicTac.h>
+
 #include <iostream>
 
 using namespace mrpt::nav;
@@ -113,7 +113,7 @@ void CPTG_DiffDrive_CollisionGridBased::simulateTrajectories(
 	// Reserve the size in the buffers:
 	m_trajectory.resize(m_alphaValuesCount);
 
-	const float radio_max_robot = 1.0f;  // Arbitrary "robot radius", only to
+	const float radio_max_robot = 1.0f;	 // Arbitrary "robot radius", only to
 	// determine the spacing of points
 	// under pure rotation
 
@@ -386,7 +386,7 @@ bool CPTG_DiffDrive_CollisionGridBased::CCollisionGrid::saveToFile(
 		if (!f) return false;
 
 		const uint8_t serialize_version =
-			2;  // v1: As of jun 2012, v2: As of dec-2013
+			2;	// v1: As of jun 2012, v2: As of dec-2013
 
 		// Save magic signature && serialization version:
 		*f << COLGRID_FILE_MAGIC << serialize_version;
@@ -475,23 +475,23 @@ bool CPTG_DiffDrive_CollisionGridBased::CCollisionGrid::loadFromFile(
 		if (desc != expected_desc) return false;
 
 // and standard PTG data:
-#define READ_UINT16_CHECK_IT_MATCHES_STORED(_VAR) \
-	{                                             \
-		uint16_t ff;                              \
-		*f >> ff;                                 \
-		if (ff != _VAR) return false;             \
+#define READ_UINT16_CHECK_IT_MATCHES_STORED(_VAR)                              \
+	{                                                                          \
+		uint16_t ff;                                                           \
+		*f >> ff;                                                              \
+		if (ff != _VAR) return false;                                          \
 	}
-#define READ_FLOAT_CHECK_IT_MATCHES_STORED(_VAR)       \
-	{                                                  \
-		float ff;                                      \
-		*f >> ff;                                      \
-		if (std::abs(ff - _VAR) > 1e-4f) return false; \
+#define READ_FLOAT_CHECK_IT_MATCHES_STORED(_VAR)                               \
+	{                                                                          \
+		float ff;                                                              \
+		*f >> ff;                                                              \
+		if (std::abs(ff - _VAR) > 1e-4f) return false;                         \
 	}
-#define READ_DOUBLE_CHECK_IT_MATCHES_STORED(_VAR)     \
-	{                                                 \
-		double ff;                                    \
-		*f >> ff;                                     \
-		if (std::abs(ff - _VAR) > 1e-6) return false; \
+#define READ_DOUBLE_CHECK_IT_MATCHES_STORED(_VAR)                              \
+	{                                                                          \
+		double ff;                                                             \
+		*f >> ff;                                                              \
+		if (std::abs(ff - _VAR) > 1e-6) return false;                          \
 	}
 
 		READ_UINT16_CHECK_IT_MATCHES_STORED(m_parent->getAlphaValuesCount())
@@ -603,7 +603,7 @@ bool CPTG_DiffDrive_CollisionGridBased::inverseMap_WS2TP(
 			for (uint32_t n = n_min; n <= n_max_this; n++)
 			{
 				const float dist_a_punto = square(m_trajectory[k][n].x - x) +
-										   square(m_trajectory[k][n].y - y);
+					square(m_trajectory[k][n].y - y);
 				if (dist_a_punto < selected_dist)
 				{
 					selected_dist = dist_a_punto;
@@ -633,8 +633,7 @@ bool CPTG_DiffDrive_CollisionGridBased::inverseMap_WS2TP(
 	{
 		const int n = int(m_trajectory[k].size()) - 1;
 		const float dist_a_punto = square(m_trajectory[k][n].dist) +
-								   square(m_trajectory[k][n].x - x) +
-								   square(m_trajectory[k][n].y - y);
+			square(m_trajectory[k][n].x - x) + square(m_trajectory[k][n].y - y);
 
 		if (dist_a_punto < selected_dist)
 		{
@@ -757,8 +756,7 @@ void CPTG_DiffDrive_CollisionGridBased::internal_initialize(
 			for (size_t n = 0; n < (nPoints - 1); n++)
 			{
 				// Translate and rotate the robot shape at this C-Space pose:
-				mrpt::math::TPose2D p;
-				getPathPose(k, n, p);
+				const mrpt::math::TPose2D p = getPathPose(k, n);
 
 				mrpt::math::TPoint2D bb_min(
 					std::numeric_limits<double>::max(),
@@ -769,11 +767,11 @@ void CPTG_DiffDrive_CollisionGridBased::internal_initialize(
 
 				for (size_t m = 0; m < nVerts; m++)
 				{
-					transf_shape[m].x =
-						p.x + cos(p.phi) * m_robotShape.GetVertex_x(m) -
+					transf_shape[m].x = p.x +
+						cos(p.phi) * m_robotShape.GetVertex_x(m) -
 						sin(p.phi) * m_robotShape.GetVertex_y(m);
-					transf_shape[m].y =
-						p.y + sin(p.phi) * m_robotShape.GetVertex_x(m) +
+					transf_shape[m].y = p.y +
+						sin(p.phi) * m_robotShape.GetVertex_x(m) +
 						cos(p.phi) * m_robotShape.GetVertex_y(m);
 					mrpt::keep_max(bb_max.x, transf_shape[m].x);
 					mrpt::keep_max(bb_max.y, transf_shape[m].y);
@@ -837,15 +835,15 @@ size_t CPTG_DiffDrive_CollisionGridBased::getPathStepCount(uint16_t k) const
 	return m_trajectory[k].size();
 }
 
-void CPTG_DiffDrive_CollisionGridBased::getPathPose(
-	uint16_t k, uint32_t step, mrpt::math::TPose2D& p) const
+mrpt::math::TPose2D CPTG_DiffDrive_CollisionGridBased::getPathPose(
+	uint16_t k, uint32_t step) const
 {
 	ASSERT_(k < m_trajectory.size());
 	ASSERT_(step < m_trajectory[k].size());
 
-	p.x = m_trajectory[k][step].x;
-	p.y = m_trajectory[k][step].y;
-	p.phi = m_trajectory[k][step].phi;
+	return {
+		m_trajectory[k][step].x, m_trajectory[k][step].y,
+		m_trajectory[k][step].phi};
 }
 
 double CPTG_DiffDrive_CollisionGridBased::getPathDist(
@@ -920,8 +918,7 @@ void CPTG_DiffDrive_CollisionGridBased::internal_readFromStream(
 			in >> V_MAX >> W_MAX >> turningRadiusReference >> m_robotShape >>
 				m_resolution >> m_trajectory;
 			break;
-		default:
-			MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
 	};
 }
 
@@ -949,4 +946,17 @@ mrpt::kinematics::CVehicleVelCmd::Ptr
 double CPTG_DiffDrive_CollisionGridBased::getPathStepDuration() const
 {
 	return m_stepTimeDuration;
+}
+
+mrpt::math::TTwist2D CPTG_DiffDrive_CollisionGridBased::getPathTwist(
+	uint16_t k, uint32_t step) const
+{
+	ASSERT_(k < m_trajectory.size());
+	ASSERT_(step < m_trajectory[k].size());
+
+	auto tw = mrpt::math::TTwist2D(
+		m_trajectory[k][step].v, 0, m_trajectory[k][step].w);
+	tw.rotate(m_trajectory[k][step].phi);
+
+	return tw;
 }

@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -11,6 +11,7 @@
 #include <mrpt/system/CTimeLogger.h>
 
 #include <chrono>
+#include <mutex>
 #include <thread>
 
 static void doTimLogEntry(
@@ -45,7 +46,7 @@ TEST(CTimeLogger, getLastTime)
 	doTimLogEntry(tl, "foo", 10);
 	EXPECT_EQ(tl.getLastTime("foo"), 0);
 
-	tl.clear(true);  // to silent console output upon dtor
+	tl.clear(true);	 // to silent console output upon dtor
 }
 
 TEST(CTimeLogger, getMeanTime)
@@ -56,7 +57,7 @@ TEST(CTimeLogger, getMeanTime)
 
 	EXPECT_GT(tl.getMeanTime("foo"), 100e-3);
 
-	tl.clear(true);  // to silent console output upon dtor
+	tl.clear(true);	 // to silent console output upon dtor
 }
 
 TEST(CTimeLogger, printStats)
@@ -94,4 +95,31 @@ TEST(CTimeLogger, printStatsFaulty)
 	const std::string s = tl.getStatsAsText();
 	tl.clear(true);
 	EXPECT_EQ(std::count(s.begin(), s.end(), '\n'), 14U);
+}
+
+TEST(CTimeLogger, multithread)
+{
+	mrpt::system::CTimeLogger tl;
+	std::vector<std::thread> ths;
+	std::mutex mtx;
+
+	mtx.lock();
+
+	for (int i = 0; i < 20; i++)
+	{
+		ths.push_back(std::thread([i, &mtx, &tl]() {
+			mtx.lock();
+			mtx.unlock();
+			doTimLogEntry(tl, mrpt::format("foo%i", i % 5).c_str(), 10);
+		}));
+	}
+
+	mtx.unlock();  // now, all threads will run
+
+	for (auto& t : ths)
+		if (t.joinable()) t.join();
+
+	const std::string s = tl.getStatsAsText();
+	tl.clear(true);	 // to silent console output upon dtor
+	EXPECT_EQ(std::count(s.begin(), s.end(), '\n'), 9U);
 }
