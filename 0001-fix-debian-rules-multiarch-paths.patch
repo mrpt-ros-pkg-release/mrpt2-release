@@ -1,4 +1,4 @@
-From dd8626de598df931c14508a2d87d964bf125cdd8 Mon Sep 17 00:00:00 2001
+From ca72a6888099f29e4153b9857ce1879dfd143695 Mon Sep 17 00:00:00 2001
 From: Jose Luis Blanco-Claraco <joseluisblancoc@gmail.com>
 Date: Mon, 5 Oct 2020 07:50:08 +0200
 Subject: [PATCH] fix debian/rules multiarch paths
@@ -32,5 +32,5 @@ index aa010fa..d8f8bd2 100755
  override_dh_auto_install:
  	# In case we're installing to a non-standard location, look for a setup.sh
 -- 
-2.17.1
+2.25.1
 
