@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -23,13 +23,12 @@
 #include <wx/stattext.h>
 #include <wx/statusbr.h>
 #include <wx/textctrl.h>
+
 #include "MyGLCanvas.h"
 //*)
 
 #include <mrpt/3rdparty/mathplot/mathplot.h>
-
 #include <mrpt/gui/CMyRedirector.h>
-
 #include <mrpt/opengl/CAxis.h>
 #include <mrpt/opengl/CMesh.h>
 #include <mrpt/opengl/COpenGLViewport.h>
@@ -102,7 +101,9 @@ class ptgConfiguratorframe : public wxFrame
 	static const long ID_STATICTEXT6;
 	static const long ID_TEXTCTRL6;
 	static const long ID_STATICTEXT7;
+	static const long ID_STATICTEXT7b;
 	static const long ID_TEXTCTRL7;
+	static const long ID_TEXTCTRL7b;
 	static const long ID_STATICTEXT17;
 	static const long ID_TEXTCTRL8;
 	static const long ID_BUTTON4;
@@ -190,6 +191,7 @@ class ptgConfiguratorframe : public wxFrame
 	mpWindow* m_plotPathXp;
 	mpWindow* m_plotHeadAngIndiv;
 	wxStaticText* StaticText7;
+	wxStaticText* StaticText7b;
 	wxStatusBar* StatusBar1;
 	mpWindow* m_plotVelCmds;
 	wxTextCtrl* edObsX;
@@ -205,8 +207,10 @@ class ptgConfiguratorframe : public wxFrame
 	wxCheckBox* cbShowClearance;
 	wxStaticText* StaticText16;
 	wxTextCtrl* edTargetY;
+	wxTextCtrl* edTargetPhiDeg;
 	wxSlider* slidPathHighlight;
 	//*)
+	wxTextCtrl* edSelectedTrajCmd = nullptr;
 
 	DECLARE_EVENT_TABLE()
 
@@ -242,8 +246,8 @@ class ptgConfiguratorframe : public wxFrame
 	mrpt::opengl::CSetOfLines::Ptr gl_robot_ptg_prediction,
 		gl_robot_ptg_prediction_highlight, gl_tp_obstacles;
 	mrpt::opengl::CPointCloud::Ptr gl_WS_obs;
-	mrpt::opengl::CPointCloud::Ptr gl_WS_target, gl_TP_target,
-		gl_WS_target_reprojected;
+	mrpt::opengl::CPointCloud::Ptr gl_TP_target;
+	mrpt::opengl::CSetOfObjects::Ptr gl_WS_target, gl_WS_target_reprojected;
 
 	// 2D plot views:
 	mpFXYVector *m_graph_head_all, *m_graph_head_indiv;

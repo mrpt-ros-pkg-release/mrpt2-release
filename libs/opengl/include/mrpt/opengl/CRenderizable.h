@@ -2,13 +2,14 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 #pragma once
 
 #include <mrpt/img/TColor.h>
+#include <mrpt/math/TBoundingBox.h>
 #include <mrpt/math/TPoint3D.h>
 #include <mrpt/math/math_frwds.h>
 #include <mrpt/opengl/DefaultShaders.h>
@@ -16,18 +17,15 @@
 #include <mrpt/opengl/Shader.h>
 #include <mrpt/opengl/TRenderMatrices.h>
 #include <mrpt/opengl/opengl_fonts.h>
+#include <mrpt/opengl/opengl_frwds.h>
 #include <mrpt/poses/CPose3D.h>
 #include <mrpt/serialization/CSerializable.h>
+#include <mrpt/typemeta/TEnumType.h>
+
 #include <deque>
 
 namespace mrpt::opengl
 {
-// Frwd decls:
-class COpenGLViewport;
-class CSetOfObjects;
-class CText;
-struct TLightParameters;
-
 /** The base class of 3D objects that can be directly rendered through OpenGL.
  *  In this class there are a set of common properties to all 3D objects,
  *mainly:
@@ -332,8 +330,17 @@ class CRenderizable : public mrpt::serialization::CSerializable
 
 	/** Evaluates the bounding box of this object (including possible
 	 * children) in the coordinate frame of the object parent. */
-	virtual void getBoundingBox(
-		mrpt::math::TPoint3D& bb_min, mrpt::math::TPoint3D& bb_max) const = 0;
+	virtual auto getBoundingBox() const -> mrpt::math::TBoundingBox = 0;
+
+	[[deprecated(
+		"Use getBoundingBox() const -> mrpt::math::TBoundingBox instead.")]]  //
+	void getBoundingBox(
+		mrpt::math::TPoint3D& bb_min, mrpt::math::TPoint3D& bb_max) const
+	{
+		const auto bb = getBoundingBox();
+		bb_min = bb.min;
+		bb_max = bb.max;
+	}
 
 	/** Provide a representative point (in object local coordinates), used to
 	 * sort objects by eye-distance while rendering with transparencies
@@ -375,6 +382,20 @@ class CRenderizable : public mrpt::serialization::CSerializable
 /** A list of smart pointers to renderizable objects */
 using CListOpenGLObjects = std::deque<CRenderizable::Ptr>;
 
+/** Enum for cull face modes in triangle-based shaders.
+ *  \sa CRenderizableShaderTriangles, CRenderizableShaderTexturedTriangles
+ *  \ingroup mrpt_opengl_grp
+ */
+enum class TCullFace : uint8_t
+{
+	/** The default: culls none, so all front and back faces are visible. */
+	NONE = 0,
+	/** Skip back faces (those that are NOT seen in the CCW direction) */
+	BACK,
+	/** Skip front faces (those that ARE seen in the CCW direction) */
+	FRONT
+};
+
 /** @name Miscellaneous rendering methods
 @{ */
 
@@ -408,3 +429,10 @@ void processRenderQueue(
 /** @} */
 
 }  // namespace mrpt::opengl
+
+MRPT_ENUM_TYPE_BEGIN(mrpt::opengl::TCullFace)
+using namespace mrpt::opengl;
+MRPT_FILL_ENUM_MEMBER(TCullFace, NONE);
+MRPT_FILL_ENUM_MEMBER(TCullFace, BACK);
+MRPT_FILL_ENUM_MEMBER(TCullFace, FRONT);
+MRPT_ENUM_TYPE_END()

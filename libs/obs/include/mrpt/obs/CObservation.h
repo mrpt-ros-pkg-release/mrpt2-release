@@ -2,15 +2,16 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 #pragma once
 
+#include <mrpt/core/Stringifyable.h>
 #include <mrpt/math/TPose3D.h>
 #include <mrpt/math/math_frwds.h>
-#include <mrpt/poses/poses_frwds.h>
+#include <mrpt/poses/CPose3D.h>
 #include <mrpt/serialization/CSerializable.h>
 #include <mrpt/system/datetime.h>
 
@@ -26,21 +27,25 @@ namespace obs
  * \ingroup mrpt_obs_grp */
 #define INVALID_LANDMARK_ID (-1)
 
-/** Declares a class that represents any robot's observation.
- *  This is a base class for many types of sensor observations.
+/** Generic sensor observation.
+ *
+ *  This is a base virtual class for all types of sensor observations.
  *  Users can add new observation types creating a new class deriving from this
- * one.
+ * one, or reuse those provided in MRPT modules. Most observations are defined
+ * in \def mrpt_obs_grp.
  *
- *  <b>IMPORTANT</b>: Observations don't include any information about the robot
- * pose,
- *   just  raw sensory data and, where aplicable, information about the sensor
- * position and
- *   orientation in the local frame of the robot.
+ * Observations do not include any information about the robot localization,
+ * but just raw sensory data and, where aplicable, information about the
+ * sensor position and orientation in the **local frame** (vehicle frame).
  *
- * \sa CSensoryFrame, CMetricMap
+ * Datasets with large number of observations can be managed with
+ * mrpt::obs::CRawLog.
+ *
+ * \sa CSensoryFrame, CMetricMap, mrpt::obs::CRawLog
  * \ingroup mrpt_obs_grp
  */
-class CObservation : public mrpt::serialization::CSerializable
+class CObservation : public mrpt::serialization::CSerializable,
+					 public mrpt::Stringifyable
 {
 	DEFINE_VIRTUAL_SERIALIZABLE(CObservation)
 
@@ -97,10 +102,11 @@ class CObservation : public mrpt::serialization::CSerializable
 	 */
 	template <class METRICMAP>
 	inline bool insertObservationInto(
-		METRICMAP* theMap,
-		const mrpt::poses::CPose3D* robotPose = nullptr) const
+		METRICMAP& theMap,
+		const std::optional<const mrpt::poses::CPose3D>& robotPose =
+			std::nullopt) const
 	{
-		return theMap->insertObservation(*this, robotPose);
+		return theMap.insertObservation(*this, robotPose);
 	}
 
 	/** A general method to retrieve the sensor pose on the robot.
@@ -116,6 +122,17 @@ class CObservation : public mrpt::serialization::CSerializable
 	 * \sa setSensorPose
 	 */
 	void getSensorPose(mrpt::math::TPose3D& out_sensorPose) const;
+
+	/** synonym with getSensorPose()
+	 * \sa getSensorPose
+	 * \note (New in MRPT 2.3.1)
+	 */
+	mrpt::math::TPose3D sensorPose() const
+	{
+		mrpt::math::TPose3D p;
+		getSensorPose(p);
+		return p;
+	}
 
 	/** A general method to change the sensor pose on the robot.
 	 *  Note that most sensors will use the full (6D) CPose3D, but see the
@@ -139,8 +156,28 @@ class CObservation : public mrpt::serialization::CSerializable
 	 * object in the dataset */
 	virtual void getDescriptionAsText(std::ostream& o) const;
 
-	/** Return by value version of getDescriptionAsText(std::ostream&) */
-	std::string getDescriptionAsTextValue() const;
+	/** Return by value version of getDescriptionAsText(std::ostream&).
+	 */
+	std::string asString() const override;
+
+	/** @name Export to TXT/CSV API (see the rawlog-edit app)
+		@{ */
+	/** Must return true if the class is exportable to TXT/CSV files, in which
+	 * case the other virtual methods in this group must be redefined too.
+	 */
+	virtual bool exportTxtSupported() const { return false; }
+
+	/** Returns the description of the data columns. Timestamp is automatically
+	 * included as the first column, do not list it. See example implementations
+	 * if interested in enabling this in custom CObservation classes.
+	 * Do not include newlines.*/
+	virtual std::string exportTxtHeader() const { return {}; }
+
+	/** Returns one row of data with the data stored in this particular object.
+	 * Do not include newlines. */
+	virtual std::string exportTxtDataRow() const { return {}; }
+
+	/** @} */
 
 	/** @name Delayed-load manual control methods.
 		@{ */
@@ -161,13 +198,13 @@ class CObservation : public mrpt::serialization::CSerializable
 	 * external files (othewise, has no effect).
 	 * \sa load
 	 */
-	virtual void unload()
+	virtual void unload() const
 	{ /* Default implementation: do nothing */
 	}
 
 	/** @} */
 
-};  // End of class def.
+};	// End of class def.
 
 }  // namespace obs
 }  // namespace mrpt

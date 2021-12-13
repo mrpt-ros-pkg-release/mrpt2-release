@@ -28,7 +28,7 @@
 #include "fy-ctype.h"
 #include "fy-utf8.h"
 
-const char *fy_token_type_txt[] = {
+const char *fy_token_type_txt[FYTT_COUNT] = {
 	[FYTT_NONE]			= "<NONE>",
 	[FYTT_STREAM_START]		= "STRM+",
 	[FYTT_STREAM_END]		= "STRM-",
@@ -52,20 +52,112 @@ const char *fy_token_type_txt[] = {
 	[FYTT_ANCHOR]			= "ANCHR",
 	[FYTT_TAG]			= "TAG",
 	[FYTT_INPUT_MARKER]		= "INPUT_MARKER",
+
+	[FYTT_PE_SLASH]			= "PE_SLASH",
+	[FYTT_PE_ROOT]			= "PE_ROOT",
+	[FYTT_PE_THIS]			= "PE_THIS",
+	[FYTT_PE_PARENT]		= "PE_PARENT",
+	[FYTT_PE_MAP_KEY]		= "PE_MAP_KEY",
+	[FYTT_PE_SEQ_INDEX]		= "PE_SEQ_INDEX",
+	[FYTT_PE_SEQ_SLICE]		= "PE_SEQ_SLICE",
+	[FYTT_PE_SCALAR_FILTER]		= "PE_SCALAR_FILTER",
+	[FYTT_PE_COLLECTION_FILTER]	= "PE_COLLECTION_FILTER",
+	[FYTT_PE_SEQ_FILTER]		= "PE_SEQ_FILTER",
+	[FYTT_PE_MAP_FILTER]		= "PE_MAP_FILTER",
+	[FYTT_PE_UNIQUE_FILTER]		= "PE_UNIQUE_FILTER",
+	[FYTT_PE_EVERY_CHILD]		= "PE_EVERY_CHILD",
+	[FYTT_PE_EVERY_CHILD_R]		= "PE_EVERY_CHILD_R",
+	[FYTT_PE_ALIAS]			= "PE_ALIAS",
+	[FYTT_PE_SIBLING]		= "PE_SIBLING",
+	[FYTT_PE_COMMA]			= "PE_COMMA",
+	[FYTT_PE_BARBAR]		= "PE_BARBAR",
+	[FYTT_PE_AMPAMP]		= "PE_AMPAMP",
+	[FYTT_PE_LPAREN]		= "PE_LPAREN",
+	[FYTT_PE_RPAREN]		= "PE_RPAREN",
+
+	[FYTT_PE_EQEQ]			= "PE_EQEQ",
+	[FYTT_PE_NOTEQ]			= "PE_NOTEQ",
+	[FYTT_PE_LT]			= "PE_LT",
+	[FYTT_PE_GT]			= "PE_GT",
+	[FYTT_PE_LTE]			= "PE_LTE",
+	[FYTT_PE_GTE]			= "PE_GTE",
+
+	[FYTT_SE_PLUS]			= "SE_PLUS",
+	[FYTT_SE_MINUS]			= "SE_MINUS",
+	[FYTT_SE_MULT]			= "SE_MULT",
+	[FYTT_SE_DIV]			= "SE_DIV",
+
+	[FYTT_PE_METHOD]		= "PE_METHOD",
+	[FYTT_SE_METHOD]		= "SE_METHOD",
 };
 
 char *fy_token_dump_format(struct fy_token *fyt, char *buf, size_t bufsz)
 {
-	const char *s = NULL;
+	const char *typetxt, *text;
+	size_t size;
+	enum fy_token_type type;
+	const char *pfx, *sfx;
 
 	if (fyt && (unsigned int)fyt->type < sizeof(fy_token_type_txt)/
-					     sizeof(fy_token_type_txt[0]))
-		s = fy_token_type_txt[fyt->type];
+					     sizeof(fy_token_type_txt[0])) {
+		typetxt = fy_token_type_txt[fyt->type];
+		type = fyt->type;
+	} else {
+		typetxt = "<NULL>";
+		type = FYTT_NONE;
+	}
 
-	if (!s)
-		s = "<NULL>";
+	size = 0;
+	switch (type) {
+	case FYTT_SCALAR:
+	case FYTT_ALIAS:
+	case FYTT_ANCHOR:
+		text = fy_token_get_text(fyt, &size);
+		break;
+	default:
+		text = NULL;
+		break;
+	}
 
-	snprintf(buf, bufsz, "%s", s);
+	if (!text) {
+		snprintf(buf, bufsz, "%s", typetxt);
+		return buf;
+	}
+
+	pfx = typetxt;
+	sfx = "";
+	switch (type) {
+	case FYTT_SCALAR:
+
+		pfx = "\"";
+
+		/* not too large */
+		if (size > 20)
+			size = 20;
+		text = fy_utf8_format_text_a(text, size, fyue_doublequote);
+		size = strlen(text);
+		if (size > 10) {
+			sfx = "...\"";
+			size = 7;
+		} else {
+			sfx = "\"";
+		}
+		break;
+	case FYTT_ALIAS:
+	case FYTT_ANCHOR:
+		sfx = type == FYTT_ALIAS ? "*" : "&";
+		if (size > 10) {
+			sfx = "...";
+			size = 7;
+		} else
+			sfx = "";
+		break;
+
+	default:
+		break;
+	}
+
+	snprintf(buf, bufsz, "%s%.*s%s", pfx, (int)size, text, sfx);
 
 	return buf;
 }
@@ -79,6 +171,9 @@ char *fy_token_list_dump_format(struct fy_token_list *fytl,
 	s = buf;
 	e = buf + bufsz - 1;
 	for (fyt = fy_token_list_first(fytl); fyt; fyt = fy_token_next(fytl, fyt)) {
+
+		if (s >= (e - 1))
+			break;
 
 		s += snprintf(s, e - s, "%s%s",
 				fyt != fy_token_list_first(fytl) ? "," : "",
@@ -107,7 +202,7 @@ char *fy_simple_key_dump_format(struct fy_parser *fyp, struct fy_simple_key *fys
 
 	snprintf(buf, bufsz, "%s/%c%c/%d/<%d-%d,%d-%d>", tbuf,
 			fysk->required ? 'R' : '-',
-			fysk->possible ? 'P' : '-',
+			fysk->implicit_complex ? 'C' : '-',
 			fysk->flow_level,
 			fysk->mark.line, fysk->mark.column,
 			fysk->end_mark.line, fysk->end_mark.column);
@@ -123,6 +218,9 @@ char *fy_simple_key_list_dump_format(struct fy_parser *fyp, struct fy_simple_key
 	s = buf;
 	e = buf + bufsz - 1;
 	for (fysk = fy_simple_key_list_first(fyskl); fysk; fysk = fy_simple_key_next(fyskl, fysk)) {
+
+		if (s >= (e - 1))
+			break;
 
 		s += snprintf(s, e - s, "%s%s",
 				fysk != fy_simple_key_list_first(fyskl) ? "," : "",
@@ -142,9 +240,9 @@ char *fy_simple_key_list_dump_format(struct fy_parser *fyp, struct fy_simple_key
 void fyp_debug_dump_token_list(struct fy_parser *fyp, struct fy_token_list *fytl,
 		struct fy_token *fyt_highlight, const char *banner)
 {
-	char buf[1024];
+	char buf[4096];
 
-	if (FYET_DEBUG < FYPCF_GET_DEBUG_LEVEL(fyp->cfg.flags))
+	if (!fyp || !fyp->diag || FYET_DEBUG < fyp->diag->cfg.level)
 		return;
 
 	fyp_scan_debug(fyp, "%s%s\n", banner,
@@ -155,7 +253,7 @@ void fyp_debug_dump_token(struct fy_parser *fyp, struct fy_token *fyt, const cha
 {
 	char buf[80];
 
-	if (FYET_DEBUG < FYPCF_GET_DEBUG_LEVEL(fyp->cfg.flags))
+	if (!fyp || !fyp->diag || FYET_DEBUG < fyp->diag->cfg.level)
 		return;
 
 	fyp_scan_debug(fyp, "%s%s\n", banner,
@@ -165,9 +263,9 @@ void fyp_debug_dump_token(struct fy_parser *fyp, struct fy_token *fyt, const cha
 void fyp_debug_dump_simple_key_list(struct fy_parser *fyp, struct fy_simple_key_list *fyskl,
 		struct fy_simple_key *fysk_highlight, const char *banner)
 {
-	char buf[1024];
+	char buf[4096];
 
-	if (FYET_DEBUG < FYPCF_GET_DEBUG_LEVEL(fyp->cfg.flags))
+	if (!fyp || !fyp->diag || FYET_DEBUG < fyp->diag->cfg.level)
 		return;
 
 	fyp_scan_debug(fyp, "%s%s\n", banner,
@@ -178,7 +276,7 @@ void fyp_debug_dump_simple_key(struct fy_parser *fyp, struct fy_simple_key *fysk
 {
 	char buf[80];
 
-	if (FYET_DEBUG < FYPCF_GET_DEBUG_LEVEL(fyp->cfg.flags))
+	if (!fyp || !fyp->diag || FYET_DEBUG < fyp->diag->cfg.level)
 		return;
 
 	fyp_scan_debug(fyp, "%s%s\n", banner,

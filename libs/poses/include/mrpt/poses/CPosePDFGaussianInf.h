@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -150,8 +150,8 @@ class CPosePDFGaussianInf : public CPosePDF
 	 *		- (x2,S2): Mean and variance of the p2 distribution.
 	 *		- (x,S): Mean and variance of the resulting distribution.
 	 *
-	 *    S = (S1<sup>-1</sup> + S2<sup>-1</sup>)<sup>-1</sup>;
-	 *    x = S * ( S1<sup>-1</sup>*x1 + S2<sup>-1</sup>*x2 );
+	 *    \f$ S = (S_1^{-1} + S_2^{-1})^{-1} \f$
+	 *    \f$ x = S ( S_1^{-1} x_1 + S_2^{-1} x_2 ) \f$
 	 */
 	void bayesianFusion(
 		const CPosePDF& p1, const CPosePDF& p2,
@@ -187,7 +187,7 @@ class CPosePDFGaussianInf : public CPosePDF
 		this->inverseComposition(*this, ref);
 	}
 
-};  // End of class def.
+};	// End of class def.
 
 bool operator==(const CPosePDFGaussianInf& p1, const CPosePDFGaussianInf& p2);
 /** Pose compose operator: RES = A (+) B , computing both the mean and the

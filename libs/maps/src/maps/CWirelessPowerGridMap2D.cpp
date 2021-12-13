@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "maps-precomp.h"  // Precomp header
-
+//
 #include <mrpt/core/round.h>
 #include <mrpt/img/color_maps.h>
 #include <mrpt/maps/CWirelessPowerGridMap2D.h>
@@ -116,7 +116,8 @@ void CWirelessPowerGridMap2D::internal_clear()
 						insertObservation
   ---------------------------------------------------------------*/
 bool CWirelessPowerGridMap2D::internal_insertObservation(
-	const CObservation& obs, const CPose3D* robotPose)
+	const CObservation& obs,
+	const std::optional<const mrpt::poses::CPose3D>& robotPose)
 {
 	MRPT_START
 
@@ -148,7 +149,7 @@ bool CWirelessPowerGridMap2D::internal_insertObservation(
 
 		// Normalization:
 		sensorReading = (sensorReading - insertionOptions.R_min) /
-						(insertionOptions.R_max - insertionOptions.R_min);
+			(insertionOptions.R_max - insertionOptions.R_min);
 
 		// Update the gross estimates of mean/vars for the whole reading history
 		// (see IROS2009 paper):
@@ -181,7 +182,7 @@ bool CWirelessPowerGridMap2D::internal_insertObservation(
   ---------------------------------------------------------------*/
 double CWirelessPowerGridMap2D::internal_computeObservationLikelihood(
 	[[maybe_unused]] const CObservation& obs,
-	[[maybe_unused]] const CPose3D& takenFrom)
+	[[maybe_unused]] const CPose3D& takenFrom) const
 {
 	THROW_EXCEPTION("Not implemented yet!");
 }
@@ -325,8 +326,7 @@ void CWirelessPowerGridMap2D::serializeFrom(
 			m_hasToRecoverMeanAndCov = true;
 		}
 		break;
-		default:
-			MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
 	};
 }
 
@@ -352,14 +352,11 @@ void CWirelessPowerGridMap2D::TInsertionOptions::loadFromConfigFile(
 	internal_loadFromConfigFile_common(iniFile, section);
 }
 
-/*---------------------------------------------------------------
-						getAs3DObject
----------------------------------------------------------------*/
-void CWirelessPowerGridMap2D::getAs3DObject(
-	mrpt::opengl::CSetOfObjects::Ptr& outObj) const
+void CWirelessPowerGridMap2D::getVisualizationInto(
+	mrpt::opengl::CSetOfObjects& o) const
 {
 	MRPT_START
 	if (!genericMapParams.enableSaveAs3DObject) return;
-	CRandomFieldGridMap2D::getAs3DObject(outObj);
+	CRandomFieldGridMap2D::getVisualizationInto(o);
 	MRPT_END
 }

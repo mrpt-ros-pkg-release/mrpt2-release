@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -11,14 +11,13 @@
 
 #include <mrpt/config/CConfigFileBase.h>
 #include <mrpt/config/CLoadableOptions.h>
+#include <mrpt/graphslam/interfaces/CGraphSlamOptimizer.h>
+#include <mrpt/graphslam/levmarq.h>
 #include <mrpt/img/TColor.h>
 #include <mrpt/obs/CSensoryFrame.h>
 #include <mrpt/opengl/CRenderizable.h>
 #include <mrpt/poses/CPose2D.h>
 #include <mrpt/poses/CPose3D.h>
-
-#include <mrpt/graphslam/interfaces/CGraphSlamOptimizer.h>
-#include <mrpt/graphslam/levmarq.h>
 
 #include <cmath>
 #include <iostream>
@@ -201,7 +200,7 @@ class CLevMarqGSO
 		mrpt::containers::yaml cfg;
 		bool visualize_optimized_graph;
 		// textMessage parameters
-		std::string keystroke_graph_toggle;  // see Ctor for initialization
+		std::string keystroke_graph_toggle;	 // see Ctor for initialization
 		std::string keystroke_graph_autofit;  // see Ctor for initialization
 		int text_index_graph;
 		double offset_y_graph;

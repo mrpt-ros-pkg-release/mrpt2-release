@@ -2,19 +2,21 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
-#include "comms-precomp.h"  // Precompiled headers
-
+#include "comms-precomp.h"	// Precompiled headers
+//
 #include <mrpt/comms/CClientTCPSocket.h>
 #include <mrpt/comms/CServerTCPSocket.h>
 #include <mrpt/comms/net_utils.h>
 #include <mrpt/core/exceptions.h>
 #include <mrpt/system/os.h>
+
 #include <cstdio>  // stderr
+
 using namespace mrpt::comms;
 
 #if defined(MRPT_OS_LINUX) || defined(__APPLE__)
@@ -28,6 +30,7 @@ using namespace mrpt::comms;
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
+
 #include <cerrno>
 #endif
 
@@ -98,10 +101,7 @@ std::unique_ptr<CClientTCPSocket> CServerTCPSocket::accept(int timeout_ms)
 	FD_SET(m_serverSock, &sockArr);
 
 	// The timeout:
-	if (timeout_ms < 0)
-	{
-		ptrTimeout = nullptr;
-	}
+	if (timeout_ms < 0) { ptrTimeout = nullptr; }
 	else
 	{
 		timeoutSelect.tv_sec = timeout_ms / 1000;
@@ -156,6 +156,9 @@ std::unique_ptr<CClientTCPSocket> CServerTCPSocket::accept(int timeout_ms)
 		auto ret = std::make_unique<CClientTCPSocket>();
 
 		ret->m_hSock = aceptdSock;
+#if defined(MRPT_OS_LINUX)
+		ret->internal_attach_epoll_to_hsock();
+#endif
 
 		ret->m_remotePartIP = std::string(inet_ntoa(otherPart.sin_addr));
 		ret->m_remotePartPort = ntohs(otherPart.sin_port);

@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -103,7 +103,7 @@ class CVehicleSimulVirtualBase
 		m_Aphi_err_std = Aphi_err_std;
 	}
 
-	void resetStatus();  //! Reset all simulator variables to 0 (except the
+	void resetStatus();	 //! Reset all simulator variables to 0 (except the
 	//! simulation time). \sa resetTime
 	/** Reset time counter \sa resetStatus */
 	void resetTime();

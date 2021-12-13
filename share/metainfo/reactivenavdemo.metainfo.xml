@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>org.mrpt.reactivenavdemo.desktop</id>
+  <metadata_license>MIT</metadata_license>
+  <name>ReactiveNavigationDemo</name>
+  <summary>Reactive Navigation Demo</summary>
+  <description>
+    <p>Reactive Navigation Demo.</p>
+  </description>
+  <launchable type="desktop-id">reactivenavdemo.desktop</launchable>
+  <screenshots>
+    <screenshot type="default">
+        <caption>Application screenshot</caption>
+        <image>https://static.mrpt.org/screenshots/reactivenavdemo.png</image>
+    </screenshot>
+  </screenshots>
+  <url type="homepage">https://www.mrpt.org/</url>
+  <update_contact>joseluisblancoc@gmail.com</update_contact>
+</component>

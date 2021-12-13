@@ -2,19 +2,20 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include <gtest/gtest.h>
 #include <mrpt/core/exceptions.h>
+
 #include <algorithm>  // count()
 #include <sstream>
 
 TEST(exception, stackedExceptionBasic)
 {
-	EXPECT_THROW({ THROW_STACKED_EXCEPTION; }, std::logic_error);
+	EXPECT_THROW({ THROW_EXCEPTION("wtf"); }, mrpt::ExceptionWithCallBackBase);
 }
 
 template <typename T>
@@ -50,9 +51,20 @@ TEST(exception, stackedExceptionComplex)
 	catch (const std::exception& e)
 	{
 		const auto sExc = mrpt::exception_to_str(e);
-		// std::cerr << sExc;
+
+#if !defined(MRPT_EXCEPTIONS_WITH_CALL_STACK)
+		EXPECT_TRUE(sExc.find("Aw!") != std::string::npos) << sExc;
+#else
 		const auto num_lines = std::count(sExc.begin(), sExc.end(), '\n');
-		EXPECT_EQ(num_lines, 6);
+		EXPECT_GT(num_lines, 10) << sExc;
+		EXPECT_TRUE(sExc.find("Message:  Aw!") != std::string::npos) << sExc;
+#endif
+// This test doesn't pass in Windows if building w/o debug symbols:
+#if defined(MRPT_EXCEPTIONS_WITH_CALL_STACK) &&                                \
+	(!defined(_WIN32) || defined(_DEBUG))
+		EXPECT_TRUE(sExc.find("test_except_toplevel") != std::string::npos)
+			<< sExc;
+#endif
 	}
 }
 
@@ -60,12 +72,29 @@ TEST(exception, assertException)
 {
 	bool trueValue = true;
 	bool falseValue = false;
-	EXPECT_THROW({ ASSERT_EQUAL_(trueValue, falseValue); }, std::logic_error);
+	EXPECT_THROW(
+		{ ASSERT_EQUAL_(trueValue, falseValue); },
+		mrpt::ExceptionWithCallBackBase);
 }
 
-TEST(exception, stackedExceptionCustomMsg)
+static std::string testFoo()
 {
-	EXPECT_THROW(
-		{ THROW_STACKED_EXCEPTION_CUSTOM_MSG2("Foo %s\n", "bar"); },
-		std::logic_error);
+	try
+	{
+		std::vector<int> dummy;
+		ASSERTMSG_(!dummy.empty(), "Check it");
+		return {};
+	}
+	catch (std::exception& e)
+	{
+		const auto err = mrpt::exception_to_str(e);
+		return err;
+	}
+}
+
+TEST(exception, infiniteRecurseBug)
+{
+	// Should not crash:
+	const auto s = testFoo();
+	EXPECT_TRUE(s.find("Check it") != std::string::npos);
 }

@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -14,6 +14,7 @@
 #include <mrpt/poses/CPose3D.h>
 #include <mrpt/poses/CPose3DPDF.h>
 #include <mrpt/poses/CPosePDF.h>
+
 #include <memory>  // unique_ptr
 
 namespace mrpt::poses
@@ -122,5 +123,5 @@ class CPoseRandomSampler
 	 * yaw ~ pitch ~ roll ] \f$. */
 	void getOriginalPDFCov3D(mrpt::math::CMatrixDouble& cov6x6) const;
 
-};  // End of class def.
+};	// End of class def.
 }  // namespace mrpt::poses

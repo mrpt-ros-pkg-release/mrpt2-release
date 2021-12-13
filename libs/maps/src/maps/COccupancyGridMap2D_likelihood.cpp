@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "maps-precomp.h"  // Precomp header
-
+//
 #include <mrpt/maps/COccupancyGridMap2D.h>
 #include <mrpt/maps/CSimplePointsMap.h>
 #include <mrpt/obs/CObservation2DRangeScan.h>
@@ -22,15 +22,8 @@ using namespace mrpt::obs;
 using namespace mrpt::poses;
 using namespace std;
 
-/*---------------------------------------------------------------
- Computes the likelihood that a given observation was taken from a given pose in
- the world being modeled with this map.
-	takenFrom The robot's pose the observation is supposed to be taken from.
-	obs The observation.
- This method returns a likelihood in the range [0,1].
- ---------------------------------------------------------------*/
 double COccupancyGridMap2D::internal_computeObservationLikelihood(
-	const CObservation& obs, const CPose3D& takenFrom3D)
+	const CObservation& obs, const CPose3D& takenFrom3D) const
 {
 	// Ignore laser scans if they are not planar or they are not
 	//  at the altitude of this grid map:
@@ -83,7 +76,7 @@ double COccupancyGridMap2D::internal_computeObservationLikelihood(
 			computeObservationLikelihood_Consensus
 ---------------------------------------------------------------*/
 double COccupancyGridMap2D::computeObservationLikelihood_Consensus(
-	const CObservation& obs, const CPose2D& takenFrom)
+	const CObservation& obs, const CPose2D& takenFrom) const
 {
 	double likResult = 0;
 
@@ -142,7 +135,7 @@ double COccupancyGridMap2D::computeObservationLikelihood_Consensus(
 			computeObservationLikelihood_ConsensusOWA
 ---------------------------------------------------------------*/
 double COccupancyGridMap2D::computeObservationLikelihood_ConsensusOWA(
-	const CObservation& obs, const CPose2D& takenFrom)
+	const CObservation& obs, const CPose2D& takenFrom) const
 {
 	double likResult = 0;
 
@@ -161,12 +154,12 @@ double COccupancyGridMap2D::computeObservationLikelihood_ConsensusOWA(
 	// Insert only HORIZONTAL scans, since the grid is supposed to
 	//  be a horizontal representation of space.
 	if (!o.isPlanarScan(insertionOptions.horizontalTolerance))
-		return 0.5;  // NO WAY TO ESTIMATE NON HORIZONTAL SCANS!!
+		return 0.5;	 // NO WAY TO ESTIMATE NON HORIZONTAL SCANS!!
 
 	// Assure we have a 2D points-map representation of the points from the
 	// scan:
 	CPointsMap::TInsertionOptions insOpt;
-	insOpt.minDistBetweenLaserPoints = -1;  // ALL the laser points
+	insOpt.minDistBetweenLaserPoints = -1;	// ALL the laser points
 
 	const auto* compareMap =
 		o.buildAuxPointsMap<mrpt::maps::CPointsMap>(&insOpt);
@@ -229,7 +222,7 @@ double COccupancyGridMap2D::computeObservationLikelihood_ConsensusOWA(
 		likelihoodOutputs.OWA_individualLikValues[k] =
 			likelihoodOutputs.OWA_pairList[k].first;
 		likResult += likelihoodOptions.OWA_weights[k] *
-					 likelihoodOutputs.OWA_individualLikValues[k];
+			likelihoodOutputs.OWA_individualLikValues[k];
 	}
 
 	return log(likResult);
@@ -239,7 +232,7 @@ double COccupancyGridMap2D::computeObservationLikelihood_ConsensusOWA(
 			computeObservationLikelihood_CellsDifference
 ---------------------------------------------------------------*/
 double COccupancyGridMap2D::computeObservationLikelihood_CellsDifference(
-	const CObservation& obs, const CPose2D& takenFrom)
+	const CObservation& obs, const CPose2D& takenFrom) const
 {
 	double ret = 0.5;
 
@@ -254,7 +247,7 @@ double COccupancyGridMap2D::computeObservationLikelihood_CellsDifference(
 		// Insert only HORIZONTAL scans, since the grid is supposed to
 		//  be a horizontal representation of space.
 		if (!o.isPlanarScan(insertionOptions.horizontalTolerance))
-			return 0.5;  // NO WAY TO ESTIMATE NON HORIZONTAL SCANS!!
+			return 0.5;	 // NO WAY TO ESTIMATE NON HORIZONTAL SCANS!!
 
 		// Build a copy of this occupancy grid:
 		COccupancyGridMap2D compareGrid(
@@ -267,7 +260,7 @@ double COccupancyGridMap2D::computeObservationLikelihood_CellsDifference(
 		compareGrid.insertionOptions.maxDistanceInsertion =
 			insertionOptions.maxDistanceInsertion;
 		compareGrid.insertionOptions.maxOccupancyUpdateCertainty = 0.95f;
-		o.insertObservationInto(&compareGrid, &robotPose);
+		o.insertObservationInto(compareGrid, robotPose);
 
 		// Save Cells offset between the two grids:
 		Ax = round((x_min - compareGrid.x_min) / resolution);
@@ -306,7 +299,7 @@ double COccupancyGridMap2D::computeObservationLikelihood_CellsDifference(
 			computeObservationLikelihood_MI
 ---------------------------------------------------------------*/
 double COccupancyGridMap2D::computeObservationLikelihood_MI(
-	const CObservation& obs, const CPose2D& takenFrom)
+	const CObservation& obs, const CPose2D& takenFrom) const
 {
 	MRPT_START
 
@@ -315,7 +308,8 @@ double COccupancyGridMap2D::computeObservationLikelihood_MI(
 
 	// Dont modify the grid, only count the changes in Information
 	updateInfoChangeOnly.enabled = true;
-	insertionOptions.maxDistanceInsertion *=
+	const_cast<COccupancyGridMap2D*>(this)
+		->insertionOptions.maxDistanceInsertion *=
 		likelihoodOptions.MI_ratio_max_distance;
 
 	// Reset the new information counters:
@@ -325,7 +319,7 @@ double COccupancyGridMap2D::computeObservationLikelihood_MI(
 
 	// Insert the observation (It will not be really inserted, only the
 	// information counted)
-	insertObservation(obs, &poseRobot);
+	const_cast<COccupancyGridMap2D*>(this)->insertObservation(obs, poseRobot);
 
 	// Compute the change in I aported by the observation:
 	double newObservation_mean_I;
@@ -337,7 +331,8 @@ double COccupancyGridMap2D::computeObservationLikelihood_MI(
 
 	// Let the normal mode enabled, i.e. the grid can be updated
 	updateInfoChangeOnly.enabled = false;
-	insertionOptions.maxDistanceInsertion /=
+	const_cast<COccupancyGridMap2D*>(this)
+		->insertionOptions.maxDistanceInsertion /=
 		likelihoodOptions.MI_ratio_max_distance;
 
 	res =
@@ -350,7 +345,7 @@ double COccupancyGridMap2D::computeObservationLikelihood_MI(
 }
 
 double COccupancyGridMap2D::computeObservationLikelihood_rayTracing(
-	const CObservation& obs, const CPose2D& takenFrom)
+	const CObservation& obs, const CPose2D& takenFrom) const
 {
 	double ret = 0;
 
@@ -366,7 +361,7 @@ double COccupancyGridMap2D::computeObservationLikelihood_rayTracing(
 		// Insert only HORIZONTAL scans, since the grid is supposed to
 		//  be a horizontal representation of space.
 		if (!o.isPlanarScan(insertionOptions.horizontalTolerance))
-			return 0.5;  // NO WAY TO ESTIMATE NON HORIZONTAL SCANS!!
+			return 0.5;	 // NO WAY TO ESTIMATE NON HORIZONTAL SCANS!!
 
 		// The number of simulated rays will be original range scan rays /
 		// DOWNRATIO
@@ -382,9 +377,9 @@ double COccupancyGridMap2D::computeObservationLikelihood_rayTracing(
 		// Performs the scan simulation:
 		laserScanSimulator(
 			simulatedObs,  // The in/out observation
-			takenFrom,  // robot pose
-			0.45f,  // Cells threshold
-			nRays,  // Scan length
+			takenFrom,	// robot pose
+			0.45f,	// Cells threshold
+			nRays,	// Scan length
 			0, decimation);
 
 		double stdLaser = likelihoodOptions.rayTracing_stdHit;
@@ -405,8 +400,7 @@ double COccupancyGridMap2D::computeObservationLikelihood_rayTracing(
 			// Is a valid range?
 			if (o.getScanRangeValidity(j))
 			{
-				likelihood =
-					0.1 / o.maxRange +
+				likelihood = 0.1 / o.maxRange +
 					0.9 *
 						exp(-square(
 							min((float)fabs(r_sim - r_obs), 2.0f) / stdSqrt2));
@@ -424,7 +418,7 @@ double COccupancyGridMap2D::computeObservationLikelihood_rayTracing(
 			computeObservationLikelihood_likelihoodField_Thrun
 ---------------------------------------------------------------*/
 double COccupancyGridMap2D::computeObservationLikelihood_likelihoodField_Thrun(
-	const CObservation& obs, const CPose2D& takenFrom)
+	const CObservation& obs, const CPose2D& takenFrom) const
 {
 	MRPT_START
 
@@ -478,7 +472,7 @@ double COccupancyGridMap2D::computeObservationLikelihood_likelihoodField_Thrun(
 		computeObservationLikelihood_likelihoodField_II
 ---------------------------------------------------------------*/
 double COccupancyGridMap2D::computeObservationLikelihood_likelihoodField_II(
-	const CObservation& obs, const CPose2D& takenFrom)
+	const CObservation& obs, const CPose2D& takenFrom) const
 {
 	MRPT_START
 
@@ -515,7 +509,7 @@ double COccupancyGridMap2D::computeObservationLikelihood_likelihoodField_II(
 					computeLikelihoodField_Thrun
  ---------------------------------------------------------------*/
 double COccupancyGridMap2D::computeLikelihoodField_Thrun(
-	const CPointsMap* pm, const CPose2D* relativePose)
+	const CPointsMap* pm, const CPose2D* relativePose) const
 {
 	MRPT_START
 
@@ -620,9 +614,7 @@ double COccupancyGridMap2D::computeLikelihoodField_Thrun(
 		{
 			// We are into the map limits:
 			if (likelihoodOptions.enableLikelihoodCache)
-			{
-				thisLik = precomputedLikelihood[cx + cy * size_x];
-			}
+			{ thisLik = precomputedLikelihood[cx + cy * size_x]; }
 
 			if (!likelihoodOptions.enableLikelihoodCache ||
 				thisLik == LIK_LF_CACHE_INVALID)
@@ -639,8 +631,8 @@ double COccupancyGridMap2D::computeLikelihoodField_Thrun(
 				// Optimized code: this part will be invoked a *lot* of times:
 				float occupiedMinDist;
 				{
-					cellType* mapPtr =
-						&map[xx1 + yy1 * size_x];  // Initial pointer position
+					// Initial pointer position
+					const cellType* mapPtr = &map[xx1 + yy1 * size_x];
 					unsigned incrAfterRow = size_x - ((xx2 - xx1) + 1);
 
 					signed int Ax0 = 10 * (xx1 - cx);
@@ -652,7 +644,7 @@ double COccupancyGridMap2D::computeLikelihoodField_Thrun(
 					for (int yy = yy1; yy <= yy2; yy++)
 					{
 						unsigned int Ay2 =
-							square((unsigned int)(Ay));  // Square is faster
+							square((unsigned int)(Ay));	 // Square is faster
 						// with unsigned.
 						signed short Ax = Ax0;
 						cellType cell;
@@ -688,10 +680,7 @@ double COccupancyGridMap2D::computeLikelihoodField_Thrun(
 		}
 
 		// Update the likelihood:
-		if (Product_T_OrSum_F)
-		{
-			ret += log(thisLik);
-		}
+		if (Product_T_OrSum_F) { ret += log(thisLik); }
 		else
 		{
 			ret += thisLik;
@@ -710,14 +699,14 @@ double COccupancyGridMap2D::computeLikelihoodField_Thrun(
 					computeLikelihoodField_II
  ---------------------------------------------------------------*/
 double COccupancyGridMap2D::computeLikelihoodField_II(
-	const CPointsMap* pm, const CPose2D* relativePose)
+	const CPointsMap* pm, const CPose2D* relativePose) const
 {
 	MRPT_START
 
 	double ret;
 	size_t N = pm->size();
 
-	if (!N) return 1e-100;  // No way to estimate this likelihood!!
+	if (!N) return 1e-100;	// No way to estimate this likelihood!!
 
 	// Compute the likelihoods for each point:
 	ret = 0;
@@ -780,16 +769,16 @@ double COccupancyGridMap2D::computeLikelihoodField_II(
 			{
 				float P_free = getCell(cx, cy);
 				float termDist =
-					exp(Q * (square(idx2x(cx) - pointGlobal.x) +
-							 square(idx2y(cy) - pointGlobal.y)));
+					exp(Q *
+						(square(idx2x(cx) - pointGlobal.x) +
+						 square(idx2y(cy) - pointGlobal.y)));
 
 				lik += P_free * zRandomTerm + (1 - P_free) * termDist;
 			}  // end for cy
 		}  // end for cx
 
 		// Update the likelihood:
-		if (likelihoodOptions.LF_alternateAverageMethod)
-			ret += lik;
+		if (likelihoodOptions.LF_alternateAverageMethod) ret += lik;
 		else
 			ret += log(lik / ((cy_max - cy_min + 1) * (cx_max - cx_min + 1)));
 		nCells++;
@@ -869,30 +858,14 @@ void COccupancyGridMap2D::TLikelihoodOptions::dumpToTextStream(
 	out << "likelihoodMethod                        = ";
 	switch (likelihoodMethod)
 	{
-		case lmMeanInformation:
-			out << "lmMeanInformation";
-			break;
-		case lmRayTracing:
-			out << "lmRayTracing";
-			break;
-		case lmConsensus:
-			out << "lmConsensus";
-			break;
-		case lmCellsDifference:
-			out << "lmCellsDifference";
-			break;
-		case lmLikelihoodField_Thrun:
-			out << "lmLikelihoodField_Thrun";
-			break;
-		case lmLikelihoodField_II:
-			out << "lmLikelihoodField_II";
-			break;
-		case lmConsensusOWA:
-			out << "lmConsensusOWA";
-			break;
-		default:
-			out << "UNKNOWN!!!";
-			break;
+		case lmMeanInformation: out << "lmMeanInformation"; break;
+		case lmRayTracing: out << "lmRayTracing"; break;
+		case lmConsensus: out << "lmConsensus"; break;
+		case lmCellsDifference: out << "lmCellsDifference"; break;
+		case lmLikelihoodField_Thrun: out << "lmLikelihoodField_Thrun"; break;
+		case lmLikelihoodField_II: out << "lmLikelihoodField_II"; break;
+		case lmConsensusOWA: out << "lmConsensusOWA"; break;
+		default: out << "UNKNOWN!!!"; break;
 	}
 	out << "\n";
 

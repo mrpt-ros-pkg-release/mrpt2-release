@@ -2,13 +2,14 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 #pragma once
 
 #include <mrpt/core/round.h>
+
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
@@ -222,7 +223,8 @@ class CDynamicGrid3D
 	 */
 	inline void fill(const T& value)
 	{
-		for (auto it = m_map.begin(); it != m_map.end(); ++it) *it = value;
+		for (auto it = m_map.begin(); it != m_map.end(); ++it)
+			*it = value;
 	}
 
 	static const size_t INVALID_VOXEL_IDX = size_t(-1);
@@ -230,8 +232,8 @@ class CDynamicGrid3D
 	inline bool isOutOfBounds(const int cx, const int cy, const int cz) const
 	{
 		return (cx < 0 || cx >= static_cast<int>(m_size_x)) ||
-			   (cy < 0 || cy >= static_cast<int>(m_size_y)) ||
-			   (cz < 0 || cz >= static_cast<int>(m_size_z));
+			(cy < 0 || cy >= static_cast<int>(m_size_y)) ||
+			(cz < 0 || cz >= static_cast<int>(m_size_z));
 	}
 
 	/** Gets the absolute index of a voxel in the linear container m_map[] from
@@ -349,10 +351,14 @@ class CDynamicGrid3D
 	}
 	inline coord_t idx2z(int cz) const { return m_z_min + (cz)*m_resolution_z; }
 
+	/** @name Direct and range-based access to data
+	 * @{ */
+	inline const grid_data_t& data() const { return m_map; }
 	inline iterator begin() { return m_map.begin(); }
 	inline iterator end() { return m_map.end(); }
 	inline const_iterator begin() const { return m_map.begin(); }
 	inline const_iterator end() const { return m_map.end(); }
+	/** @} */
 
    protected:
 	/** The cells */
@@ -390,6 +396,6 @@ class CDynamicGrid3D
 		m_map.resize(m_size_x * m_size_y * m_size_z);
 	}
 
-};  // end of CDynamicGrid3D<>
+};	// end of CDynamicGrid3D<>
 
 }  // namespace mrpt::containers

@@ -2,14 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 #pragma once
 
 #include <mrpt/config.h>
-
 #include <mrpt/core/pimpl.h>
 #include <mrpt/core/safe_pointers.h>
 #include <mrpt/obs/CObservationImage.h>
@@ -103,7 +102,7 @@ class CImageGrabber_OpenCV
 	 */
 	bool getObservation(mrpt::obs::CObservationImage& out_observation);
 
-};  // End of class
+};	// End of class
 
 }  // namespace mrpt::hwdrivers
 MRPT_ENUM_TYPE_BEGIN(mrpt::hwdrivers::TCameraType)

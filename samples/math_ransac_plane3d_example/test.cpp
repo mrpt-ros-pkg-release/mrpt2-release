@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -16,6 +16,7 @@
 #include <mrpt/poses/CPose3D.h>
 #include <mrpt/random.h>
 #include <mrpt/system/CTicTac.h>
+
 #include <iostream>
 
 using namespace mrpt;
@@ -49,7 +50,8 @@ void ransac3Dplane_fit(
 		CMatrixDouble& M = fitModels[0];
 
 		M.setSize(1, 4);
-		for (size_t i = 0; i < 4; i++) M(0, i) = plane.coefs[i];
+		for (size_t i = 0; i < 4; i++)
+			M(0, i) = plane.coefs[i];
 	}
 	catch (exception&)
 	{
@@ -145,7 +147,7 @@ void TestRANSAC()
 		myransac.execute(
 			data, ransac3Dplane_fit, ransac3Dplane_distance,
 			ransac3Dplane_degenerate, DIST_THRESHOLD,
-			3,  // Minimum set of points
+			3,	// Minimum set of points
 			best_inliers, best_model);
 	}
 

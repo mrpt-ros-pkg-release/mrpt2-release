@@ -2,18 +2,18 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #define MRPT_NO_WARN_BIG_HDR  // Yes, we really want to include all classes.
-#include <mrpt/obs.h>
-
 #include <CTraitsTest.h>
 #include <gtest/gtest.h>
 #include <mrpt/io/CMemoryStream.h>
+#include <mrpt/obs.h>
 #include <mrpt/obs/stock_observations.h>
+
 #include <sstream>
 
 using namespace mrpt;
@@ -23,11 +23,12 @@ using namespace mrpt::math;
 using namespace mrpt::serialization;
 using namespace std;
 
-#define TEST_CLASS_MOVE_COPY_CTORS(_classname) \
+#define TEST_CLASS_MOVE_COPY_CTORS(_classname)                                 \
 	template class mrpt::CTraitsTest<_classname>
 
 TEST_CLASS_MOVE_COPY_CTORS(CObservation2DRangeScan);
 TEST_CLASS_MOVE_COPY_CTORS(CObservation3DRangeScan);
+TEST_CLASS_MOVE_COPY_CTORS(CObservation3DScene);
 TEST_CLASS_MOVE_COPY_CTORS(CObservationRGBD360);
 TEST_CLASS_MOVE_COPY_CTORS(CObservationBearingRange);
 TEST_CLASS_MOVE_COPY_CTORS(CObservationBatteryState);
@@ -41,7 +42,7 @@ TEST_CLASS_MOVE_COPY_CTORS(CObservationReflectivity);
 TEST_CLASS_MOVE_COPY_CTORS(CObservationIMU);
 TEST_CLASS_MOVE_COPY_CTORS(CObservationOdometry);
 TEST_CLASS_MOVE_COPY_CTORS(CObservationRange);
-#if MRPT_HAS_OPENCV  // These classes need CImage serialization
+#if MRPT_HAS_OPENCV	 // These classes need CImage serialization
 TEST_CLASS_MOVE_COPY_CTORS(CObservationImage);
 TEST_CLASS_MOVE_COPY_CTORS(CObservationStereoImages);
 #endif
@@ -55,6 +56,7 @@ TEST_CLASS_MOVE_COPY_CTORS(CActionRobotMovement3D);
 const mrpt::rtti::TRuntimeClassId* lstClasses[] = {
 	// Observations:
 	CLASS_ID(CObservation2DRangeScan), CLASS_ID(CObservation3DRangeScan),
+	CLASS_ID(CObservation3DScene),	//
 	CLASS_ID(CObservationRGBD360), CLASS_ID(CObservationBearingRange),
 	CLASS_ID(CObservationBatteryState), CLASS_ID(CObservationWirelessPower),
 	CLASS_ID(CObservationRFID), CLASS_ID(CObservationBeaconRanges),
@@ -62,7 +64,7 @@ const mrpt::rtti::TRuntimeClassId* lstClasses[] = {
 	CLASS_ID(CObservationGPS), CLASS_ID(CObservationReflectivity),
 	CLASS_ID(CObservationIMU), CLASS_ID(CObservationOdometry),
 	CLASS_ID(CObservationRange),
-#if MRPT_HAS_OPENCV  // These classes need CImage serialization
+#if MRPT_HAS_OPENCV	 // These classes need CImage serialization
 	CLASS_ID(CObservationImage), CLASS_ID(CObservationStereoImages),
 #endif
 	CLASS_ID(CObservationCANBusJ1939), CLASS_ID(CObservationRawDAQ),
@@ -199,6 +201,7 @@ TEST(Observations, CopyCtorAssignOp)
 {
 	run_copy_tests<CObservation2DRangeScan>();
 	run_copy_tests<CObservation3DRangeScan>();
+	run_copy_tests<CObservation3DScene>();
 	run_copy_tests<CObservationGPS>();
 	run_copy_tests<CObservationIMU>();
 	run_copy_tests<CObservationOdometry>();
@@ -212,7 +215,7 @@ TEST(Observations, CopyCtorAssignOp)
 	run_copy_tests<CObservationGasSensors>();
 	run_copy_tests<CObservationReflectivity>();
 	run_copy_tests<CObservationRange>();
-#if MRPT_HAS_OPENCV  // These classes need CImage serialization
+#if MRPT_HAS_OPENCV	 // These classes need CImage serialization
 	run_copy_tests<CObservationImage>();
 	run_copy_tests<CObservationStereoImages>();
 #endif

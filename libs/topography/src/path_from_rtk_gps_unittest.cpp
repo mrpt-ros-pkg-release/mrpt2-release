@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -47,11 +47,11 @@ TEST(TopographyReconstructPathFrom3RTK, sampleDataset)
 		// -------------------------------------------
 		mrpt::topography::path_from_rtk_gps(
 			robot_path, rawlog,
-			0,  // first entry
-			rawlog.size() - 1,  // last entry
-			false,  // Isn't a GUI
-			false,  // disableGPSInterp
-			1,  // path_smooth_filter_size
+			0,	// first entry
+			rawlog.size() - 1,	// last entry
+			false,	// Isn't a GUI
+			false,	// disableGPSInterp
+			1,	// path_smooth_filter_size
 			&rtk_path_info);
 
 		EXPECT_EQ(robot_path.size(), 75u);

@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "maps-precomp.h"  // Precomp header
-
+//
 #include <mrpt/maps/COctoMap.h>
 #include <mrpt/maps/CPointsMap.h>
 #include <mrpt/obs/CObservation2DRangeScan.h>
@@ -87,7 +87,7 @@ uint8_t COctoMap::serializeGetVersion() const { return 3; }
 void COctoMap::serializeTo(mrpt::serialization::CArchive& out) const
 {
 	this->likelihoodOptions.writeToStream(out);
-	this->renderingOptions.writeToStream(out);  // Added in v1
+	this->renderingOptions.writeToStream(out);	// Added in v1
 	out << genericMapParams;
 	// v2->v3: remove CMemoryChunk
 	std::stringstream ss;
@@ -129,13 +129,13 @@ void COctoMap::serializeFrom(mrpt::serialization::CArchive& in, uint8_t version)
 			}
 		}
 		break;
-		default:
-			MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
 	};
 }
 
 bool COctoMap::internal_insertObservation(
-	const mrpt::obs::CObservation& obs, const CPose3D* robotPose)
+	const mrpt::obs::CObservation& obs,
+	const std::optional<const mrpt::poses::CPose3D>& robotPose)
 {
 	octomap::point3d sensorPt;
 	octomap::Pointcloud scan;
@@ -156,7 +156,7 @@ void COctoMap::getAsOctoMapVoxels(mrpt::opengl::COctoMapVoxels& gl_obj) const
 	// OcTreeVolume voxel; // current voxel, possibly transformed
 	octomap::OcTree::tree_iterator it_end = m_impl->m_octomap.end_tree();
 
-	const unsigned char max_depth = 0;  // all
+	const unsigned char max_depth = 0;	// all
 	const TColorf general_color = gl_obj.getColor();
 	const TColor general_color_u(
 		general_color.R * 255, general_color.G * 255, general_color.B * 255,
@@ -165,7 +165,7 @@ void COctoMap::getAsOctoMapVoxels(mrpt::opengl::COctoMapVoxels& gl_obj) const
 	gl_obj.clear();
 	gl_obj.reserveGridCubes(this->calcNumNodes());
 
-	gl_obj.resizeVoxelSets(2);  // 2 sets of voxels: occupied & free
+	gl_obj.resizeVoxelSets(2);	// 2 sets of voxels: occupied & free
 
 	gl_obj.showVoxels(
 		VOXEL_SET_OCCUPIED, renderingOptions.visibleOccupiedVoxels);
@@ -218,10 +218,7 @@ void COctoMap::getAsOctoMapVoxels(mrpt::opengl::COctoMapVoxels& gl_obj) const
 
 					case COctoMapVoxels::TRANSPARENCY_FROM_OCCUPANCY:
 						coeft = 255 - 510 * (1 - occ);
-						if (coeft < 0)
-						{
-							coeft = 0;
-						}
+						if (coeft < 0) { coeft = 0; }
 						vx_color = TColor(
 							255 * general_color.R, 255 * general_color.G,
 							255 * general_color.B, coeft);
@@ -237,22 +234,18 @@ void COctoMap::getAsOctoMapVoxels(mrpt::opengl::COctoMapVoxels& gl_obj) const
 					case COctoMapVoxels::MIXED:
 						coefc = 255 * inv_dz * (vx_center.z() - zmin);
 						coeft = 255 - 510 * (1 - occ);
-						if (coeft < 0)
-						{
-							coeft = 0;
-						}
+						if (coeft < 0) { coeft = 0; }
 						vx_color = TColor(
 							coefc * general_color.R, coefc * general_color.G,
 							coefc * general_color.B, coeft);
 						break;
 
-					default:
-						THROW_EXCEPTION("Unknown coloring scheme!");
+					default: THROW_EXCEPTION("Unknown coloring scheme!");
 				}
 
 				const size_t vx_set = (m_impl->m_octomap.isNodeOccupied(*it))
-										  ? VOXEL_SET_OCCUPIED
-										  : VOXEL_SET_FREESPACE;
+					? VOXEL_SET_OCCUPIED
+					: VOXEL_SET_FREESPACE;
 
 				gl_obj.push_back_Voxel(
 					vx_set,

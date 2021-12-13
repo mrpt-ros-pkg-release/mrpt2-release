@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -11,6 +11,7 @@
 #include <mrpt/serialization/CArchive.h>
 #include <mrpt/serialization/metaprogramming_serialization.h>
 #include <mrpt/typemeta/TTypeName_stl.h>  // TTypeName<> for STL templates, needed for serialization of STL templates
+
 #include <algorithm>  // for_each()
 #include <array>
 #include <deque>
@@ -71,15 +72,17 @@ using is_map_like = std::is_same<
 
 template <typename T>
 using is_map = std::is_same<
-	T, typename std::map<
-		   typename T::key_type, typename T::mapped_type,
-		   typename T::key_compare, typename T::allocator_type>>;
+	T,
+	typename std::map<
+		typename T::key_type, typename T::mapped_type, typename T::key_compare,
+		typename T::allocator_type>>;
 
 template <typename T>
 using is_multimap = std::is_same<
-	T, typename std::multimap<
-		   typename T::key_type, typename T::mapped_type,
-		   typename T::key_compare, typename T::allocator_type>>;
+	T,
+	typename std::multimap<
+		typename T::key_type, typename T::mapped_type, typename T::key_compare,
+		typename T::allocator_type>>;
 
 template <typename T, std::enable_if_t<is_map<T>::value, int> = 0>
 std::string containerName()
@@ -112,30 +115,24 @@ CArchive& operator>>(CArchive& in, T& obj)
 	obj.clear();
 	std::string pref, stored_K, stored_V;
 	in >> pref;
+	const auto kType = mrpt::typemeta::TTypeName<typename T::key_type>::get();
+	const auto mTp = mrpt::typemeta::TTypeName<typename T::mapped_type>::get();
 	if (pref != containerName<T>())
 		THROW_EXCEPTION(format(
 			"Error: serialized container %s<%s,%s>'s preamble is "
 			"wrong: '%s'",
-			containerName<T>().c_str(),
-			mrpt::typemeta::TTypeName<typename T::key_type>::get().c_str(),
-			mrpt::typemeta::TTypeName<typename T::mapped_type>::get().c_str(),
+			containerName<T>().c_str(), kType.c_str(), mTp.c_str(),
 			pref.c_str()));
 	in >> stored_K;
-	if (stored_K !=
-		std::string(
-			mrpt::typemeta::TTypeName<typename T::key_type>::get().c_str()))
+	if (stored_K != std::string(kType.c_str()))
 		THROW_EXCEPTION(format(
 			"Error: serialized container %s key type %s != %s",
-			containerName<T>().c_str(), stored_K.c_str(),
-			mrpt::typemeta::TTypeName<typename T::key_type>::get().c_str()));
+			containerName<T>().c_str(), stored_K.c_str(), kType.c_str()));
 	in >> stored_V;
-	if (stored_V !=
-		std::string(
-			mrpt::typemeta::TTypeName<typename T::mapped_type>::get().c_str()))
+	if (stored_V != std::string(mTp.c_str()))
 		THROW_EXCEPTION(format(
 			"Error: serialized container %s value type %s != %s",
-			containerName<T>().c_str(), stored_V.c_str(),
-			mrpt::typemeta::TTypeName<typename T::mapped_type>::get().c_str()));
+			containerName<T>().c_str(), stored_V.c_str(), mTp.c_str()));
 	const uint32_t n = in.ReadAs<uint32_t>();
 	for (uint32_t i = 0; i < n; i++)
 	{
@@ -157,10 +154,8 @@ CArchive& operator>>(CArchive& in, T& obj)
 	{                                                                          \
 		out << std::string(#CONTAINER) << mrpt::typemeta::TTypeName<K>::get(); \
 		out.WriteAs<uint32_t>(obj.size());                                     \
-		for (typename CONTAINER<K, _Pr, _Alloc>::const_iterator it =           \
-				 obj.begin();                                                  \
-			 it != obj.end(); ++it)                                            \
-			out << *it;                                                        \
+		for (const auto& e : obj)                                              \
+			out << e;                                                          \
 		return out;                                                            \
 	}                                                                          \
 	/** Template method to deserialize an associative STL container */         \
@@ -169,20 +164,18 @@ CArchive& operator>>(CArchive& in, T& obj)
 	{                                                                          \
 		obj.clear();                                                           \
 		std::string pref, stored_K;                                            \
+		const auto kType = mrpt::typemeta::TTypeName<K>::get();                \
 		in >> pref;                                                            \
 		if (pref != #CONTAINER)                                                \
-			THROW_EXCEPTION(format(                                            \
+			THROW_EXCEPTION_FMT(                                               \
 				"Error: serialized container %s<%s>'s preamble is wrong: "     \
 				"'%s'",                                                        \
-				#CONTAINER, mrpt::typemeta::TTypeName<K>::get().c_str(),       \
-				pref.c_str()));                                                \
+				#CONTAINER, kType.c_str(), pref.c_str());                      \
 		in >> stored_K;                                                        \
-		if (stored_K !=                                                        \
-			std::string(mrpt::typemeta::TTypeName<K>::get().c_str()))          \
-			THROW_EXCEPTION(format(                                            \
+		if (stored_K != std::string(kType.c_str()))                            \
+			THROW_EXCEPTION_FMT(                                               \
 				"Error: serialized container %s key type %s != %s",            \
-				#CONTAINER, stored_K.c_str(),                                  \
-				mrpt::typemeta::TTypeName<K>::get().c_str()));                 \
+				#CONTAINER, stored_K.c_str(), kType.c_str());                  \
 		const uint32_t n = in.ReadAs<uint32_t>();                              \
 		for (uint32_t i = 0; i < n; i++)                                       \
 		{                                                                      \

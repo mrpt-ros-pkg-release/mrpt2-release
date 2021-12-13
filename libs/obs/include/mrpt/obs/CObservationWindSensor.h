@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -33,12 +33,10 @@ class CObservationWindSensor : public CObservation
 	/** @name The data members
 	 * @{ */
 
-	/** The wind speed in m/s */
-	double speed{.0};
-	/** The wind flow direction in deg */
-	double direction{.0};
-	/** The location of the sensing anemometer on the robot coordinate framework
-	 */
+	double speed = 0;  //!< Wind speed [m/s]
+	double direction = 0;  //!< Wind flow direction [degrees]
+
+	/** The location of the sensing anemometer on the robot frame */
 	mrpt::poses::CPose3D sensorPoseOnRobot;
 
 	/** @} */
@@ -48,6 +46,11 @@ class CObservationWindSensor : public CObservation
 	void setSensorPose(const mrpt::poses::CPose3D& newSensorPose) override;
 	void getDescriptionAsText(std::ostream& o) const override;
 
-};  // End of class def.
+	// See base class docs:
+	bool exportTxtSupported() const override { return true; }
+	std::string exportTxtHeader() const override;
+	std::string exportTxtDataRow() const override;
+
+};	// End of class def.
 
 }  // namespace mrpt::obs

@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -14,6 +14,7 @@
 #include <mrpt/obs/CObservationGasSensors.h>
 #include <mrpt/serialization/CArchive.h>
 #include <mrpt/system/filesystem.h>
+
 #include <iostream>
 
 using namespace mrpt;
@@ -93,7 +94,7 @@ int main(int argc, char** argv)
 			CSerializable::Ptr o;
 			archiveFrom(file_input) >> o;
 
-			if (o)  // ASSERT_(o);
+			if (o)	// ASSERT_(o);
 			{
 				if (IS_CLASS(*o, CObservationGasSensors))
 				{
@@ -103,7 +104,7 @@ int main(int argc, char** argv)
 					// Correct delay on gas readings
 					if (apply_delay)
 						obs->timestamp = obs->timestamp -
-										 std::chrono::milliseconds(delay_value);
+							std::chrono::milliseconds(delay_value);
 
 					if (obs->sensorLabel == sensorLabel)
 					{

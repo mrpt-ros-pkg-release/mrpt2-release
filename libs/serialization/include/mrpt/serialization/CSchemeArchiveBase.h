@@ -2,13 +2,14 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 #pragma once
 
 #include <mrpt/serialization/CSerializable.h>
+
 #include <cstdint>
 #include <memory>
 #include <stdexcept>
@@ -32,7 +33,6 @@ class CSchemeArchiveBase_impl
 	virtual CSchemeArchiveBase& operator=(const uint64_t) = 0;
 	virtual CSchemeArchiveBase& operator=(const float) = 0;
 	virtual CSchemeArchiveBase& operator=(const double) = 0;
-	virtual CSchemeArchiveBase& operator=(const std::nullptr_t) = 0;
 	virtual CSchemeArchiveBase& operator=(const std::string) = 0;
 	virtual CSchemeArchiveBase& operator=(bool) = 0;
 
@@ -61,7 +61,7 @@ class CSchemeArchiveBase_impl
 	// Dict accessor
 	virtual CSchemeArchiveBase operator[](std::string) = 0;
 
-   public:  // should make it private by virtue of friend class
+   public:	// should make it private by virtue of friend class
 	void setParent(CSchemeArchiveBase* parent) { m_parent = parent; }
 
    protected:

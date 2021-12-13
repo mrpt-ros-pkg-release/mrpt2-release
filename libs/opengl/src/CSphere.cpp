@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
-#include "opengl-precomp.h"  // Precompiled header
-
+#include "opengl-precomp.h"	 // Precompiled header
+//
 #include <mrpt/opengl/CSphere.h>
 #include <mrpt/serialization/CArchive.h>
 
@@ -50,8 +50,7 @@ void CSphere::serializeFrom(mrpt::serialization::CArchive& in, uint8_t version)
 			regenerateBaseParams();
 		}
 		break;
-		default:
-			MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
 	};
 	CRenderizable::notifyChange();
 }
@@ -86,20 +85,10 @@ bool CSphere::traceRay(const mrpt::poses::CPose3D& o, double& dist) const
 		return false;
 }
 
-void CSphere::getBoundingBox(
-	mrpt::math::TPoint3D& bb_min, mrpt::math::TPoint3D& bb_max) const
+auto CSphere::getBoundingBox() const -> mrpt::math::TBoundingBox
 {
-	bb_min.x = -m_radius;
-	bb_min.y = -m_radius;
-	bb_min.z = -m_radius;
-
-	bb_max.x = m_radius;
-	bb_max.y = m_radius;
-	bb_max.z = m_radius;
-
-	// Convert to coordinates of my parent:
-	m_pose.composePoint(bb_min, bb_min);
-	m_pose.composePoint(bb_max, bb_max);
+	const double R = m_radius;
+	return mrpt::math::TBoundingBox({-R, -R, -R}, {R, R, R}).compose(m_pose);
 }
 
 void CSphere::renderUpdateBuffers() const

@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -242,9 +242,7 @@ bool TUserOptionsChecker<GRAPH_t>::checkRegistrationDeciderExists(
 		pose_t p;
 		if ((!dec->is_slam_2d && IS_CLASS(p, CPose2D)) ||
 			(!dec->is_slam_3d && IS_CLASS(p, CPose3D)))
-		{
-			continue;
-		}
+		{ continue; }
 
 		if (system::strCmpI(dec->type, reg_type))
 		{
@@ -280,9 +278,7 @@ bool TUserOptionsChecker<GRAPH_t>::checkOptimizerExists(
 		pose_t p;
 		if ((!opt->is_slam_2d && IS_CLASS(p, CPose2D)) &&
 			(!opt->is_slam_3d && IS_CLASS(p, CPose3D)))
-		{
-			continue;
-		}
+		{ continue; }
 
 		if (system::strCmpI(opt->name, given_opt))
 		{

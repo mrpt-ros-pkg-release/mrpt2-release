@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -15,6 +15,7 @@
 
 #include <mrpt/core/exceptions.h>  // ASSERT_()
 #include <mrpt/core/round.h>
+
 #include <algorithm>  // std::max(),...
 #include <cmath>
 #include <limits>
@@ -33,7 +34,7 @@ bool ModelSearch::ransacSingleModel(
 	size_t bestScore = std::string::npos;  // npos will mean "none"
 	size_t iter = 0;
 	size_t softIterLimit = 1;  // will be updated by the size of inliers
-	size_t hardIterLimit = 100;  // a fixed iteration step
+	size_t hardIterLimit = 100;	 // a fixed iteration step
 	p_inliers.clear();
 	size_t nSamples = p_state.getSampleCount();
 	std::vector<size_t> ind(p_kernelSize);
@@ -139,7 +140,7 @@ bool ModelSearch::geneticSingleModel(
 			}
 
 			// mate elders to make siblings
-			int se = (int)speciesAlive;  // dead species cannot mate
+			int se = (int)speciesAlive;	 // dead species cannot mate
 			for (; i < elderCnt + siblingCnt; i++)
 			{
 				Species* sibling = sortedPopulation[--se];

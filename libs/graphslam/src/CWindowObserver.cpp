@@ -2,14 +2,14 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
+#include "graphslam-precomp.h"	// Precompiled headers
+//
 // Implementation file for CWindowObserver class
-#include "graphslam-precomp.h"  // Precompiled headers
-
 #include <mrpt/graphslam/misc/CWindowObserver.h>
 #include <mrpt/gui/CBaseGUIWindow.h>
 #include <mrpt/opengl/COpenGLViewport.h>
@@ -52,7 +52,7 @@ void CWindowObserver::registerKeystroke(
 	const std::string key_str, const std::string key_desc)
 {
 	m_help_msg += std::string("\n") + " - " + key_str + "/" +
-				  mrpt::system::upperCase(key_str) + ": " + key_desc;
+		mrpt::system::upperCase(key_str) + ": " + key_desc;
 
 	m_key_codes_to_pressed[key_str] = false;
 }
@@ -85,9 +85,7 @@ void CWindowObserver::OnEvent(const mrpt::system::mrptEvent& e)
 		switch (ev.char_code)
 		{
 			case 'h':
-			case 'H':
-				m_key_codes_to_pressed["h"] = true;
-				break;
+			case 'H': m_key_codes_to_pressed["h"] = true; break;
 			case 'c':
 			case 'C':
 				// case 3: // <C-c>

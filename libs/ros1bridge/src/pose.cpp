@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -42,7 +42,8 @@ tf2::Matrix3x3 toROS(const mrpt::math::CMatrixDouble33& src)
 {
 	tf2::Matrix3x3 des;
 	for (int r = 0; r < 3; r++)
-		for (int c = 0; c < 3; c++) des[r][c] = src(r, c);
+		for (int c = 0; c < 3; c++)
+			des[r][c] = src(r, c);
 	return des;
 }
 
@@ -232,7 +233,8 @@ mrpt::math::CMatrixDouble33 fromROS(const tf2::Matrix3x3& src)
 {
 	mrpt::math::CMatrixDouble33 des;
 	for (int r = 0; r < 3; r++)
-		for (int c = 0; c < 3; c++) des(r, c) = src[r][c];
+		for (int c = 0; c < 3; c++)
+			des(r, c) = src[r][c];
 	return des;
 }
 

@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -76,6 +76,14 @@ class CHeightGridMap2D
 		return float(c.h);
 	}
 
+	/** Returns a short description of the map. */
+	std::string asString() const override
+	{
+		return mrpt::format(
+			"HeightGridMap2D, extending from (%f,%f) to (%f,%f), resolution=%f",
+			getXMin(), getYMin(), getXMax(), getYMax(), getResolution());
+	}
+
 	/** The type of map representation to be used.
 	 *  See mrpt::maps::CHeightGridMap2D for discussion.
 	 */
@@ -103,7 +111,7 @@ class CHeightGridMap2D
 			const mrpt::config::CConfigFileBase& source,
 			const std::string& section) override;  // See base docs
 		void dumpToTextStream(
-			std::ostream& out) const override;  // See base docs
+			std::ostream& out) const override;	// See base docs
 
 		/** Whether to perform filtering by z-coordinate (default=false):
 		 * coordinates are always RELATIVE to the robot for this filter.vvv */
@@ -122,13 +130,14 @@ class CHeightGridMap2D
 		const TMatchingRatioParams& params) const override;
 
 	void saveMetricMapRepresentationToFile(const std::string& filNamePrefix)
-		const override;  // See base class docs
+		const override;	 // See base class docs
 
 	/** Returns a 3D object representing the map: by default, it will be a
 	 * mrpt::opengl::CMesh object, unless
 	 *   it is specified otherwise in
 	 * mrpt::global_settings::HEIGHTGRIDMAP_EXPORT3D_AS_MESH */
-	void getAs3DObject(mrpt::opengl::CSetOfObjects::Ptr& outObj) const override;
+	void getVisualizationInto(
+		mrpt::opengl::CSetOfObjects& outObj) const override;
 
 	/** Return the type of the gas distribution map, according to parameters
 	 * passed on construction */
@@ -157,10 +166,11 @@ class CHeightGridMap2D
 	void internal_clear() override;
 	bool internal_insertObservation(
 		const mrpt::obs::CObservation& obs,
-		const mrpt::poses::CPose3D* robotPose = nullptr) override;
+		const std::optional<const mrpt::poses::CPose3D>& robotPose =
+			std::nullopt) override;
 	double internal_computeObservationLikelihood(
 		const mrpt::obs::CObservation& obs,
-		const mrpt::poses::CPose3D& takenFrom) override;
+		const mrpt::poses::CPose3D& takenFrom) const override;
 
 	MAP_DEFINITION_START(CHeightGridMap2D)
 	/** See CHeightGridMap2D::CHeightGridMap2D */

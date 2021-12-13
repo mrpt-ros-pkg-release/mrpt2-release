@@ -2,18 +2,19 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
-#include "io-precomp.h"  // Precompiled headers
-
+#include "io-precomp.h"	 // Precompiled headers
+//
 #include <mrpt/io/CFileInputStream.h>
 #include <mrpt/io/CFileOutputStream.h>
 #include <mrpt/io/CMemoryStream.h>
+
 #include <algorithm>  // min,max
-#include <cstring>  // memcpy
+#include <cstring>	// memcpy
 
 using namespace mrpt::io;
 using std::max;
@@ -127,15 +128,9 @@ uint64_t CMemoryStream::Seek(int64_t Offset, CStream::TSeekOrigin Origin)
 {
 	switch (Origin)
 	{
-		case sFromBeginning:
-			m_position = Offset;
-			break;
-		case sFromCurrent:
-			m_position += Offset;
-			break;
-		case sFromEnd:
-			m_position = m_bytesWritten - 1 + Origin;
-			break;
+		case sFromBeginning: m_position = Offset; break;
+		case sFromCurrent: m_position += Offset; break;
+		case sFromEnd: m_position = m_bytesWritten - 1 + Origin; break;
 	};
 
 	if (m_position >= m_size) m_position = m_size - 1;
@@ -147,10 +142,7 @@ uint64_t CMemoryStream::getTotalBytesCount() const { return m_bytesWritten; }
 uint64_t CMemoryStream::getPosition() const { return m_position; }
 void CMemoryStream::clear()
 {
-	if (!m_read_only)
-	{
-		resize(0);
-	}
+	if (!m_read_only) { resize(0); }
 	else
 	{
 		m_memory = nullptr;
@@ -210,4 +202,13 @@ void mrpt::io::internal::free_fn_for_zmq(void* /* data*/, void* hint)
 	auto* fd = reinterpret_cast<mrpt::io::internal::TFreeFnDataForZMQ*>(hint);
 	if (fd->do_free) delete fd->buf;
 	delete fd;
+}
+
+std::string CMemoryStream::getStreamDescription() const
+{
+	using namespace std::string_literals;
+	return "mrpt::io::CMemoryStream with size="s +
+		std::to_string(this->m_size) +
+		", readPosition=" + std::to_string(m_position) + ", bytesWritten="s +
+		std::to_string(m_bytesWritten);
 }

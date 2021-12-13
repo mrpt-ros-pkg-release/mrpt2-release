@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "img-precomp.h"  // Precompiled headers
-
+//
 #include <mrpt/config.h>
 
 #if MRPT_ARCH_INTEL_COMPATIBLE
@@ -26,6 +26,7 @@
 #include <mrpt/core/SSE_types.h>
 #include <mrpt/img/CImage.h>
 #include <mrpt/system/memory.h>
+
 #include "CImage.SSEx.h"
 
 /** \addtogroup sse_optimizations
@@ -73,7 +74,7 @@ void impl_image_SSE2_scale_half_1c8u(
 			}
 		}
 
-		in += 2 * step_in;  // Skip one row
+		in += 2 * step_in;	// Skip one row
 		out += step_out;
 	}
 }
@@ -127,7 +128,7 @@ void impl_image_SSE2_scale_half_smooth_1c8u(
 			}
 		}
 
-		in += 2 * step_in;  // Skip one row
+		in += 2 * step_in;	// Skip one row
 		out += step_out;
 	}
 }
@@ -189,4 +190,4 @@ void image_SSE2_scale_half_smooth_1c8u(
 
 /**  @} */
 
-#endif  // end if MRPT_ARCH_INTEL_COMPATIBLE
+#endif	// end if MRPT_ARCH_INTEL_COMPATIBLE

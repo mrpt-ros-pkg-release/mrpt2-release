@@ -2,14 +2,15 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "math-precomp.h"  // Precompiled headers
-
+//
 #include <mrpt/math/fresnel.h>
+
 #include <cfloat>
 #include <cmath>
 
@@ -508,7 +509,8 @@ static long double sin_Asymptotic_Series(long double x)
 		}
 		if (fabsl(term[i]) <= epsilon) break;
 	}
-	for (; i >= 0; i--) g += term[i];
+	for (; i >= 0; i--)
+		g += term[i];
 
 	g /= (x * sqrt_2pi);
 	return g / (x2 + x2);
@@ -1007,7 +1009,8 @@ static long double cos_Asymptotic_Series(long double x)
 		if (fabsl(term[i]) <= epsilon) break;
 	}
 
-	for (; i >= 0; i--) f += term[i];
+	for (; i >= 0; i--)
+		f += term[i];
 
 	return f / (x * sqrt_2pi);
 }

@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -13,6 +13,7 @@
   ---------------------------------------------------------------*/
 
 #include "camera_calib_guiMain.h"
+
 #include "CDlgCalibWizardOnline.h"
 #include "CDlgPoseEst.h"
 
@@ -23,20 +24,19 @@
 #include <wx/string.h>
 //*)
 
-#include <wx/filedlg.h>
-#include <wx/msgdlg.h>
-#include <wx/progdlg.h>
-
+#include <mrpt/containers/yaml.h>
 #include <mrpt/gui/WxUtils.h>
 #include <mrpt/opengl/CGridPlaneXY.h>
 #include <mrpt/opengl/stock_objects.h>
 #include <mrpt/system/filesystem.h>
+#include <mrpt/vision/pnp_algos.h>
+#include <wx/filedlg.h>
+#include <wx/msgdlg.h>
+#include <wx/progdlg.h>
 
+#include <Eigen/Dense>
 #include <fstream>
 #include <iostream>
-
-#include <mrpt/vision/pnp_algos.h>
-#include <Eigen/Dense>
 
 using namespace mrpt;
 using namespace mrpt::math;
@@ -153,7 +153,7 @@ camera_calib_guiDialog::camera_calib_guiDialog(wxWindow* parent, wxWindowID id)
 	Create(
 		parent, id, _("Camera calibration GUI - Part of the MRPT project"),
 		wxDefaultPosition, wxDefaultSize,
-		wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER | wxMAXIMIZE_BOX, _T("id"));
+		wxDEFAULT_DIALOG_STYLE | wxDEFAULT_FRAME_STYLE, _T("id"));
 	FlexGridSizer1 = new wxFlexGridSizer(1, 2, 0, 0);
 	FlexGridSizer1->AddGrowableCol(1);
 	FlexGridSizer1->AddGrowableRow(0);
@@ -171,8 +171,7 @@ camera_calib_guiDialog::camera_calib_guiDialog(wxWindow* parent, wxWindowID id)
 		this, ID_BUTTON8, _("Grab now..."), wxDefaultPosition, wxDefaultSize, 0,
 		wxDefaultValidator, _T("ID_BUTTON8"));
 	wxFont btnCaptureNowFont(
-		wxDEFAULT, wxDEFAULT, wxFONTSTYLE_NORMAL, wxBOLD, false, wxEmptyString,
-		wxFONTENCODING_DEFAULT);
+		-1, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxBOLD);
 	btnCaptureNow->SetFont(btnCaptureNowFont);
 	FlexGridSizer5->Add(
 		btnCaptureNow, 1, wxALL | wxEXPAND | wxALIGN_LEFT | wxALIGN_TOP, 5);
@@ -180,8 +179,7 @@ camera_calib_guiDialog::camera_calib_guiDialog(wxWindow* parent, wxWindowID id)
 		this, ID_BUTTON10, _("Pose Est. now..."), wxDefaultPosition,
 		wxDefaultSize, 0, wxDefaultValidator, _T("ID_BUTTON10"));
 	wxFont btnPoseEstimateNowFont(
-		wxDEFAULT, wxDEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD, false,
-		wxEmptyString, wxFONTENCODING_DEFAULT);
+		-1, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
 	btnPoseEstimateNow->SetFont(btnPoseEstimateNowFont);
 	FlexGridSizer5->Add(
 		btnPoseEstimateNow, 1, wxALL | wxEXPAND | wxALIGN_LEFT | wxALIGN_TOP,
@@ -282,11 +280,11 @@ camera_calib_guiDialog::camera_calib_guiDialog(wxWindow* parent, wxWindowID id)
 		FlexGridSizer17, 1, wxALL | wxEXPAND | wxALIGN_LEFT | wxALIGN_TOP, 0);
 	FlexGridSizer6->Add(
 		StaticBoxSizer4, 1, wxALL | wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 2);
-	wxString __wxRadioBoxChoices_1[2] = {_("OpenCV\'s default"),
-										 _("Scaramuzza et al.\'s")};
+	wxString __wxRadioBoxChoices_1[2] = {
+		_("OpenCV\'s default"), _("Scaramuzza et al.\'s")};
 	rbMethod = new wxRadioBox(
 		this, ID_RADIOBOX1, _(" Detector method: "), wxDefaultPosition,
-		wxDefaultSize, 2, __wxRadioBoxChoices_1, 1, 0, wxDefaultValidator,
+		wxDefaultSize, 2, __wxRadioBoxChoices_1, 0, 0, wxDefaultValidator,
 		_T("ID_RADIOBOX1"));
 	FlexGridSizer6->Add(
 		rbMethod, 1, wxALL | wxEXPAND | wxALIGN_LEFT | wxALIGN_TOP, 2);
@@ -361,8 +359,7 @@ camera_calib_guiDialog::camera_calib_guiDialog(wxWindow* parent, wxWindowID id)
 		wxDefaultValidator, _T("ID_BUTTON3"));
 	btnRunCalib->SetDefault();
 	wxFont btnRunCalibFont(
-		wxDEFAULT, wxDEFAULT, wxFONTSTYLE_NORMAL, wxBOLD, false, wxEmptyString,
-		wxFONTENCODING_DEFAULT);
+		-1, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxBOLD);
 	btnRunCalib->SetFont(btnRunCalibFont);
 	FlexGridSizer8->Add(
 		btnRunCalib, 1, wxALL | wxEXPAND | wxALIGN_LEFT | wxALIGN_TOP, 5);
@@ -518,13 +515,10 @@ camera_calib_guiDialog::camera_calib_guiDialog(wxWindow* parent, wxWindowID id)
 	icon.CopyFromBitmap(wxBitmap(wxImage(icono_main_xpm)));
 	this->SetIcon(icon);
 
-	this->show3Dview();  // Empty 3D scene
+	this->show3Dview();	 // Empty 3D scene
 
 	Center();
-	this->SetTitle(format(
-					   "Camera calibration %s - Part of the MRPT project",
-					   CAMERA_CALIB_GUI_VERSION)
-					   .c_str());
+	this->SetTitle("Camera calibration - Part of the MRPT project");
 	Maximize();
 }
 
@@ -555,12 +549,12 @@ void camera_calib_guiDialog::OnAddImage(wxCommandEvent& event)
 
 		wxProgressDialog progDia(
 			wxT("Adding image files"), wxT("Processing..."),
-			files.Count(),  // range
+			files.Count(),	// range
 			this,  // parent
 			wxPD_CAN_ABORT | wxPD_APP_MODAL | wxPD_SMOOTH | wxPD_AUTO_HIDE |
 				wxPD_ELAPSED_TIME | wxPD_ESTIMATED_TIME | wxPD_REMAINING_TIME);
 
-		wxTheApp->Yield();  // Let the app. process messages
+		wxTheApp->Yield();	// Let the app. process messages
 
 		int counter_loops = 0;
 
@@ -569,7 +563,7 @@ void camera_calib_guiDialog::OnAddImage(wxCommandEvent& event)
 			if (counter_loops++ % 5 == 0)
 			{
 				if (!progDia.Update(i)) break;
-				wxTheApp->Yield();  // Let the app. process messages
+				wxTheApp->Yield();	// Let the app. process messages
 			}
 
 			const string fil = string(files[i].mb_str());
@@ -687,30 +681,15 @@ void camera_calib_guiDialog::OnbtnSaveClick(wxCommandEvent& event)
 
 	{
 		wxFileDialog dlg(
-			this, _("Save intrinsic parameters matrix"), _("."),
-			_("intrinsic_matrix.txt"),
-			_("Text files (*.txt)|*.txt|All files (*.*)|*.*"),
+			this, _("Save camera calibration"), _("."), _("calibration.yml"),
+			_("YAML files (*.yml)|*.yml|All files (*.*)|*.*"),
 			wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
 
 		if (wxID_OK != dlg.ShowModal()) return;
 
-		camera_params.intrinsicParams.saveToTextFile(
-			string(dlg.GetPath().mb_str()));
-	}
-
-	{
-		wxFileDialog dlg(
-			this, _("Save distortion parameters"), _("."),
-			_("distortion_matrix.txt"),
-			_("Text files (*.txt)|*.txt|All files (*.*)|*.*"),
-			wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
-
-		if (wxID_OK != dlg.ShowModal()) return;
-
-		CMatrixDouble M(1, 5);
-		for (unsigned i = 0; i < 5; i++) M(0, i) = camera_params.dist[i];
-
-		M.saveToTextFile(string(dlg.GetPath().mb_str()));
+		std::ofstream f(string(dlg.GetPath().mb_str()));
+		ASSERT_(f.is_open());
+		camera_params.asYAML().printAsYAML(f);
 	}
 }
 
@@ -755,8 +734,7 @@ void camera_calib_guiDialog::refreshDisplayedImage()
 		TImageSize imgSizes(0, 0);
 
 		// Generate the images on-the-fly:
-		CImage imgOrgColor;
-		it->second.img_original.colorImage(imgOrgColor);
+		CImage imgOrgColor = it->second.img_original.colorImage();
 
 		imgSizes = imgOrgColor.getSize();
 
@@ -914,7 +892,7 @@ void camera_calib_guiDialog::OnbtnManualRectClick(wxCommandEvent& event)
 		wxString::Format(wxT("%.07f"), camera_params.intrinsicParams(0, 0)),
 		this);
 	if (s.IsEmpty()) return;
-	if (!s.ToDouble(&camera_params.intrinsicParams(0, 0)))
+	if (!s.ToCDouble(&camera_params.intrinsicParams(0, 0)))
 	{
 		wxMessageBox(_("Invalid number"));
 		return;
@@ -925,7 +903,7 @@ void camera_calib_guiDialog::OnbtnManualRectClick(wxCommandEvent& event)
 		wxString::Format(wxT("%.07f"), camera_params.intrinsicParams(1, 1)),
 		this);
 	if (s.IsEmpty()) return;
-	if (!s.ToDouble(&camera_params.intrinsicParams(1, 1)))
+	if (!s.ToCDouble(&camera_params.intrinsicParams(1, 1)))
 	{
 		wxMessageBox(_("Invalid number"));
 		return;
@@ -936,7 +914,7 @@ void camera_calib_guiDialog::OnbtnManualRectClick(wxCommandEvent& event)
 		wxString::Format(wxT("%.07f"), camera_params.intrinsicParams(0, 2)),
 		this);
 	if (s.IsEmpty()) return;
-	if (!s.ToDouble(&camera_params.intrinsicParams(0, 2)))
+	if (!s.ToCDouble(&camera_params.intrinsicParams(0, 2)))
 	{
 		wxMessageBox(_("Invalid number"));
 		return;
@@ -947,7 +925,7 @@ void camera_calib_guiDialog::OnbtnManualRectClick(wxCommandEvent& event)
 		wxString::Format(wxT("%.07f"), camera_params.intrinsicParams(1, 2)),
 		this);
 	if (s.IsEmpty()) return;
-	if (!s.ToDouble(&camera_params.intrinsicParams(1, 2)))
+	if (!s.ToCDouble(&camera_params.intrinsicParams(1, 2)))
 	{
 		wxMessageBox(_("Invalid number"));
 		return;
@@ -957,7 +935,7 @@ void camera_calib_guiDialog::OnbtnManualRectClick(wxCommandEvent& event)
 		_("Distortion param p1:"), _("Manual parameters"),
 		wxString::Format(wxT("%.07f"), camera_params.dist[0]), this);
 	if (s.IsEmpty()) return;
-	if (!s.ToDouble(&camera_params.dist[0]))
+	if (!s.ToCDouble(&camera_params.dist[0]))
 	{
 		wxMessageBox(_("Invalid number"));
 		return;
@@ -967,7 +945,7 @@ void camera_calib_guiDialog::OnbtnManualRectClick(wxCommandEvent& event)
 		_("Distortion param p2:"), _("Manual parameters"),
 		wxString::Format(wxT("%.07f"), camera_params.dist[1]), this);
 	if (s.IsEmpty()) return;
-	if (!s.ToDouble(&camera_params.dist[1]))
+	if (!s.ToCDouble(&camera_params.dist[1]))
 	{
 		wxMessageBox(_("Invalid number"));
 		return;
@@ -977,7 +955,7 @@ void camera_calib_guiDialog::OnbtnManualRectClick(wxCommandEvent& event)
 		_("Distortion param k1:"), _("Manual parameters"),
 		wxString::Format(wxT("%.07f"), camera_params.dist[2]), this);
 	if (s.IsEmpty()) return;
-	if (!s.ToDouble(&camera_params.dist[2]))
+	if (!s.ToCDouble(&camera_params.dist[2]))
 	{
 		wxMessageBox(_("Invalid number"));
 		return;
@@ -987,7 +965,7 @@ void camera_calib_guiDialog::OnbtnManualRectClick(wxCommandEvent& event)
 		_("Distortion param k2:"), _("Manual parameters"),
 		wxString::Format(wxT("%.07f"), camera_params.dist[3]), this);
 	if (s.IsEmpty()) return;
-	if (!s.ToDouble(&camera_params.dist[3]))
+	if (!s.ToCDouble(&camera_params.dist[3]))
 	{
 		wxMessageBox(_("Invalid number"));
 		return;

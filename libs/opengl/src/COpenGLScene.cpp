@@ -2,21 +2,20 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
-#include "opengl-precomp.h"  // Precompiled header
-
+#include "opengl-precomp.h"	 // Precompiled header
+//
 #include <mrpt/io/CFileGZInputStream.h>
 #include <mrpt/io/CFileGZOutputStream.h>
 #include <mrpt/opengl/COpenGLScene.h>
 #include <mrpt/opengl/CRenderizable.h>
+#include <mrpt/opengl/opengl_api.h>
 #include <mrpt/serialization/CArchive.h>
 #include <mrpt/serialization/metaprogramming_serialization.h>
-
-#include <mrpt/opengl/opengl_api.h>
 
 using namespace mrpt;
 using namespace mrpt::opengl;
@@ -32,8 +31,8 @@ using namespace std;
 #pragma comment(lib, "opengl32.lib")
 #pragma comment(lib, "GlU32.lib")
 #endif
-#endif  // _WIN32
-#endif  // MRPT_HAS_OPENGL_GLUT
+#endif	// _WIN32
+#endif	// MRPT_HAS_OPENGL_GLUT
 
 IMPLEMENTS_SERIALIZABLE(COpenGLScene, CRenderizable, mrpt::opengl)
 
@@ -121,7 +120,8 @@ void COpenGLScene::serializeTo(mrpt::serialization::CArchive& out) const
 	uint32_t n;
 	n = (uint32_t)m_viewports.size();
 	out << n;
-	for (const auto& m_viewport : m_viewports) out << *m_viewport;
+	for (const auto& m_viewport : m_viewports)
+		out << *m_viewport;
 }
 
 void COpenGLScene::serializeFrom(
@@ -166,8 +166,7 @@ void COpenGLScene::serializeFrom(
 			}
 		}
 		break;
-		default:
-			MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
 	};
 }
 
@@ -205,22 +204,35 @@ CRenderizable::Ptr COpenGLScene::getByName(
 
 void COpenGLScene::initializeTextures()
 {
-	for (auto& m_viewport : m_viewports) m_viewport->initializeTextures();
+	for (auto& m_viewport : m_viewports)
+		m_viewport->initializeTextures();
 }
 
 /*--------------------------------------------------------------
 					dumpListOfObjects
   ---------------------------------------------------------------*/
-void COpenGLScene::dumpListOfObjects(std::vector<std::string>& lst)
+void COpenGLScene::dumpListOfObjects(std::vector<std::string>& lst) const
 {
+	using namespace std::string_literals;
 	lst.clear();
 
 	for (auto& v : m_viewports)
 	{
-		lst.emplace_back(string("VIEWPORT: ") + v->m_name);
+		lst.emplace_back("Viewport: '"s + v->m_name + "'"s);
 		lst.emplace_back("============================================");
 		v->dumpListOfObjects(lst);
 	}
+}
+
+mrpt::containers::yaml COpenGLScene::asYAML() const
+{
+	mrpt::containers::yaml d = mrpt::containers::yaml::Map();
+	auto vs = d["viewports"];
+
+	for (auto& v : m_viewports)
+		vs[v->m_name] = v->asYAML();
+
+	return d;
 }
 
 /*--------------------------------------------------------------
@@ -320,14 +332,13 @@ bool COpenGLScene::loadFromFile(const std::string& fil)
 
 /** Evaluates the bounding box of this object (including possible children) in
  * the coordinate frame of the object parent. */
-void COpenGLScene::getBoundingBox(
-	mrpt::math::TPoint3D& bb_min, mrpt::math::TPoint3D& bb_max,
-	const std::string& vpn) const
+auto COpenGLScene::getBoundingBox(const std::string& vpn) const
+	-> mrpt::math::TBoundingBox
 {
 	COpenGLViewport::Ptr vp = this->getViewport(vpn);
 	ASSERTMSG_(vp, "No opengl viewport exists with the given name");
 
-	return vp->getBoundingBox(bb_min, bb_max);
+	return vp->getBoundingBox();
 }
 
 void COpenGLScene::freeOpenGLResources()

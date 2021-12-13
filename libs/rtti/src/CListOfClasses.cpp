@@ -2,13 +2,15 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
-#include "rtti-precomp.h"  // Precompiled headers
 
+#include "rtti-precomp.h"  // Precompiled headers
+//
 #include <mrpt/rtti/CListOfClasses.h>
+
 #include <algorithm>
 #include <cctype>
 #include <functional>
@@ -25,7 +27,7 @@ bool CListOfClasses::containsDerivedFrom(
 	return false;
 }
 
-std::string CListOfClasses::toString() const
+std::string CListOfClasses::asString() const
 {
 	std::string s;
 	unsigned int cnt = 0;

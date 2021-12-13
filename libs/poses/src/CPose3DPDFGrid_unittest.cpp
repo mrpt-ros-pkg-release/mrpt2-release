@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -45,7 +45,8 @@ TEST(CPose3DPDFGrid, uniformDistribution)
 	EXPECT_NEAR(MEAN.pitch(), gt_mean.pitch, 1e-4);
 	EXPECT_NEAR(MEAN.roll(), gt_mean.roll, 1e-4);
 
-	for (int i = 0; i < 3; i++) EXPECT_GT(COV(i, i), mrpt::square(0.25));
+	for (int i = 0; i < 3; i++)
+		EXPECT_GT(COV(i, i), mrpt::square(0.25));
 	for (int i = 4; i < 6; i++)
 		EXPECT_GT(COV(i, i), mrpt::square(mrpt::DEG2RAD(3.0)));
 }
@@ -76,5 +77,6 @@ TEST(CPose3DPDFGrid, setManualPDF)
 	EXPECT_NEAR(MEAN.pitch(), gt_mean.pitch, 0.1);
 	EXPECT_NEAR(MEAN.roll(), gt_mean.roll, 0.1);
 
-	for (int i = 0; i < 6; i++) EXPECT_LT(COV(i, i), mrpt::square(0.05));
+	for (int i = 0; i < 6; i++)
+		EXPECT_LT(COV(i, i), mrpt::square(0.05));
 }

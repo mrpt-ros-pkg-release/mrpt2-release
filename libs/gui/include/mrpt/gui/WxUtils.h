@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -12,6 +12,7 @@
 #include <mrpt/config/CConfigFileMemory.h>
 #include <mrpt/gui/keycodes.h>
 #include <mrpt/img/CImage.h>
+#include <mrpt/system/string_utils.h>  // firstNLines()
 
 #if MRPT_HAS_WXWIDGETS
 
@@ -69,19 +70,21 @@ namespace gui
 
 #ifndef WX_START_TRY
 
-#define WX_START_TRY \
-	try              \
+#define WX_START_TRY                                                           \
+	try                                                                        \
 	{
-#define WX_END_TRY                                                            \
-	}                                                                         \
-	catch (std::exception & e)                                                \
-	{                                                                         \
-		wxMessageBox(                                                         \
-			mrpt::exception_to_str(e), wxT("Exception"), wxOK, nullptr);      \
-	}                                                                         \
-	catch (...)                                                               \
-	{                                                                         \
-		wxMessageBox(_("Untyped exception!"), _("Exception"), wxOK, nullptr); \
+#define WX_END_TRY                                                             \
+	}                                                                          \
+	catch (std::exception & e)                                                 \
+	{                                                                          \
+		const size_t maxLines = 7;                                             \
+		const std::string sErr =                                               \
+			mrpt::system::firstNLines(mrpt::exception_to_str(e), maxLines);    \
+		wxMessageBox(sErr, wxT("Exception"), wxOK, nullptr);                   \
+	}                                                                          \
+	catch (...)                                                                \
+	{                                                                          \
+		wxMessageBox(_("Untyped exception!"), _("Exception"), wxOK, nullptr);  \
 	}
 
 #endif

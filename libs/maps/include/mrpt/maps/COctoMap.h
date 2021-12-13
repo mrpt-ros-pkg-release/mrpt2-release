@@ -2,18 +2,17 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #pragma once
 
-#include <mrpt/maps/COctoMapBase.h>
-
 #include <mrpt/config/CLoadableOptions.h>
 #include <mrpt/core/safe_pointers.h>
 #include <mrpt/maps/CMetricMap.h>
+#include <mrpt/maps/COctoMapBase.h>
 #include <mrpt/obs/obs_frwds.h>
 
 namespace octomap
@@ -51,12 +50,12 @@ class COctoMap : public COctoMapBase<octomap::OcTree, octomap::OcTreeNode>
 
 	MAP_DEFINITION_START(COctoMap)
 	double resolution{
-		0.10};  //!< The finest resolution of the octomap (default: 0.10
+		0.10};	//!< The finest resolution of the octomap (default: 0.10
 	//! meters)
 	mrpt::maps::COctoMap::TInsertionOptions
-		insertionOpts;  //!< Observations insertion options
+		insertionOpts;	//!< Observations insertion options
 	mrpt::maps::COctoMap::TLikelihoodOptions
-		likelihoodOpts;  //!< Probabilistic observation likelihood options
+		likelihoodOpts;	 //!< Probabilistic observation likelihood options
 	MAP_DEFINITION_END(COctoMap)
 
 	/** Returns true if the map is empty/no observation has been inserted */
@@ -128,7 +127,8 @@ class COctoMap : public COctoMapBase<octomap::OcTree, octomap::OcTreeNode>
 	void internal_clear() override;
 	bool internal_insertObservation(
 		const mrpt::obs::CObservation& obs,
-		const mrpt::poses::CPose3D* robotPose) override;
-};  // End of class def.
+		const std::optional<const mrpt::poses::CPose3D>& robotPose =
+			std::nullopt) override;
+};	// End of class def.
 }  // namespace maps
 }  // namespace mrpt

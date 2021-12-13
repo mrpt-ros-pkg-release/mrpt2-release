@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -14,7 +14,7 @@
 #include <mrpt/nav.h>
 #include <mrpt/random.h>
 #include <mrpt/serialization/CArchive.h>
-#include <mrpt/system/filesystem.h>  // directoryExists(), ...
+#include <mrpt/system/filesystem.h>	 // directoryExists(), ...
 
 #include <iostream>
 
@@ -67,12 +67,12 @@ void TestRRT1()
 
 	// Logging:
 	planner.params.save_3d_log_freq =
-		0;  // 500; // save some iterations for debugging
+		0;	// 500; // save some iterations for debugging
 
 	// End criteria:
 	planner.end_criteria.acceptedDistToTarget = 0.25;
 	planner.end_criteria.acceptedAngToTarget =
-		180.0_deg;  // 180d=Any orientation is ok
+		180.0_deg;	// 180d=Any orientation is ok
 	planner.end_criteria.maxComputationTime = 15.0;
 	planner.end_criteria.minComputationTime =
 		1.0;  // 0=accept first found acceptable solution
@@ -92,14 +92,13 @@ void TestRRT1()
 
 	// Obstacles:
 	planner_input.obstacles_points.loadFromSimpleMap(simplemap);
-	mrpt::math::TPoint3D bbox_min, bbox_max;
-	planner_input.obstacles_points.boundingBox(bbox_min, bbox_max);
+	const auto bbox = planner_input.obstacles_points.boundingBox();
 	// Convert gridmap -> obstacle points:
 	// gridmap.getAsPointCloud( planner_input.obstacles_points );
 
 	// Workspace bounding box:
-	planner_input.world_bbox_min = mrpt::math::TPoint2D(bbox_min.x, bbox_min.y);
-	planner_input.world_bbox_max = mrpt::math::TPoint2D(bbox_max.x, bbox_max.y);
+	planner_input.world_bbox_min = mrpt::math::TPoint2D(bbox.min.x, bbox.min.y);
+	planner_input.world_bbox_max = mrpt::math::TPoint2D(bbox.max.x, bbox.max.y);
 
 // size_t iters=0;
 // Show results in a GUI and keep improving:

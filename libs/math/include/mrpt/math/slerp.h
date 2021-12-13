@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -59,17 +59,21 @@ void slerp(
 	if (std::abs(sinHalfTheta) < 0.001)
 	{
 		if (!reverse_q1)
-			for (int i = 0; i < 4; i++) q[i] = (1 - t) * q0[i] + t * q1[i];
+			for (int i = 0; i < 4; i++)
+				q[i] = (1 - t) * q0[i] + t * q1[i];
 		else
-			for (int i = 0; i < 4; i++) q[i] = (1 - t) * q0[i] - t * q1[i];
+			for (int i = 0; i < 4; i++)
+				q[i] = (1 - t) * q0[i] - t * q1[i];
 		return;
 	}
 	const double A = sin((1 - t) * halfTheta) / sinHalfTheta;
 	const double B = sin(t * halfTheta) / sinHalfTheta;
 	if (!reverse_q1)
-		for (int i = 0; i < 4; i++) q[i] = A * q0[i] + B * q1[i];
+		for (int i = 0; i < 4; i++)
+			q[i] = A * q0[i] + B * q1[i];
 	else
-		for (int i = 0; i < 4; i++) q[i] = A * q0[i] - B * q1[i];
+		for (int i = 0; i < 4; i++)
+			q[i] = A * q0[i] - B * q1[i];
 }
 
 /** SLERP interpolation between two 6D poses - like mrpt::math::slerp for

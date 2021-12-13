@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -13,15 +13,16 @@
 	AUTHOR: Raghavender Sahdev <raghavendersahdev@gmail.com>
   ---------------------------------------------------------------*/
 
-#include "vision-precomp.h"  // Precompiled headers
-
+#include "vision-precomp.h"	 // Precompiled headers
+//
 #include <mrpt/io/CMemoryStream.h>
 #include <mrpt/system/os.h>
-#include <mrpt/vision/CFeatureExtraction.h>  // important import
+#include <mrpt/vision/CFeatureExtraction.h>	 // important import
+
 // Universal include for all versions of OpenCV
 #include <mrpt/3rdparty/do_opencv_includes.h>
 
-#ifdef HAVE_OPENCV_NONFREE  // MRPT_HAS_OPENCV_NONFREE
+#ifdef HAVE_OPENCV_NONFREE	// MRPT_HAS_OPENCV_NONFREE
 #include <opencv2/nonfree/nonfree.hpp>
 #endif
 

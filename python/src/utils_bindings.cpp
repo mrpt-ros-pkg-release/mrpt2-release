@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -29,14 +29,14 @@ using namespace mrpt::serialization;
 using namespace mrpt::io;
 
 // CStream
-void CStream_ReadObject(CArchive& self, CSerializable::Ptr& obj)
+void CStream_ReadObject(CArchive& me, CSerializable::Ptr& obj)
 {
-	self.ReadObject(obj.get());
+	me.ReadObject(obj.get());
 }
 
-void CStream_WriteObject(CArchive& self, CSerializable::Ptr& obj)
+void CStream_WriteObject(CArchive& me, CSerializable::Ptr& obj)
 {
-	self.WriteObject(obj.get());
+	me.WriteObject(obj.get());
 }
 // end of CStream
 
@@ -65,9 +65,9 @@ double mrpt_utils_RAD2DEG(double rad) { return mrpt::RAD2DEG(rad); }
 // end of Utils
 
 // smart pointer contents
-CObject& CObjectPtr_get_ctx(CObject::Ptr& self) { return *self; }
-void CObjectPtr_set_ctx(CObject::Ptr& self, const CObject& ctx) { *self = ctx; }
-CObject* CObjectPtr_pointer(CObject::Ptr& self) { return self.get(); }
+CObject& CObjectPtr_get_ctx(CObject::Ptr& me) { return *me; }
+void CObjectPtr_set_ctx(CObject::Ptr& me, const CObject& ctx) { *me = ctx; }
+CObject* CObjectPtr_pointer(CObject::Ptr& me) { return me.get(); }
 MAKE_PTR_CTX(CSerializable)
 
 // exporter
@@ -79,9 +79,10 @@ void export_utils()
 	// TColorf
 	{
 		class_<TColorf>(
-			"TColorf", init<optional<float, float, float, float>>(
-						   args("r", "g", "b", "alpha"),
-						   "A RGB color - floats in the range [0,1]."))
+			"TColorf",
+			init<optional<float, float, float, float>>(
+				args("r", "g", "b", "alpha"),
+				"A RGB color - floats in the range [0,1]."))
 			.def_readwrite("R", &TColorf::R, "red")
 			.def_readwrite("G", &TColorf::R, "green")
 			.def_readwrite("B", &TColorf::R, "blue")

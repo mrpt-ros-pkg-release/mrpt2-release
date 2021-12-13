@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -27,8 +27,7 @@ TEST(CGridMapAligner, DISABLED_alignGridMaps)
 			"/share/mrpt/config_files/grid-matching/gridmatch_example.ini");
 	EXPECT_TRUE(mrpt::system::fileExists(ini_fil));
 
-	const std::string gridmap1_fil =
-		mrpt::UNITTEST_BASEDIR +
+	const std::string gridmap1_fil = mrpt::UNITTEST_BASEDIR +
 		std::string("/share/mrpt/datasets/malaga-cs-fac-building.simplemap.gz");
 	EXPECT_TRUE(mrpt::system::fileExists(gridmap1_fil));
 

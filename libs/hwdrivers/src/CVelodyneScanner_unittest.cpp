@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -17,7 +17,7 @@ using namespace mrpt::hwdrivers;
 using namespace std;
 
 #include <mrpt/config.h>
-#if MRPT_HAS_LIBPCAP
+#if MRPT_HAS_LIBPCAP && MRPT_HAS_TINYXML2
 
 TEST(CVelodyneScanner, sample_vlp16_dataset)
 {
@@ -95,4 +95,4 @@ TEST(CVelodyneScanner, sample_hdl32_dataset)
 	EXPECT_EQ(nScans, 3U);
 }
 
-#endif  // MRPT_HAS_LIBPCAP
+#endif	// MRPT_HAS_LIBPCAP

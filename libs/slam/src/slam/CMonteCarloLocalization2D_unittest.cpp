@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -100,8 +100,8 @@ void run_test_pf_localization(CPose2D& meanPose, CMatrixDouble33& cov)
 	CParticleFilter::TParticleFilterStats PF_stats;
 
 	// Load the set of metric maps to consider in the experiments:
-	CMultiMetricMap metricMap;
-	metricMap.setListOfMaps(mapList);
+	auto metricMap = CMultiMetricMap::Create();
+	metricMap->setListOfMaps(mapList);
 
 	getRandomGenerator().randomize();
 
@@ -124,7 +124,7 @@ void run_test_pf_localization(CPose2D& meanPose, CMatrixDouble33& cov)
 			mrpt::serialization::archiveFrom(f) >> simpleMap;
 			ASSERT_(simpleMap.size() > 0);
 			// Build metric map:
-			metricMap.loadFromProbabilisticPosesAndObservations(simpleMap);
+			metricMap->loadFromProbabilisticPosesAndObservations(simpleMap);
 		}
 		else
 		{
@@ -150,13 +150,12 @@ void run_test_pf_localization(CPose2D& meanPose, CMatrixDouble33& cov)
 		tictacGlobal.Tic();
 		for (int repetition = 0; repetition < NUM_REPS; repetition++)
 		{
-			int M = PARTICLE_COUNT;
-			CMonteCarloLocalization2D pdf(M);
+			CMonteCarloLocalization2D pdf(PARTICLE_COUNT);
 
 			// PDF Options:
 			pdf.options = pdfPredictionOptions;
 
-			pdf.options.metricMap = &metricMap;
+			pdf.options.metricMap = metricMap;
 
 			// Create the PF object:
 			CParticleFilter PF;
@@ -172,7 +171,7 @@ void run_test_pf_localization(CPose2D& meanPose, CMatrixDouble33& cov)
 					iniSectionName, "init_PDF_mode", false,
 					/*Fail if not found*/ true))
 			{
-				auto grid = metricMap.mapByClass<COccupancyGridMap2D>();
+				auto grid = metricMap->mapByClass<COccupancyGridMap2D>();
 				pdf.resetUniformFreeSpace(
 					grid.get(), 0.7f, PARTICLE_COUNT,
 					iniFile.read_float(
@@ -242,7 +241,7 @@ void run_test_pf_localization(CPose2D& meanPose, CMatrixDouble33& cov)
 						PF.executeOn(
 							pdf,
 							action.get(),  // Action
-							observations.get(),  // Obs.
+							observations.get(),	 // Obs.
 							&PF_stats  // Output statistics
 						);
 					}
@@ -255,7 +254,7 @@ void run_test_pf_localization(CPose2D& meanPose, CMatrixDouble33& cov)
 
 				step++;
 
-			};  // while rawlogEntries
+			};	// while rawlogEntries
 		}  // for repetitions
 	}  // end of loop for different # of particles
 }
@@ -285,7 +284,7 @@ TEST(MonteCarlo2D, RunSampleDataset)
 			bool pass1 = (final_pf_pose - GT_endpose).norm() < 0.10;
 			bool pass2 = final_pf_cov_trace < 0.01;
 
-			if (pass1 && pass2) return;  // OK!
+			if (pass1 && pass2) return;	 // OK!
 
 			// else: give it another try...
 			cout << "\n*Warning: Test failed. Will give it another chance, "

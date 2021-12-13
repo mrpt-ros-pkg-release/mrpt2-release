@@ -2,16 +2,18 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "xRawLogViewerApp.h"
+
 #include <wx/stdpaths.h>
 
 //(*AppHeaders
 #include <wx/image.h>
+
 #include "xRawLogViewerMain.h"
 //*)
 #include <wx/cmdline.h>
@@ -66,7 +68,7 @@ bool xRawLogViewerApp::OnInit()
 	// Create the INI file:
 	wxString dataDir = wxStandardPaths::Get().GetUserDataDir();
 	std::string dataDirStr(dataDir.mb_str());
-	mrpt::system::createDirectory(dataDirStr);  // Create dir!
+	mrpt::system::createDirectory(dataDirStr);	// Create dir!
 	std::string iniFileName(dataDirStr + std::string("/config.cfg"));
 	iniFile = std::make_unique<CConfigFile>(iniFileName);
 

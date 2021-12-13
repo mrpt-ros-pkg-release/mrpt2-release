@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -97,6 +97,6 @@ class CJoystick
 		int x_min = -32767, int x_max = 32767, int y_min = -32767,
 		int y_max = 32767, int z_min = -32767, int z_max = 32767);
 #endif
-};  // End of class def.
+};	// End of class def.
 
 }  // namespace mrpt::hwdrivers

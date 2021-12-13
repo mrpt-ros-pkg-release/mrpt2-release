@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -55,16 +55,17 @@ class CHeightGridMap2D_MRF : public CRandomFieldGridMap2D,
 			const mrpt::config::CConfigFileBase& source,
 			const std::string& section) override;  // See base docs
 		void dumpToTextStream(
-			std::ostream& out) const override;  // See base docs
+			std::ostream& out) const override;	// See base docs
 	} insertionOptions;
 
 	/** Returns a 3D object representing the map */
-	void getAs3DObject(mrpt::opengl::CSetOfObjects::Ptr& outObj) const override;
+	void getVisualizationInto(
+		mrpt::opengl::CSetOfObjects& outObj) const override;
 
 	/** Returns two 3D objects representing the mean and variance maps */
 	void getAs3DObject(
-		mrpt::opengl::CSetOfObjects::Ptr& meanObj,
-		mrpt::opengl::CSetOfObjects::Ptr& varObj) const override;
+		mrpt::opengl::CSetOfObjects& meanObj,
+		mrpt::opengl::CSetOfObjects& varObj) const override;
 
 	bool insertIndividualPoint(
 		const double x, const double y, const double z,
@@ -91,10 +92,11 @@ class CHeightGridMap2D_MRF : public CRandomFieldGridMap2D,
 	void internal_clear() override;
 	bool internal_insertObservation(
 		const mrpt::obs::CObservation& obs,
-		const mrpt::poses::CPose3D* robotPose = nullptr) override;
+		const std::optional<const mrpt::poses::CPose3D>& robotPose =
+			std::nullopt) override;
 	double internal_computeObservationLikelihood(
 		const mrpt::obs::CObservation& obs,
-		const mrpt::poses::CPose3D& takenFrom) override;
+		const mrpt::poses::CPose3D& takenFrom) const override;
 
 	MAP_DEFINITION_START(CHeightGridMap2D_MRF)
 	/** Runs map estimation at start up (Default:true) */

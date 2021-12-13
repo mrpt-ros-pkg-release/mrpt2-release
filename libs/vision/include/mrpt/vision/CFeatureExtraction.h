@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)               |
    |                          https://www.mrpt.org/                            |
    |                                                                           |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file        |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file        |
    | See: https://www.mrpt.org/Authors - All rights reserved.                  |
    | Released under BSD License. See details in https://www.mrpt.org/License   |
    +---------------------------------------------------------------------------+
@@ -76,11 +76,9 @@ class CFeatureExtraction
 
 	enum TSIFTImplementation
 	{
-		LoweBinary = 0 /* obsolete */,
-		CSBinary /* obsolete */,
-		VedaldiBinary /* obsolete */,
-		Hess /* obsolete */,
-		OpenCV /* DEFAULT */
+		// number 4 is to keep physical numbering after removing all obsolete
+		// possibilities in mrpt 2.2.0
+		OpenCV = 4 /* DEFAULT */
 	};
 
 	/** The set of parameters for all the detectors & descriptor algorithms */
@@ -181,9 +179,9 @@ class CFeatureExtraction
 		struct TSIFTOptions
 		{
 			TSIFTOptions() = default;
-			TSIFTImplementation implementation{OpenCV};  //!< Default: OpenCV
+			TSIFTImplementation implementation{OpenCV};	 //!< Default: OpenCV
 			int octaveLayers{3};
-			double threshold{0.04};  //!< default= 0.04
+			double threshold{0.04};	 //!< default= 0.04
 			double edgeThreshold{10};  //!< default= 10
 		} SIFTOptions;
 
@@ -340,11 +338,6 @@ class CFeatureExtraction
 	* \param in_img (input) The image from where to compute the descriptors.
 	* \param in_features (input/output) The list of features whose
 	descriptors are going to be computed.
-	*
-	* \note The SIFT descriptors for already located features can only be
-	computed through the Hess and
-			CSBinary implementations which may be specified in
-	CFeatureExtraction::TOptions::SIFTOptions.
 	*/
 	void internal_computeSiftDescriptors(
 		const mrpt::img::CImage& in_img, CFeatureList& in_features);
@@ -521,5 +514,5 @@ class CFeatureExtraction
 		unsigned int init_ID, unsigned int nDesiredFeatures,
 		const TImageROI& ROI = TImageROI());
 
-};  // end of class
+};	// end of class
 }  // namespace mrpt::vision

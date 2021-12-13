@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -94,15 +94,22 @@ class CRawlog : public mrpt::serialization::CSerializable
 	 */
 	enum TEntryType
 	{
+		/** The entry is of type mrpt::obs::CSensoryFrame */
 		etSensoryFrame = 0,
+		/** The entry is of type mrpt::obs::CActionCollection */
 		etActionCollection,
+		/** The entry is of type mrpt::obs::CObservation */
 		etObservation,
+		/** The entry is none of the types above */
 		etOther
 	};
 
 	/** Clear the sequence of actions/observations. Smart pointers to objects
 	 * previously in the rawlog will remain being valid. */
 	void clear();
+
+	/** Returns true if the rawlog is empty */
+	bool empty() const;
 
 	/** Add an action to the sequence: a collection of just one element is
 	 * created.
@@ -176,8 +183,7 @@ class CRawlog : public mrpt::serialization::CSerializable
 
 	/** Returns the i'th element in the sequence, as being an action, where
 	 * index=0 is the first object.
-	 *  If it is not an CSensoryFrame, it throws an exception. Do neighter
-	 * modify nor delete the returned pointer.
+	 *  If it is not an CSensoryFrame, it throws an exception.
 	 * \sa size, isAction, getAsAction, getAsObservation
 	 * \exception std::exception If index is out of bounds
 	 */
@@ -423,6 +429,6 @@ class CRawlog : public mrpt::serialization::CSerializable
 	 */
 	static std::string detectImagesDirectory(const std::string& rawlogFilename);
 
-};  // End of class def.
+};	// End of class def.
 
 }  // namespace mrpt::obs

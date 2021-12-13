@@ -2,17 +2,18 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
-#include "config-precomp.h"  // Precompiled headers
-
+#include "config-precomp.h"	 // Precompiled headers
+//
 #include <mrpt/config/CConfigFile.h>
 #include <mrpt/config/CConfigFileMemory.h>
 #include <mrpt/config/CLoadableOptions.h>
 #include <mrpt/core/format.h>
+
 #include <iostream>
 
 using namespace mrpt::config;

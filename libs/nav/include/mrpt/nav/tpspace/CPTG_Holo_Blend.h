@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -57,8 +57,7 @@ class CPTG_Holo_Blend : public CPTG_RobotShape_Circular
 		const override;
 
 	size_t getPathStepCount(uint16_t k) const override;
-	void getPathPose(
-		uint16_t k, uint32_t step, mrpt::math::TPose2D& p) const override;
+	mrpt::math::TPose2D getPathPose(uint16_t k, uint32_t step) const override;
 	double getPathDist(uint16_t k, uint32_t step) const override;
 	bool getPathStepForDist(
 		uint16_t k, double dist, uint32_t& out_step) const override;
@@ -86,7 +85,7 @@ class CPTG_Holo_Blend : public CPTG_RobotShape_Circular
 
 	// Compilation of user-given expressions
 	mrpt::expr::CRuntimeCompiledExpression m_expr_v, m_expr_w, m_expr_T_ramp;
-	double m_expr_dir;  // Used as symbol "dir" in m_expr_v and m_expr_w
+	double m_expr_dir;	// Used as symbol "dir" in m_expr_v and m_expr_w
 
 	/** Evals expr_v */
 	double internal_get_v(const double dir) const;

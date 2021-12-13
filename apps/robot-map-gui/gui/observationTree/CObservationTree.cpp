@@ -2,18 +2,19 @@
    |                     Mobile Robot Programming Toolkit (MRPT)               |
    |                          https://www.mrpt.org/                            |
    |                                                                           |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file        |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file        |
    | See: https://www.mrpt.org/Authors - All rights reserved.                  |
    | Released under BSD License. See details in https://www.mrpt.org/License   |
    +---------------------------------------------------------------------------+
    */
 #include "CObservationTree.h"
-#include "CNode.h"
-#include "CObservationTreeModel.h"
 
 #include <QContextMenuEvent>
 #include <QDebug>
 #include <QMenu>
+
+#include "CNode.h"
+#include "CObservationTreeModel.h"
 
 CObservationTree::CObservationTree(QWidget* parent) : QTreeView(parent) {}
 void CObservationTree::setModel(QAbstractItemModel* model)

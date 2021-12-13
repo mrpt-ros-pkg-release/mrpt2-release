@@ -2,13 +2,14 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 #pragma once
 
 #include <mrpt/opengl/CRenderizableShaderWireFrame.h>
+
 #include <array>
 
 namespace mrpt::opengl
@@ -16,13 +17,7 @@ namespace mrpt::opengl
 /** Draw a 3D world axis, with coordinate marks at some regular interval
  *  \sa opengl::COpenGLScene
  *
- *  <div align="center">
- *  <table border="0" cellspan="4" cellspacing="4" style="border-width: 1px;
- * border-style: solid;">
- *  <tr> <td> mrpt::opengl::CAxis </td> <td> \image html preview_CAxis.png
- * </td> </tr>
- *  </table>
- *  </div>
+ *  ![mrpt::opengl::CAxis](preview_CAxis.png)
  *
  * \ingroup mrpt_opengl_grp
  */
@@ -68,9 +63,7 @@ class CAxis : public CRenderizableShaderWireFrame
 	void setTickMarksLength(float len);
 	float getTickMarksLength(float len) { return m_markLen; }
 
-	void getBoundingBox(
-		mrpt::math::TPoint3D& bb_min,
-		mrpt::math::TPoint3D& bb_max) const override;
+	mrpt::math::TBoundingBox getBoundingBox() const override;
 
    protected:
 	float m_xmin, m_ymin, m_zmin;
@@ -79,7 +72,7 @@ class CAxis : public CRenderizableShaderWireFrame
 	/** draw marks for X,Y,Z */
 	std::array<bool, 3> m_marks = {false, false, false};
 	float m_textScale{0.10f};
-	float m_textRot[3][3];  // {x,y,z},{yaw,pitch,roll}
+	float m_textRot[3][3];	// {x,y,z},{yaw,pitch,roll}
 	float m_markLen{0.07f};
 
 	mrpt::opengl::CListOpenGLObjects m_gl_labels;
