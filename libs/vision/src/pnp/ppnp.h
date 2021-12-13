@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -43,10 +43,10 @@ class ppnp
 	bool compute_pose(Eigen::Matrix3d& R, Eigen::Vector3d& t, int n);
 
    private:
-	Eigen::MatrixXd P;  //! Image points in pixels
-	Eigen::MatrixXd S;  //! Object points in Camera Co-ordinate system
-	Eigen::MatrixXd C;  //! Camera intrinsic matrix
+	Eigen::MatrixXd P;	//! Image points in pixels
+	Eigen::MatrixXd S;	//! Object points in Camera Co-ordinate system
+	Eigen::MatrixXd C;	//! Camera intrinsic matrix
 };
 
-/** @}  */  // end of grouping
+/** @}  */	// end of grouping
 }  // namespace mrpt::vision::pnp

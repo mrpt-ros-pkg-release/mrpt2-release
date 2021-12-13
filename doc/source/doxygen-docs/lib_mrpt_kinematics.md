@@ -2,7 +2,7 @@
 
 Kinematics of robot arms and mobile robots.
 
-
+[TOC]
 
 # Library mrpt-kinematics
 

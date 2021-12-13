@@ -2,12 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "hmtMapViewerMain.h"
+
 #include <wx/msgdlg.h>
 
 //(*InternalHeaders(hmtMapViewerFrame)
@@ -20,6 +21,7 @@
 #include <wx/string.h>
 //*)
 
+#include <mrpt/gui/CMyRedirector.h>
 #include <wx/busyinfo.h>
 #include <wx/colordlg.h>
 #include <wx/dcmemory.h>
@@ -31,9 +33,7 @@
 #include <wx/progdlg.h>
 #include <wx/textdlg.h>
 
-#include <mrpt/gui/CMyRedirector.h>
-
-const char* iniFileSect = "configuration";  // For the .ini file
+const char* iniFileSect = "configuration";	// For the .ini file
 
 // The file to open (from cmd line), or an empty string
 extern std::string global_fileToOpen;
@@ -44,6 +44,8 @@ extern std::string global_fileToOpen;
 
 #include <mrpt/config/CConfigFile.h>
 #include <mrpt/gui/CWxGLCanvasBase.h>
+#include <mrpt/hmtslam/CHMTSLAM.h>
+#include <mrpt/hmtslam/CRobotPosesGraph.h>
 #include <mrpt/io/CFileGZInputStream.h>
 #include <mrpt/io/CFileGZOutputStream.h>
 #include <mrpt/io/CFileOutputStream.h>
@@ -53,9 +55,6 @@ extern std::string global_fileToOpen;
 #include <mrpt/opengl/stock_objects.h>
 #include <mrpt/serialization/CArchive.h>
 #include <mrpt/system/filesystem.h>
-
-#include <mrpt/hmtslam/CHMTSLAM.h>
-#include <mrpt/hmtslam/CRobotPosesGraph.h>
 
 using namespace mrpt;
 using namespace mrpt::slam;
@@ -738,10 +737,7 @@ void hmtMapViewerFrame::updateLocalMapView()
 				if (!area) continue;
 
 				// Is this the first rendered area??
-				if (!firstArea)
-				{
-					firstArea = area;
-				}
+				if (!firstArea) { firstArea = area; }
 				else
 				{
 					// Compute the translation btw. ref. and current area:
@@ -774,9 +770,7 @@ void hmtMapViewerFrame::updateLocalMapView()
 				// ---------------------------------------------------------
 				if (nRound == 0)
 				{
-					opengl::CSetOfObjects::Ptr objMap =
-						std::make_shared<opengl::CSetOfObjects>();
-					obj_mmap->getAs3DObject(objMap);
+					auto objMap = obj_mmap->getVisualization();
 					objMap->setPose(refPoseThisArea.mean);
 					objs->insert(objMap);
 				}
@@ -836,8 +830,7 @@ void hmtMapViewerFrame::updateLocalMapView()
 
 						CMatrixDouble C = CMatrixDouble(refPoseThisArea.cov);
 
-						if (C(2, 2) < 1e6)
-							C.setSize(2, 2);
+						if (C(2, 2) < 1e6) C.setSize(2, 2);
 						else
 							C.setSize(3, 3);
 
@@ -857,8 +850,7 @@ void hmtMapViewerFrame::updateLocalMapView()
 					// ---------------------------------------------------------
 					for (auto it = obj_robposes->begin();
 						 it != obj_robposes->end(); ++it)
-					{
-					}
+					{}
 				}
 
 			}  // end for nSelItem
@@ -1071,11 +1063,9 @@ void hmtMapViewerFrame::OnmenuExportLocalMapsSelected(wxCommandEvent& event)
 	{
 		CSimpleMap simpleMap;
 
-		string map_file =
-			map_prefix +
-			format(
-				"_map_area_%03u.simplemap",
-				(unsigned)it->first);  // it->second->m_label.c_str() );
+		string map_file = map_prefix +
+			format("_map_area_%03u.simplemap",
+				   (unsigned)it->first);  // it->second->m_label.c_str() );
 		CHMHMapNode::Ptr area = it->second;
 
 		CRobotPosesGraph::Ptr obj_poseGraph =

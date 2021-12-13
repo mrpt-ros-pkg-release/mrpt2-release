@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -12,6 +12,7 @@
 #include <mrpt/config/CConfigFileBase.h>
 #include <mrpt/obs/CObservation.h>
 #include <mrpt/typemeta/TEnumType.h>
+
 #include <map>
 #include <mutex>
 
@@ -30,9 +31,9 @@ class CGenericSensor;
 struct TSensorClassId
 {
 	/** Class name */
-	const char* className;
+	const char* className = nullptr;
 	/** Pointer to class constructor */
-	CGenericSensor* (*ptrCreateObject)();
+	CGenericSensor* (*ptrCreateObject)() = nullptr;
 };
 
 /** A generic interface for a wide-variety of sensors designed to be used in the
@@ -86,7 +87,7 @@ class CGenericSensor
 		ssInitializing = 0,
 		ssWorking,
 		ssError,
-		ssUninitialized  // New in MRPT 1.9.9
+		ssUninitialized	 // New in MRPT 1.9.9
 	};
 
 	/** The current state of the sensor  */
@@ -138,7 +139,7 @@ class CGenericSensor
 	 */
 	size_t m_grab_decimation{0};
 	/** See CGenericSensor */
-	std::string m_sensorLabel;
+	std::string m_sensorLabel = "UNNAMED_SENSOR";
 
 	/** @} */
 
@@ -155,7 +156,7 @@ class CGenericSensor
 	std::string m_path_for_external_images;
 	/** The extension ("jpg","gif","png",...) that determines the format of
 	 * images saved externally \sa setPathForExternalImages */
-	std::string m_external_images_format;
+	std::string m_external_images_format = "png";
 	/** For JPEG images, the quality (default=95%). */
 	unsigned int m_external_images_jpeg_quality{95};
 	// ======================================
@@ -242,10 +243,17 @@ class CGenericSensor
 	 */
 	virtual void doProcess() = 0;
 
-	/** Returns a list of enqueued objects, emptying it (thread-safe). The
-	 * objects must be freed by the invoker.
+	/** Returns a list of enqueued objects, emptying it (thread-safe).
 	 */
 	void getObservations(TListObservations& lstObjects);
+
+	/// \overload returning by value.
+	TListObservations getObservations()
+	{
+		TListObservations obs;
+		getObservations(obs);
+		return obs;
+	}
 
 	/**  Set the path where to save off-rawlog image files (will be ignored in
 	 * those sensors where this is not applicable).
@@ -261,8 +269,7 @@ class CGenericSensor
 	}
 
 	/**  Set the extension ("jpg","gif","png",...) that determines the format of
-	 * images saved externally
-	 *   The default is "jpg".
+	 * images saved externally. Default: "png".
 	 * \sa setPathForExternalImages, setExternalImageJPEGQuality
 	 */
 	void setExternalImageFormat(const std::string& ext)
@@ -282,31 +289,31 @@ class CGenericSensor
 	}
 
    public:
-};  // end of class
+};	// end of class
 
 static_assert(
 	!std::is_copy_constructible_v<CGenericSensor> &&
 		!std::is_copy_assignable_v<CGenericSensor>,
 	"Copy Check");
 
-#define SENSOR_CLASS_ID(class_name)                      \
-	static_cast<const mrpt::hwdrivers::TSensorClassId*>( \
+#define SENSOR_CLASS_ID(class_name)                                            \
+	static_cast<const mrpt::hwdrivers::TSensorClassId*>(                       \
 		&mrpt::hwdrivers::class_name::class##class_name)
 
-#define SENSOR_IS_CLASS(ptrObj, class_name) \
+#define SENSOR_IS_CLASS(ptrObj, class_name)                                    \
 	(ptrObj->GetRuntimeClass() == SENSOR_CLASS_ID(class_name))
 
 /** This declaration must be inserted in all CGenericSensor classes definition,
  * within the class declaration.
  */
-#define DEFINE_GENERIC_SENSOR(class_name)                                    \
-   public:                                                                   \
-	static mrpt::hwdrivers::TSensorClassId class##class_name;                \
-	const mrpt::hwdrivers::TSensorClassId* GetRuntimeClass() const override; \
-	static mrpt::hwdrivers::CGenericSensor* CreateObject();                  \
-	static void doRegister()                                                 \
-	{                                                                        \
-		CGenericSensor::registerClass(SENSOR_CLASS_ID(class_name));          \
+#define DEFINE_GENERIC_SENSOR(class_name)                                      \
+   public:                                                                     \
+	static mrpt::hwdrivers::TSensorClassId class##class_name;                  \
+	const mrpt::hwdrivers::TSensorClassId* GetRuntimeClass() const override;   \
+	static mrpt::hwdrivers::CGenericSensor* CreateObject();                    \
+	static void doRegister()                                                   \
+	{                                                                          \
+		CGenericSensor::registerClass(SENSOR_CLASS_ID(class_name));            \
 	}
 
 /** This must be inserted in all CGenericSensor classes implementation files:

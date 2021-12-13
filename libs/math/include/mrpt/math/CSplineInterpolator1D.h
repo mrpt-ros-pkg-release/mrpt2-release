@@ -2,13 +2,14 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 #pragma once
 
 #include <mrpt/serialization/CSerializable.h>
+
 #include <map>
 
 namespace mrpt::math
@@ -60,7 +61,8 @@ class CSplineInterpolator1D : public mrpt::serialization::CSerializable
 		if (clearPreviousContent) m_x2y.clear();
 		ASSERT_EQUAL_(x.size(), y.size());
 		const size_t n = size_t(x.size());
-		for (size_t i = 0; i < n; i++) m_x2y[x[i]] = y[i];
+		for (size_t i = 0; i < n; i++)
+			m_x2y[x[i]] = y[i];
 		MRPT_END
 	}
 

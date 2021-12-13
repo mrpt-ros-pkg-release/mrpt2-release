@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -24,7 +24,6 @@
 // The "custom class" mpWindow, from the wxMathPlot libray by David Schalig
 //  See http://sourceforge.net/projects/wxmathplot
 #include <mrpt/3rdparty/mathplot/mathplot.h>
-
 #include <mrpt/gui/CDisplayWindow3D.h>
 
 class CFormRawMap : public wxDialog
@@ -56,7 +55,6 @@ class CFormRawMap : public wxDialog
 	static const long ID_BUTTON9;
 	static const long ID_STATICTEXT8;
 	static const long ID_STATICTEXT2;
-	static const long ID_BITMAPBUTTON1;
 	static const long ID_BUTTON4;
 	static const long ID_TEXTCTRL1;
 	static const long ID_PANEL1;
@@ -93,7 +91,6 @@ class CFormRawMap : public wxDialog
 	wxFlexGridSizer* FlexGridSizer3;
 	wxStaticText* lbCount;
 	wxStaticText* StaticText6;
-	wxBitmapButton* btnHelp;
 	wxButton* btnSavePath;
 	wxFlexGridSizer* FlexGridSizer2;
 	wxStaticText* StaticText1;

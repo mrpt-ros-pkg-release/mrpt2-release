@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -10,6 +10,7 @@
 #include <gtest/gtest.h>
 #include <mrpt/typemeta/TTypeName.h>
 #include <mrpt/typemeta/TTypeName_stl.h>
+
 #include <iostream>
 #include <memory>  // shared_ptr
 
@@ -31,16 +32,16 @@ struct MyBarClass2
 DECLARE_CUSTOM_TTYPENAME(MyFooClass);
 DECLARE_CUSTOM_TTYPENAME(MyNS::MyBarClass);
 
-#define TST_FOR_TYPE(__TSTTYPE) \
+#define TST_FOR_TYPE(__TSTTYPE)                                                \
 	EXPECT_STREQ(#__TSTTYPE, TTypeName<__TSTTYPE>::get().c_str())
 
 // templates with a "," in its name break all our and gtest macros:
-#define TST_FOR_TYPE2(__TSTTYPE, __TSTTYPE2ndpart)                            \
-	if (std::string(#__TSTTYPE "," #__TSTTYPE2ndpart) !=                      \
-		TTypeName<__TSTTYPE, __TSTTYPE2ndpart>::get().c_str())                \
-		GTEST_FAIL() << "Failed: " << #__TSTTYPE "," #__TSTTYPE2ndpart        \
-					 << "\n Computed type is: "                               \
-					 << TTypeName<__TSTTYPE, __TSTTYPE2ndpart>::get().c_str() \
+#define TST_FOR_TYPE2(__TSTTYPE, __TSTTYPE2ndpart)                             \
+	if (std::string(#__TSTTYPE "," #__TSTTYPE2ndpart) !=                       \
+		TTypeName<__TSTTYPE, __TSTTYPE2ndpart>::get().c_str())                 \
+		GTEST_FAIL() << "Failed: " << #__TSTTYPE "," #__TSTTYPE2ndpart         \
+					 << "\n Computed type is: "                                \
+					 << TTypeName<__TSTTYPE, __TSTTYPE2ndpart>::get().c_str()  \
 					 << endl;
 
 TEST(TTypeName, types2str)

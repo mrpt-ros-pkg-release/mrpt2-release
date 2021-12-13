@@ -2,18 +2,17 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
-#include "slam-precomp.h"  // Precompiled headerss
-
-#include <mrpt/obs/CSensoryFrame.h>
-#include <mrpt/slam/CMonteCarloLocalization3D.h>
-
+#include "slam-precomp.h"  // Precompiled headers
+//
 #include <mrpt/core/round.h>
 #include <mrpt/math/utils.h>
+#include <mrpt/obs/CSensoryFrame.h>
+#include <mrpt/slam/CMonteCarloLocalization3D.h>
 #include <mrpt/slam/PF_aux_structs.h>
 
 using namespace std;
@@ -176,9 +175,9 @@ double
 	ASSERT_(
 		options.metricMap || particleIndexForMap < options.metricMaps.size());
 
-	CMetricMap* map =
-		(options.metricMap) ? options.metricMap :  // All particles, one map
-			options.metricMaps[particleIndexForMap];  // One map per particle
+	// All particles, one map, or one map per particle
+	auto map = (options.metricMap) ? options.metricMap
+								   : options.metricMaps[particleIndexForMap];
 
 	// For each observation:
 	double ret = 1;

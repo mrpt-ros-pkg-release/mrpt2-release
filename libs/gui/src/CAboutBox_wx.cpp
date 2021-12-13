@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "gui-precomp.h"  // Precompiled headers
-
+//
 #if MRPT_HAS_WXWIDGETS
 
 #include "CAboutBox_wx.h"
@@ -27,7 +27,6 @@
 
 // For CV_VERSION
 #include <mrpt/config.h>
-
 #include <mrpt/system/os.h>
 
 using namespace mrpt;
@@ -188,4 +187,4 @@ void CAboutBox::OnInit(wxInitDialogEvent& event)
 }
 
 void CAboutBox::OnButton1Click(wxCommandEvent& event) { Close(); }
-#endif  // MRPT_HAS_WXWIDGETS
+#endif	// MRPT_HAS_WXWIDGETS

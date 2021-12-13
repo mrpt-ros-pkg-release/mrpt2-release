@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -15,9 +15,17 @@
 
 #include "core-precomp.h"  // Precompiled headers
 //
+#include <mrpt/config.h>
 #include <mrpt/core/WorkerThreadsPool.h>
 #include <mrpt/core/exceptions.h>
+
 #include <iostream>
+
+// for SetThreadDescription()
+#if defined(_WIN32)
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#endif
 
 using namespace mrpt;
 
@@ -30,10 +38,10 @@ void WorkerThreadsPool::clear()
 	condition_.notify_all();
 
 	if (!tasks_.empty())
-		std::cerr
-			<< "[WorkerThreadsPool] Warning: clear() called (probably from a "
-			   "dtor) while having "
-			<< tasks_.size() << " pending tasks. Aborting them.\n";
+		std::cerr << "[WorkerThreadsPool name=`" << name_
+				  << "`] Warning: clear() called (probably from a "
+					 "dtor) while having "
+				  << tasks_.size() << " pending tasks. Aborting them.\n";
 
 	for (auto& t : threads_)
 		if (t.joinable()) t.join();
@@ -68,9 +76,36 @@ void WorkerThreadsPool::resize(std::size_t num_threads)
 				}
 				catch (std::exception& e)
 				{
-					std::cerr << "[WorkerThreadsPool] Exception:\n"
+					std::cerr << "[WorkerThreadsPool name=`" << name_
+							  << "`] Exception:\n"
 							  << mrpt::exception_to_str(e) << "\n";
 				}
 			}
 		});
+}
+
+// code partially replicated from mrpt::system for convenience (avoid dep)
+static void mySetThreadName(const std::string& name, std::thread& theThread)
+{
+#if defined(MRPT_OS_WINDOWS) && !defined(__MINGW32_MAJOR_VERSION)
+	wchar_t wName[50];
+	std::mbstowcs(wName, name.c_str(), sizeof(wName) / sizeof(wName[0]));
+	SetThreadDescription(theThread.native_handle(), wName);
+#elif defined(MRPT_OS_LINUX)
+	auto handle = theThread.native_handle();
+	pthread_setname_np(handle, name.c_str());
+#endif
+}
+
+void WorkerThreadsPool::name(const std::string& name)
+{
+	using namespace std::string_literals;
+
+	name_ = name;
+
+	for (std::size_t i = 0; i < threads_.size(); ++i)
+	{
+		const std::string str = name + "["s + std::to_string(i) + "]"s;
+		mySetThreadName(str, threads_.at(i));
+	}
 }

@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -30,7 +30,7 @@ using namespace std;
 
 const char* MSG_HELP_WINDOW =
 	"These are the supported commands:\n"
-	" - h: Toogle help view\n"
+	" - h: Toggle help view\n"
 	" - i: Switch view/hide node IDs\n"
 	" - +/-: Increase/reduce size of node points\n"
 	" - e: Switch view/hide edges\n"
@@ -39,7 +39,7 @@ const char* MSG_HELP_WINDOW =
 	" - v: Switch view/hide edge pose values\n"
 	" - k/l: Inc/red. length of edge pose corners\n"
 	" - s: Save 3D scene to file\n"
-	" - Alt+Enter: Toogle fullscreen\n"
+	" - Alt+Enter: Toggle fullscreen\n"
 	" - q: Quit\n";
 
 /**
@@ -89,7 +89,7 @@ void display_graph(const GRAPHTYPE& g)
 	{
 		const GRAPHTYPE& m_graph;
 		CSetOfObjects::Ptr m_new_3dobj;
-		mrpt::containers::yaml params;  // for "graph_visualize()"
+		mrpt::containers::yaml params;	// for "graph_visualize()"
 
 		bool request_to_refresh_3D_view;
 		bool request_to_quit;
@@ -122,13 +122,9 @@ void display_graph(const GRAPHTYPE& g)
 				switch (ev->char_code)
 				{
 					case 'h':
-					case 'H':
-						std::cout << MSG_HELP_WINDOW << "\n";
-						break;
+					case 'H': std::cout << MSG_HELP_WINDOW << "\n"; break;
 					case 'q':
-					case 'Q':
-						request_to_quit = true;
-						break;
+					case 'Q': request_to_quit = true; break;
 					case 'i':
 					case 'I':
 						params["show_ID_labels"] = !params["show_ID_labels"];
@@ -242,7 +238,7 @@ void display_graph(const GRAPHTYPE& g)
 		{
 			// Replace 3D representation:
 			win.get3DSceneAndLock();
-			*objGraph = *win_feedback.m_new_3dobj;  // This overwrites the
+			*objGraph = *win_feedback.m_new_3dobj;	// This overwrites the
 			// object POINTER BY the
 			// smart pointer "objGraph".
 			win.unlockAccess3DScene();
@@ -251,9 +247,7 @@ void display_graph(const GRAPHTYPE& g)
 		}
 		if (win_feedback.request_to_quit) break;
 		if (win_feedback.showing_help || win_feedback.hiding_help)
-		{
-			win.repaint();
-		}
+		{ win.repaint(); }
 		std::this_thread::sleep_for(10ms);
 	}
 }

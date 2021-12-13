@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "slam-precomp.h"  // Precompiled headers
-
+//
 #include <mrpt/img/CEnhancedMetaFile.h>
 #include <mrpt/maps/CLandmarksMap.h>
 #include <mrpt/maps/CMultiMetricMap.h>
@@ -26,6 +26,7 @@
 #include <mrpt/slam/CICP.h>
 #include <mrpt/system/filesystem.h>
 #include <mrpt/tfest/se2.h>
+
 #include <Eigen/Dense>
 
 using namespace mrpt::math;
@@ -176,10 +177,7 @@ CPosePDF::Ptr CGridMapAligner::AlignPDF_robustMatch(
 
 	//  At least two landmarks at each map!
 	// ------------------------------------------------------
-	if (nLM1 < 2 || nLM2 < 2)
-	{
-		outInfo.goodness = 0;
-	}
+	if (nLM1 < 2 || nLM2 < 2) { outInfo.goodness = 0; }
 	else
 	{
 		//#define METHOD_FFT
@@ -309,15 +307,15 @@ CPosePDF::Ptr CGridMapAligner::AlignPDF_robustMatch(
 			 ++it1, ++it2)
 		{
 			mrpt::tfest::TMatchingPair mp;
-			mp.this_idx = *it1;
-			mp.this_x = lm1->landmarks.get(*it1)->pose_mean.x;
-			mp.this_y = lm1->landmarks.get(*it1)->pose_mean.y;
-			mp.this_z = lm1->landmarks.get(*it1)->pose_mean.z;
+			mp.globalIdx = *it1;
+			mp.global.x = lm1->landmarks.get(*it1)->pose_mean.x;
+			mp.global.y = lm1->landmarks.get(*it1)->pose_mean.y;
+			mp.global.z = lm1->landmarks.get(*it1)->pose_mean.z;
 
-			mp.other_idx = *it2;
-			mp.other_x = lm2->landmarks.get(*it2)->pose_mean.x;
-			mp.other_y = lm2->landmarks.get(*it2)->pose_mean.y;
-			mp.other_z = lm2->landmarks.get(*it2)->pose_mean.z;
+			mp.localIdx = *it2;
+			mp.local.x = lm2->landmarks.get(*it2)->pose_mean.x;
+			mp.local.y = lm2->landmarks.get(*it2)->pose_mean.y;
+			mp.local.z = lm2->landmarks.get(*it2)->pose_mean.z;
 			correspondences.push_back(mp);
 
 			if (!hasCorr[*it1])
@@ -450,9 +448,9 @@ CPosePDF::Ptr CGridMapAligner::AlignPDF_robustMatch(
 					round(options.ransac_minSetSizeRatio * 0.5 * (nLM1 + nLM2));
 				// Set an initial # of iterations:
 				const unsigned int ransac_min_nSimulations =
-					2 * (nLM1 + nLM2);  // 1000;
+					2 * (nLM1 + nLM2);	// 1000;
 				unsigned int ransac_nSimulations =
-					10;  // It doesn't matter actually, since will be changed in
+					10;	 // It doesn't matter actually, since will be changed in
 				// the first loop
 				const double probability_find_good_model = 0.9999;
 
@@ -475,17 +473,16 @@ CPosePDF::Ptr CGridMapAligner::AlignPDF_robustMatch(
 				//   |   | = ----------- = -----------
 				//   \ 2 /    2! (n-2)!         2
 				//
-				const unsigned int max_trials =
-					(nCorrs * (nCorrs - 1) / 2) *
-					5;  // "*5" is just for safety...
+				const unsigned int max_trials = (nCorrs * (nCorrs - 1) / 2) *
+					5;	// "*5" is just for safety...
 
-				unsigned int iter = 0;  // Valid iterations (those passing the
+				unsigned int iter = 0;	// Valid iterations (those passing the
 				// first mahalanobis test)
 				unsigned int trials = 0;  // counter of all iterations,
 				// including "iter" + failing ones.
 				while (iter < ransac_nSimulations &&
 					   trials <
-						   max_trials)  // ransac_nSimulations can be dynamic
+						   max_trials)	// ransac_nSimulations can be dynamic
 				{
 					trials++;
 
@@ -497,14 +494,15 @@ CPosePDF::Ptr CGridMapAligner::AlignPDF_robustMatch(
 					do
 					{
 						idx2 = getRandomGenerator().drawUniform32bit() % nCorrs;
-					} while (idx1 == idx2);  // Avoid a degenerated case!
+					} while (idx1 == idx2);	 // Avoid a degenerated case!
 
 					// Uniqueness of features:
-					if (all_corrs[idx1].this_idx == all_corrs[idx2].this_idx ||
-						all_corrs[idx1].this_idx == all_corrs[idx2].other_idx)
+					if (all_corrs[idx1].globalIdx ==
+							all_corrs[idx2].globalIdx ||
+						all_corrs[idx1].globalIdx == all_corrs[idx2].localIdx)
 						continue;
-					if (all_corrs[idx1].other_idx == all_corrs[idx2].this_idx ||
-						all_corrs[idx1].other_idx == all_corrs[idx2].other_idx)
+					if (all_corrs[idx1].localIdx == all_corrs[idx2].globalIdx ||
+						all_corrs[idx1].localIdx == all_corrs[idx2].localIdx)
 						continue;
 
 					// Check the feasibility of this pair "idx1"-"idx2":
@@ -513,15 +511,15 @@ CPosePDF::Ptr CGridMapAligner::AlignPDF_robustMatch(
 					//   to that of their correspondences in MAP2:
 					const double corrs_dist1 =
 						mrpt::math::distanceBetweenPoints(
-							all_corrs[idx1].this_x, all_corrs[idx1].this_y,
-							all_corrs[idx1].this_z, all_corrs[idx2].this_x,
-							all_corrs[idx2].this_y, all_corrs[idx2].this_z);
+							all_corrs[idx1].global.x, all_corrs[idx1].global.y,
+							all_corrs[idx1].global.z, all_corrs[idx2].global.x,
+							all_corrs[idx2].global.y, all_corrs[idx2].global.z);
 
 					const double corrs_dist2 =
 						mrpt::math::distanceBetweenPoints(
-							all_corrs[idx1].other_x, all_corrs[idx1].other_y,
-							all_corrs[idx1].other_z, all_corrs[idx2].other_x,
-							all_corrs[idx2].other_y, all_corrs[idx2].other_z);
+							all_corrs[idx1].local.x, all_corrs[idx1].local.y,
+							all_corrs[idx1].local.z, all_corrs[idx2].local.x,
+							all_corrs[idx2].local.y, all_corrs[idx2].local.z);
 
 					// Is is a consistent possibility?
 					//  We use a chi2 test (see paper for the derivation)
@@ -532,7 +530,7 @@ CPosePDF::Ptr CGridMapAligner::AlignPDF_robustMatch(
 
 					if (corrs_dist_chi2 > chi2_thres_dim1) continue;  // Nope
 
-					iter++;  // Do not count iterations if they fail the test
+					iter++;	 // Do not count iterations if they fail the test
 					// above.
 
 					// before proceeding with this hypothesis, is it an old one?
@@ -560,16 +558,16 @@ CPosePDF::Ptr CGridMapAligner::AlignPDF_robustMatch(
 					std::vector<bool> used_landmarks1(nLM1, false);
 					std::vector<bool> used_landmarks2(nLM2, false);
 
-					used_landmarks1[all_corrs[idx1].this_idx] = true;
-					used_landmarks1[all_corrs[idx2].this_idx] = true;
-					used_landmarks2[all_corrs[idx1].other_idx] = true;
-					used_landmarks2[all_corrs[idx2].other_idx] = true;
+					used_landmarks1[all_corrs[idx1].globalIdx] = true;
+					used_landmarks1[all_corrs[idx2].globalIdx] = true;
+					used_landmarks2[all_corrs[idx1].localIdx] = true;
+					used_landmarks2[all_corrs[idx2].localIdx] = true;
 
 					// Build the transformation for these temptative
 					// correspondences:
 					bool keep_incorporating = true;
 					CPosePDFGaussian temptPose;
-					do  // Incremently incorporate inliers:
+					do	// Incremently incorporate inliers:
 					{
 						if (!mrpt::tfest::se2_l2(tentativeSubSet, temptPose))
 							continue;  // Invalid matching...
@@ -585,14 +583,14 @@ CPosePDF::Ptr CGridMapAligner::AlignPDF_robustMatch(
 						const double ccos = cos(temptPose.mean.phi());
 						const double ssin = sin(temptPose.mean.phi());
 
-						CMatrixDouble22 Hc;  // Jacobian wrt point_j
+						CMatrixDouble22 Hc;	 // Jacobian wrt point_j
 						Hc(1, 1) = ccos;
 						Hc(0, 0) = ccos;
 						Hc(1, 0) = ssin;
 						Hc(0, 1) = -ssin;
 
 						CMatrixFixed<double, 2, 3>
-							Hq;  // Jacobian wrt transformation q
+							Hq;	 // Jacobian wrt transformation q
 						Hq(0, 0) = 1;
 						Hq(1, 1) = 1;
 
@@ -626,7 +624,7 @@ CPosePDF::Ptr CGridMapAligner::AlignPDF_robustMatch(
 							if (used_landmarks2[j]) continue;
 
 							lm2_pnts.getPoint(
-								j, p2_j_local);  // In local coords.
+								j, p2_j_local);	 // In local coords.
 							pdf_M2_j.mean = mrpt::poses::CPoint2D(
 								temptPose.mean +
 								p2_j_local);  // In (temptative) global coords:
@@ -740,7 +738,7 @@ CPosePDF::Ptr CGridMapAligner::AlignPDF_robustMatch(
 									mrpt::tfest::TMatchingPair(
 										best_pair_ij.first, best_pair_ij.second,
 										p1_i_localx, p1_i_localy, 0,  // MAP1
-										p2_j_localx, p2_j_localy, 0  // MAP2
+										p2_j_localx, p2_j_localy, 0	 // MAP2
 										));
 
 								keep_incorporating = true;
@@ -754,7 +752,7 @@ CPosePDF::Ptr CGridMapAligner::AlignPDF_robustMatch(
 					if (ninliers > minInliersTOaccept)
 					{
 						CPosePDFSOG::TGaussianMode newGauss;
-						newGauss.log_w = 0;  // log(1);  //
+						newGauss.log_w = 0;	 // log(1);  //
 						// std::log(static_cast<double>(nCoincidences));
 						newGauss.mean = temptPose.mean;
 						newGauss.cov = temptPose.cov;
@@ -773,13 +771,12 @@ CPosePDF::Ptr CGridMapAligner::AlignPDF_robustMatch(
 						// Update estimate of N, the number of trials to ensure
 						// we pick,
 						// with probability p, a data set with no outliers.
-						const double fracinliers =
-							ninliers /
+						const double fracinliers = ninliers /
 							static_cast<double>(std::min(nLM1, nLM2));
-						double pNoOutliers =
-							1 - pow(fracinliers,
-									static_cast<double>(
-										2.0));  // minimumSizeSamplesToFit
+						double pNoOutliers = 1 -
+							pow(fracinliers,
+								static_cast<double>(
+									2.0));	// minimumSizeSamplesToFit
 
 						pNoOutliers = std::max(
 							std::numeric_limits<double>::epsilon(),
@@ -1022,7 +1019,7 @@ CPosePDF::Ptr CGridMapAligner::AlignPDF_correlation(
 			pivotPt_y - sin(phi) * map2width_2,
 			phi);  // Rotation point: the centre of img1:
 		CPoint2D v1, v3;
-		v2 = CPose2D(0, 0, 0) - v2;  // Inverse
+		v2 = CPose2D(0, 0, 0) - v2;	 // Inverse
 
 		for (size_t cy2 = 0; cy2 < map2_ly; cy2++)
 		{
@@ -1041,7 +1038,7 @@ CPosePDF::Ptr CGridMapAligner::AlignPDF_correlation(
 		map1_img.cross_correlation_FFT(
 			map2_img, outCrossCorr, -1, -1, -1, -1,
 			127,  // Bias to be substracted
-			127  // Bias to be substracted
+			127	 // Bias to be substracted
 		);
 
 		float corrPeak = outCrossCorr.maxCoeff();

@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
-#include "opengl-precomp.h"  // Precompiled header
-
+#include "opengl-precomp.h"	 // Precompiled header
+//
 #include <mrpt/opengl/CGridPlaneXY.h>
 #include <mrpt/serialization/CArchive.h>
 
@@ -77,8 +77,7 @@ void CGridPlaneXY::serializeFrom(
 			in >> m_xMin >> m_xMax;
 			in >> m_yMin >> m_yMax >> m_plane_z;
 			in >> m_frequency;
-			if (version >= 1)
-				in >> m_lineWidth >> m_antiAliasing;
+			if (version >= 1) in >> m_lineWidth >> m_antiAliasing;
 			else
 			{
 				m_lineWidth = 1.0f;
@@ -86,24 +85,13 @@ void CGridPlaneXY::serializeFrom(
 			}
 		}
 		break;
-		default:
-			MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
 	};
 	CRenderizable::notifyChange();
 }
 
-void CGridPlaneXY::getBoundingBox(
-	mrpt::math::TPoint3D& bb_min, mrpt::math::TPoint3D& bb_max) const
+auto CGridPlaneXY::getBoundingBox() const -> mrpt::math::TBoundingBox
 {
-	bb_min.x = m_xMin;
-	bb_min.y = m_yMin;
-	bb_min.z = 0;
-
-	bb_max.x = m_xMax;
-	bb_max.y = m_yMax;
-	bb_max.z = 0;
-
-	// Convert to coordinates of my parent:
-	m_pose.composePoint(bb_min, bb_min);
-	m_pose.composePoint(bb_max, bb_max);
+	return mrpt::math::TBoundingBox({m_xMin, m_yMin, 0}, {m_xMax, m_yMax, 0})
+		.compose(m_pose);
 }

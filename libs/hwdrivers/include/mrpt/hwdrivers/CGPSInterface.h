@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -158,7 +158,7 @@ class CGPSInterface : public mrpt::system::COutputLogger, public CGenericSensor
 	/** Dtor */
 	~CGPSInterface() override;
 
-	void doProcess() override;  // See docs in parent class
+	void doProcess() override;	// See docs in parent class
 
 	/** Returns true if communications work, i.e. if some message has been
 	 * received. */
@@ -362,7 +362,7 @@ class CGPSInterface : public mrpt::system::COutputLogger, public CGenericSensor
 	mrpt::obs::CObservationGPS m_just_parsed_messages;
 	/** Used in getLastGGA() */
 	std::string m_last_GGA;
-};  // end class
+};	// end class
 }  // namespace mrpt::hwdrivers
 MRPT_ENUM_TYPE_BEGIN(mrpt::hwdrivers::CGPSInterface::PARSERS)
 using namespace mrpt::hwdrivers;

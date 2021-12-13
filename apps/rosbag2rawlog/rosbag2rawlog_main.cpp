@@ -34,7 +34,8 @@
 #include <mrpt/serialization/CSerializable.h>
 #include <mrpt/system/filesystem.h>
 #include <mrpt/system/os.h>
-#include <rosbag/bag.h>  // rosbag_storage C++ lib
+#include <mrpt/system/progress.h>
+#include <rosbag/bag.h>	 // rosbag_storage C++ lib
 #include <rosbag/view.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <sensor_msgs/Image.h>
@@ -124,10 +125,7 @@ class RosSynchronizer
 			mrpt::poses::CPose3D currentPose(poseQuat);
 
 			mrpt::poses::CPose3D incOdoPose(0, 0, 0, 0, 0, 0);
-			if (m_poseValid)
-			{
-				incOdoPose = currentPose - m_lastPose;
-			}
+			if (m_poseValid) { incOdoPose = currentPose - m_lastPose; }
 			m_lastPose = currentPose;
 			m_poseValid = true;
 			mrpt::obs::CActionRobotMovement3D::TMotionModelOptions model;
@@ -152,9 +150,7 @@ class RosSynchronizer
 	Obs checkAndSignal()
 	{
 		if (check(std::make_index_sequence<sizeof...(Args)>{}))
-		{
-			return signal();
-		}
+		{ return signal(); }
 		return {};
 	}
 
@@ -206,32 +202,24 @@ Obs toPointCloud2(std::string_view msg, const rosbag::MessageInstance& rosmsg)
 	if (!fields.count("x") || !fields.count("y") || !fields.count("z"))
 		return {};
 
-	if (fields.count("ring"))
-	{
-		// As a structured 2D range images, if we have ring numbers:
-		auto obsRotScan = mrpt::obs::CObservationRotatingScan::Create();
-		MRPT_TODO("Extract sensor pose from tf frames");
-		const mrpt::poses::CPose3D sensorPose;
-
-		if (!mrpt::ros1bridge::fromROS(*pts, *obsRotScan, sensorPose))
-			THROW_EXCEPTION(
-				"Could not convert pointcloud from ROS to "
-				"CObservationRotatingScan");
-
-		obsRotScan->sensorLabel = msg;
-		return {obsRotScan};
-	}
-	else if (fields.count("intensity"))
+	if (fields.count("intensity"))
 	{
 		// XYZI
 		auto mrptPts = mrpt::maps::CPointsMapXYZI::Create();
 		ptsObs->pointcloud = mrptPts;
+
 		if (!mrpt::ros1bridge::fromROS(*pts, *mrptPts))
-			THROW_EXCEPTION(
-				"Could not convert pointcloud from ROS to "
-				"CPointsMapXYZI");
+		{
+			thread_local bool warn1st = false;
+			if (!warn1st)
+			{
+				warn1st = true;
+				std::cerr << "Could not convert pointcloud from ROS to "
+							 "CPointsMapXYZI. Trying another format.\n";
+			}
+		}
 	}
-	else
+
 	{
 		// XYZ
 		auto mrptPts = mrpt::maps::CSimplePointsMap::Create();
@@ -243,6 +231,36 @@ Obs toPointCloud2(std::string_view msg, const rosbag::MessageInstance& rosmsg)
 	}
 
 	return {ptsObs};
+}
+
+Obs toRotatingScan(std::string_view msg, const rosbag::MessageInstance& rosmsg)
+{
+	auto pts = rosmsg.instantiate<sensor_msgs::PointCloud2>();
+
+	// Convert points:
+	std::set<std::string> fields = mrpt::ros1bridge::extractFields(*pts);
+
+	// We need X Y Z:
+	if (!fields.count("x") || !fields.count("y") || !fields.count("z") ||
+		!fields.count("ring"))
+		return {};
+
+	// As a structured 2D range images, if we have ring numbers:
+	auto obsRotScan = mrpt::obs::CObservationRotatingScan::Create();
+	MRPT_TODO("Extract sensor pose from tf frames");
+	const mrpt::poses::CPose3D sensorPose;
+
+	if (!mrpt::ros1bridge::fromROS(*pts, *obsRotScan, sensorPose))
+	{
+		THROW_EXCEPTION(
+			"Could not convert pointcloud from ROS to "
+			"CObservationRotatingScan. Trying another format.");
+	}
+
+	obsRotScan->sensorLabel = msg;
+	obsRotScan->timestamp = mrpt::ros1bridge::fromROS(pts->header.stamp);
+
+	return {obsRotScan};
 }
 
 Obs toIMU(std::string_view msg, const rosbag::MessageInstance& rosmsg)
@@ -314,6 +332,22 @@ Obs toRangeImage(
 	return {};
 }
 
+Obs toImage(std::string_view msg, const rosbag::MessageInstance& rosmsg)
+{
+	auto image = rosmsg.instantiate<sensor_msgs::Image>();
+
+	auto cv_ptr = cv_bridge::toCvShare(image);
+
+	auto imgObs = mrpt::obs::CObservationImage::Create();
+
+	imgObs->sensorLabel = msg;
+	imgObs->timestamp = mrpt::ros1bridge::fromROS(image->header.stamp);
+
+	imgObs->image = mrpt::img::CImage(cv_ptr->image, mrpt::img::SHALLOW_COPY);
+
+	return {imgObs};
+}
+
 template <bool isStatic>
 Obs toTf(tf2::BufferCore& tfBuffer, const rosbag::MessageInstance& rosmsg)
 {
@@ -362,8 +396,8 @@ class Transcriber
 			if (sensorType == "CObservation3DRangeScan")
 			{
 				bool rangeIsDepth = sensor.count("rangeIsDepth")
-										? sensor.at("rangeIsDepth").as<bool>()
-										: true;
+					? sensor.at("rangeIsDepth").as<bool>()
+					: true;
 				auto callback = [=](const sensor_msgs::Image::Ptr& image,
 									const sensor_msgs::CameraInfo::Ptr& info) {
 					return toRangeImage(sensorName, image, info, rangeIsDepth);
@@ -378,6 +412,14 @@ class Transcriber
 					.emplace_back(sync->bind<1>());
 				m_lookup["/tf"].emplace_back(sync->bindTfSync());
 			}
+			else if (sensorType == "CObservationImage")
+			{
+				auto callback = [=](const rosbag::MessageInstance& m) {
+					return toImage(sensorName, m);
+				};
+				m_lookup[sensor.at("image_topic").as<std::string>()]
+					.emplace_back(callback);
+			}
 			else if (sensorType == "CObservationPointCloud")
 			{
 				auto callback = [=](const rosbag::MessageInstance& m) {
@@ -386,6 +428,14 @@ class Transcriber
 				m_lookup[sensor.at("topic").as<std::string>()].emplace_back(
 					callback);
 				// m_lookup["/tf"].emplace_back(sync->bindTfSync());
+			}
+			else if (sensorType == "CObservationRotatingScan")
+			{
+				auto callback = [=](const rosbag::MessageInstance& m) {
+					return toRotatingScan(sensorName, m);
+				};
+				m_lookup[sensor.at("topic").as<std::string>()].emplace_back(
+					callback);
 			}
 			else if (sensorType == "CObservationIMU")
 			{
@@ -405,13 +455,21 @@ class Transcriber
 		Obs rets;
 		auto topic = rosmsg.getTopic();
 
-		auto search = m_lookup.find(topic);
-		if (search != m_lookup.end())
+		if (auto search = m_lookup.find(topic); search != m_lookup.end())
 		{
-			for (const auto& found : std::get<1>(*search))
+			for (const auto& callback : search->second)
 			{
-				auto obs = found(rosmsg);
+				auto obs = callback(rosmsg);
 				rets.insert(rets.end(), obs.begin(), obs.end());
+			}
+		}
+		else
+		{
+			if (m_unhandledTopics.count(topic) == 0)
+			{
+				m_unhandledTopics.insert(topic);
+				std::cout << "Warning: unhandled topic '" << topic << "'"
+						  << std::endl;
 			}
 		}
 		return rets;
@@ -420,6 +478,7 @@ class Transcriber
    private:
 	std::string m_rootFrame;
 	std::map<std::string, std::vector<CallbackFunction>> m_lookup;
+	std::set<std::string> m_unhandledTopics;
 };
 
 int main(int argc, char** argv)
@@ -484,14 +543,18 @@ int main(int argc, char** argv)
 
 			if (++showProgressCnt > 100)
 			{
+				const double pr = (1.0 * curEntry) / nEntries;
+
 				printf(
-					"Progress: %u/%u  %.03f%%             \r",
+					"Progress: %u/%u %s %.03f%%        \r",
 					static_cast<unsigned int>(curEntry),
 					static_cast<unsigned int>(nEntries),
-					(100.0 * curEntry) / nEntries);
+					mrpt::system::progress(pr, 50).c_str(), 100.0 * pr);
+				fflush(stdout);
 				showProgressCnt = 0;
 			}
 		}
+		printf("\n");
 
 		for (auto& bag : bags)
 		{

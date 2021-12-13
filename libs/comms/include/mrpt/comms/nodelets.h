@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -10,6 +10,7 @@
 
 #include <mrpt/typemeta/TTypeName.h>
 #include <mrpt/typemeta/TTypeName_stl.h>
+
 #include <any>
 #include <functional>
 #include <iostream>
@@ -18,14 +19,11 @@
 #include <mutex>
 #include <unordered_map>
 
-namespace mrpt
+namespace mrpt::comms
 {
-namespace comms
-{
-/** Nodelet-like Pub/Sub communications (in #include <mrpt/comms/nodelets.h>)
+/** Nodelet-like Pub/Sub communications (in `#include <mrpt/comms/nodelets.h>`)
  * \ingroup mrpt_comms_grp
  * @{ */
-
 class Subscriber
 {
    private:
@@ -141,5 +139,4 @@ class TopicDirectory : public std::enable_shared_from_this<TopicDirectory>
 
 /** @} */  // end grouping
 
-}  // namespace comms
-}  // namespace mrpt
+}  // namespace mrpt::comms

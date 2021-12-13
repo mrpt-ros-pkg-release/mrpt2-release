@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "math-precomp.h"  // Precompiled headers
-
+//
 #include <mrpt/math/CPolygon.h>
 #include <mrpt/serialization/CArchive.h>
 
@@ -38,7 +38,7 @@ void CPolygon::serializeFrom(mrpt::serialization::CArchive& in, uint8_t version)
 {
 	switch (version)
 	{
-		case 0:  // floats
+		case 0:	 // floats
 		{
 			// The number of vertexs:
 			uint32_t i, n;
@@ -110,8 +110,7 @@ void CPolygon::serializeFrom(mrpt::serialization::CArchive& in, uint8_t version)
 					(double*)&TPolygon2D::operator[](0), 2 * n);
 		}
 		break;
-		default:
-			MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
 	};
 }
 

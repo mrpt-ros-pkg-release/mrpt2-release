@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -13,6 +13,7 @@
 #include <mrpt/opengl/CGridPlaneXY.h>
 #include <mrpt/opengl/COpenGLScene.h>
 #include <mrpt/vision/CFeatureExtraction.h>
+
 #include <iostream>
 
 using mrpt::format;
@@ -83,18 +84,16 @@ void TestExtractMatchProjectAndPaint()
 
 	// Project features:
 	mrpt::maps::CLandmarksMap outMap;
-	TStereoSystemParams stereoOptions;  // Default options: Bumblebee + 640x480
+	TStereoSystemParams stereoOptions;	// Default options: Bumblebee + 640x480
 	cout << "Projecting matched features" << endl;
 	mrpt::vision::projectMatchedFeatures(mHarris, stereoOptions, outMap);
 
 	CDisplayWindow3D win3D("3D Map");
 	COpenGLScene::Ptr& scene3D = win3D.get3DSceneAndLock();
-	CSetOfObjects::Ptr map3D = CSetOfObjects::Create();
-	outMap.getAs3DObject(map3D);
 	CGridPlaneXY::Ptr gridXY = CGridPlaneXY::Create(-10, 10, -10, 10, 0, 1);
-
 	scene3D->insert(gridXY);
-	scene3D->insert(map3D);
+
+	scene3D->insert(outMap.getVisualization());
 
 	win3D.unlockAccess3DScene();
 	win3D.repaint();
@@ -150,15 +149,11 @@ void TestMatchFeatures(bool showMatches)
 	// SIFT
 	cout << "Detecting SIFT features in LEFT image" << endl;
 	fExt.options.featsType = featSIFT;
-	// fExt.options.SIFTOptions.implementation = CFeatureExtraction::Hess;
-	fExt.options.SIFTOptions.implementation = CFeatureExtraction::OpenCV;
 	fExt.detectFeatures(imL, featsSIFT_L);
 	cout << "Detected " << featsSIFT_L.size() << endl;
 
 	cout << "Detecting SIFT features in RIGHT image" << endl;
 	fExt.options.featsType = featSIFT;
-	// fExt.options.SIFTOptions.implementation = CFeatureExtraction::Hess;
-	fExt.options.SIFTOptions.implementation = CFeatureExtraction::OpenCV;
 	fExt.detectFeatures(imR, featsSIFT_R);
 	cout << "Detected " << featsSIFT_R.size() << endl;
 	cout << "***************************************************" << endl;
@@ -290,7 +285,6 @@ void TestMatchingComparative()
 	CFeatureExtraction fExt;
 	fExt.options.featsType = featFAST;
 	fExt.options.patchSize = 21;
-	fExt.options.SIFTOptions.implementation = CFeatureExtraction::Hess;
 
 	// Find FAST features
 	CFeatureList list1, list2;
@@ -328,7 +322,7 @@ void TestMatchingComparative()
 
 		copyInfoImage = infoimage;
 		copyjoinimage = joinimage;
-		copyjoinimage.line(pt1.x, 0, pt1.x, imH, TColor::green());  // Horiz
+		copyjoinimage.line(pt1.x, 0, pt1.x, imH, TColor::green());	// Horiz
 		copyjoinimage.line(
 			pt1.x + imW, 0, pt1.x + imW, imH,
 			TColor::green());  // Horiz
@@ -398,7 +392,7 @@ void TestMatchingComparative()
 
 				copyjoinimage.drawCircle(
 					pt2.x + imW, pt2.y, 4, TColor::blue(),
-					2);  // Keypoint
+					2);	 // Keypoint
 				double rx0, rx1, ry0, ry1, tx, ty;
 				rx0 = pt2.x + imW - 15;
 				rx1 = pt2.x + imW;

@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -16,10 +16,26 @@ namespace mrpt::math
 /**
  * 2D segment, consisting of two points.
  * \sa TSegment3D,TLine2D,TPolygon2D,TPoint2D
+ * \ingroup geometry_grp
  */
 struct TSegment2D
 {
    public:
+	/** Constructor from both points */
+	TSegment2D(const TPoint2D& p1, const TPoint2D& p2) : point1(p1), point2(p2)
+	{
+	}
+	/// Static method, returns segment from two points \note New in MRPT 2.3.0
+	static TSegment2D FromPoints(const TPoint2D& p1, const TPoint2D& p2)
+	{
+		return TSegment2D(p1, p2);
+	}
+	/** Fast default constructor. Initializes to (0,0)-(0,0) */
+	TSegment2D() = default;
+
+	/** Explicit constructor from 3D object, discarding the z. */
+	explicit TSegment2D(const TSegment3D& s);
+
 	/**
 	 * Origin point.
 	 */
@@ -49,12 +65,9 @@ struct TSegment2D
 	{
 		switch (i)
 		{
-			case 0:
-				return point1;
-			case 1:
-				return point2;
-			default:
-				throw std::out_of_range("index out of range");
+			case 0: return point1;
+			case 1: return point2;
+			default: throw std::out_of_range("index out of range");
 		}
 	}
 	/** Access to points using operator[0-1] */
@@ -62,12 +75,9 @@ struct TSegment2D
 	{
 		switch (i)
 		{
-			case 0:
-				return point1;
-			case 1:
-				return point2;
-			default:
-				throw std::out_of_range("index out of range");
+			case 0: return point1;
+			case 1: return point2;
+			default: throw std::out_of_range("index out of range");
 		}
 	}
 	/**
@@ -82,20 +92,6 @@ struct TSegment2D
 		p.x = (point1.x + point2.x) / 2;
 		p.y = (point1.y + point2.y) / 2;
 	}
-	/**
-	 * Constructor from both points.
-	 */
-	TSegment2D(const TPoint2D& p1, const TPoint2D& p2) : point1(p1), point2(p2)
-	{
-	}
-	/**
-	 * Fast default constructor. Initializes to garbage.
-	 */
-	TSegment2D() = default;
-	/**
-	 * Explicit constructor from 3D object, discarding the z.
-	 */
-	explicit TSegment2D(const TSegment3D& s);
 
 	bool operator<(const TSegment2D& s) const;
 };
@@ -114,6 +110,9 @@ mrpt::serialization::CArchive& operator>>(
 	mrpt::serialization::CArchive& in, mrpt::math::TSegment2D& s);
 mrpt::serialization::CArchive& operator<<(
 	mrpt::serialization::CArchive& out, const mrpt::math::TSegment2D& s);
+
+/** Text streaming function */
+std::ostream& operator<<(std::ostream& o, const TSegment2D& p);
 
 }  // namespace mrpt::math
 

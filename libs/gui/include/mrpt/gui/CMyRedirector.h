@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -94,7 +94,7 @@ class CMyRedirector : public std::streambuf
 		{
 			const auto s = wxString(str);
 
-#if wxCHECK_VERSION(3, 0, 0) && !defined(__APPLE__)  // OSX build error?
+#if wxCHECK_VERSION(3, 0, 0) && !defined(__APPLE__)	 // OSX build error?
 			m_txt->GetEventHandler()->CallAfter(&wxTextCtrl::WriteText, s);
 #else
 			m_txt->WriteText(s);  // bad solution, but at least compiles (and
@@ -108,7 +108,7 @@ class CMyRedirector : public std::streambuf
 		}
 		if (m_also_to_cout_cerr) ::printf("%s", str.c_str());
 		if (m_yieldApplication && wxThread::IsMain())
-			wxTheApp->Yield(true);  // Let the app. process messages
+			wxTheApp->Yield(true);	// Let the app. process messages
 	}
 
 	/** Writes all the stored strings to the text control (only for threadSafe

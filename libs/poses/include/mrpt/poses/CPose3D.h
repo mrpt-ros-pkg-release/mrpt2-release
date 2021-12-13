@@ -2,15 +2,17 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 #pragma once
 
+#include <mrpt/core/Stringifyable.h>
 #include <mrpt/core/optional_ref.h>
 #include <mrpt/math/CMatrixFixed.h>
 #include <mrpt/math/CQuaternion.h>
+#include <mrpt/math/MatrixVectorBase.h>
 #include <mrpt/math/TPoint2D.h>
 #include <mrpt/math/TPoint3D.h>
 #include <mrpt/poses/CPose.h>
@@ -23,37 +25,29 @@ namespace mrpt::poses
 {
 class CPose3DQuat;
 
-/** A class used to store a 3D pose (a 3D translation + a rotation in 3D).
- *   The 6D transformation in SE(3) stored in this class is kept in two
- *   separate containers: a 3-array for the translation, and a 3x3 rotation
- * matrix.
+/** A SE(3) pose, comprising a 3D translation and a 3D rotation.
  *
- *  This class allows parameterizing 6D poses as a 6-vector: [x y z yaw pitch
- * roll] (read below
- *   for the angles convention). Note however,
- *   that the yaw/pitch/roll angles are only computed (on-demand and
- * transparently)
- *   when the user requests them. Normally, rotations and transformations are
- * always handled
- *   via the 3x3 rotation matrix.
+ * The transformation is stored in two separate containers:
+ * - a 3-array for the translation ∈ R³, and
+ * - a 3x3 rotation matrix ∈ SO(3).
  *
- *  Yaw/Pitch/Roll angles are defined as successive rotations around *local*
+ * This class allows parameterizing 6D poses as a 6-vector
+ * `[x y z yaw pitch roll]` (read below for the angles convention).
+ * Note however, that the yaw/pitch/roll angles are only computed (on-demand and
+ * transparently) when the user requests them. Normally, rotations and
+ * transformations are always handled via the 3x3 SO(3) rotation matrix.
+ *
+ * Yaw/Pitch/Roll angles are defined as successive rotations around *local*
  * (dynamic) axes in the Z/Y/X order:
  *
- *  <div align=center>
- *   <img src="CPose3D.gif">
- *  </div>
+ * ![CPose3D](CPose3D.gif)
  *
- * It may be extremely confusing and annoying to find a different criterion also
- * involving
- * the names "yaw, pitch, roll" but regarding rotations around *global* (static)
- * axes.
- * Fortunately, it's very easy to see (by writing down the product of the three
- * rotation matrices) that both conventions lead to exactly the same numbers.
- * Only, that it's conventional to write the numbers in reverse order.
- * That is, the same rotation can be described equivalently with any of these
- * two
- * parameterizations:
+ * It can be shown that "yaw, pitch, roll" can be also understood as
+ * rotations around *global* (static) axes. Both conventions lead to exactly
+ * the same SE(3) transformations, although in it is conventional to write
+ * the numbers in reverse order.
+ * That is, the same SO(3) rotation can be described equivalently with any of
+ * these two parameterizations:
  *
  * - In local axes Z/Y/X convention: [yaw pitch roll]   (This is the convention
  * used in mrpt::poses::CPose3D)
@@ -65,8 +59,8 @@ class CPose3DQuat;
  * to the [2D/3D Geometry tutorial](http://www.mrpt.org/2D_3D_Geometry) online.
  *
  * To change the individual components of the pose, use CPose3D::setFromValues.
- * This class assures that the internal
- * 3x3 rotation matrix is always up-to-date with the "yaw pitch roll" members.
+ * This class assures that the internal SO(3) rotation matrix is always
+ * up-to-date with the "yaw pitch roll" members.
  *
  * Rotations in 3D can be also represented by quaternions. See
  * mrpt::math::CQuaternion, and method CPose3D::getAsQuaternion.
@@ -83,7 +77,8 @@ class CPose3DQuat;
  * \sa CPoseOrPoint,CPoint3D, mrpt::math::CQuaternion
  */
 class CPose3D : public CPose<CPose3D, 6>,
-				public mrpt::serialization::CSerializable
+				public mrpt::serialization::CSerializable,
+				public mrpt::Stringifyable
 {
 	DEFINE_SERIALIZABLE(CPose3D, mrpt::poses)
 	DEFINE_SCHEMA_SERIALIZABLE()
@@ -129,14 +124,48 @@ class CPose3D : public CPose<CPose3D, 6>,
 	/** Default constructor, with all the coordinates set to zero. */
 	CPose3D();
 
-	/** Constructor with initilization of the pose; (remember that angles are
-	 * always given in radians!)  */
+	/** Constructor with initilization of the pose, translation (x,y,z) in
+	 * meters, (yaw,pitch,roll) angles in radians.
+	 *
+	 * \sa FromXYZYawPitchRoll()
+	 */
 	CPose3D(
 		const double x, const double y, const double z, const double yaw = 0,
 		const double pitch = 0, const double roll = 0);
 
 	/** Returns the identity transformation */
 	static CPose3D Identity() { return CPose3D(); }
+
+	/** Builds a pose from a translation (x,y,z) in
+	 * meters and (yaw,pitch,roll) angles in radians. \note (New in MRPT 2.1.8)
+	 */
+	static CPose3D FromXYZYawPitchRoll(
+		double x, double y, double z, double yaw, double pitch, double roll)
+	{
+		return CPose3D(x, y, z, yaw, pitch, roll);
+	}
+
+	/** Builds a pose with a null translation and (yaw,pitch,roll) angles in
+	 * radians. \note (New in MRPT 2.1.8)
+	 */
+	static CPose3D FromYawPitchRoll(double yaw, double pitch, double roll)
+	{
+		return CPose3D(.0, .0, .0, yaw, pitch, roll);
+	}
+
+	/** Builds a pose with a translation without rotation \note (New in
+	 * MRPT 2.1.8)
+	 */
+	static CPose3D FromTranslation(double x, double y, double z)
+	{
+		return CPose3D(x, y, z, .0, .0, .0);
+	}
+	/** \overload \note (New in MRPT 2.3.3)
+	 */
+	static CPose3D FromTranslation(const mrpt::math::TPoint3D& t)
+	{
+		return CPose3D(t.x, t.y, t.z, .0, .0, .0);
+	}
 
 	/** Constructor from a 4x4 homogeneous matrix - the passed matrix can be
 	 * actually of any size larger than or equal 3x4, since only those first
@@ -146,6 +175,15 @@ class CPose3D : public CPose<CPose3D, 6>,
 
 	/** Constructor from a 4x4 homogeneous matrix: */
 	explicit CPose3D(const math::CMatrixDouble44& m);
+
+	/** Builds a pose with a 4x4 homogeneous matrix
+	 * \note (New in MRPT 2.1.8)
+	 */
+	template <class MATRIX>
+	static CPose3D FromHomogeneousMatrix(const MATRIX& m)
+	{
+		return CPose3D(mrpt::math::CMatrixDouble44(m));
+	}
 
 	/** Constructor from a 3x3 rotation matrix and a the translation given as a
 	 * 3-vector, a 3-array, a CPoint3D or a mrpt::math::TPoint3D */
@@ -157,8 +195,10 @@ class CPose3D : public CPose<CPose3D, 6>,
 		ASSERT_EQUAL_(rot.cols(), 3);
 		ASSERT_EQUAL_(xyz.size(), 3);
 		for (int r = 0; r < 3; r++)
-			for (int c = 0; c < 3; c++) m_ROT(r, c) = rot(r, c);
-		for (int r = 0; r < 3; r++) m_coords[r] = xyz[r];
+			for (int c = 0; c < 3; c++)
+				m_ROT(r, c) = rot(r, c);
+		for (int r = 0; r < 3; r++)
+			m_coords[r] = xyz[r];
 	}
 	//! \overload
 	inline CPose3D(
@@ -166,6 +206,16 @@ class CPose3D : public CPose<CPose3D, 6>,
 		const mrpt::math::CVectorFixedDouble<3>& xyz)
 		: m_coords(xyz), m_ROT(rot), m_ypr_uptodate(false)
 	{
+	}
+
+	/** Builds a pose with a 3x3 SO(3) rotation matrix and a translation vector.
+	 * \note (New in MRPT 2.1.8)
+	 */
+	template <class MATRIX, class VECTOR>
+	static CPose3D FromRotationAndTranslation(
+		const MATRIX& rot, const VECTOR& t)
+	{
+		return CPose3D(rot, t);
 	}
 
 	/** Constructor from a CPose2D object.
@@ -191,6 +241,33 @@ class CPose3D : public CPose<CPose3D, 6>,
 	/** Constructor from a CPose3DQuat. */
 	explicit CPose3D(const CPose3DQuat&);
 
+	/** Builds a pose from a quaternion (and no translation).
+	 * \note (New in MRPT 2.1.8)
+	 */
+	static CPose3D FromQuaternion(const mrpt::math::CQuaternionDouble& q)
+	{
+		return CPose3D(q, .0, .0, .0);
+	}
+
+	/** Builds a pose from a quaternion and a (x,y,z) translation.
+	 * \note (New in MRPT 2.1.8)
+	 */
+	static CPose3D FromQuaternionAndTranslation(
+		const mrpt::math::CQuaternionDouble& q, double x, double y, double z)
+	{
+		return CPose3D(q, x, y, z);
+	}
+
+	/** Builds a pose from a quaternion and a 3D translation.
+	 * \note (New in MRPT 2.3.3)
+	 */
+	template <typename Point3DLike>
+	static CPose3D FromQuaternionAndTranslation(
+		const mrpt::math::CQuaternionDouble& q, const Point3DLike& pt)
+	{
+		return CPose3D(q, pt.x, pt.y, pt.z);
+	}
+
 	/** Fast constructor that leaves all the data uninitialized - call with
 	 * UNINITIALIZED_POSE as argument */
 	inline CPose3D(TConstructorFlags_Poses)
@@ -212,7 +289,7 @@ class CPose3D : public CPose<CPose3D, 6>,
 
 	/** @} */  // end Constructors
 
-	/** @name Access 3x3 rotation and 4x4 homogeneous matrices
+	/** @name Access SO(3), SE(3), R(3)
 		@{ */
 
 	/** Returns the corresponding 4x4 homogeneous transformation matrix for the
@@ -238,6 +315,12 @@ class CPose3D : public CPose<CPose3D, 6>,
 	{
 		m_ROT = ROT;
 		m_ypr_uptodate = false;
+	}
+
+	/** Returns the (x,y,z) translational part of the SE(3) transformation. */
+	mrpt::math::TPoint3D translation() const
+	{
+		return {m_coords[0], m_coords[1], m_coords[2]};
 	}
 
 	/** @} */  // end rot and HM
@@ -589,18 +672,12 @@ class CPose3D : public CPose<CPose3D, 6>,
 		updateYawPitchRoll();
 		switch (i)
 		{
-			case 0:
-				return m_coords[0];
-			case 1:
-				return m_coords[1];
-			case 2:
-				return m_coords[2];
-			case 3:
-				return m_yaw;
-			case 4:
-				return m_pitch;
-			case 5:
-				return m_roll;
+			case 0: return m_coords[0];
+			case 1: return m_coords[1];
+			case 2: return m_coords[2];
+			case 3: return m_yaw;
+			case 4: return m_pitch;
+			case 5: return m_roll;
 			default:
 				throw std::runtime_error(
 					"CPose3D::operator[]: Index of bounds.");
@@ -615,19 +692,13 @@ class CPose3D : public CPose<CPose3D, 6>,
 	 * z yaw pitch roll]", angles in degrees.)
 	 * \sa fromString
 	 */
-	void asString(std::string& s) const
+	std::string asString() const override
 	{
 		using mrpt::RAD2DEG;
 		updateYawPitchRoll();
-		s = mrpt::format(
+		return mrpt::format(
 			"[%f %f %f %f %f %f]", m_coords[0], m_coords[1], m_coords[2],
 			RAD2DEG(m_yaw), RAD2DEG(m_pitch), RAD2DEG(m_roll));
-	}
-	inline std::string asString() const
-	{
-		std::string s;
-		asString(s);
-		return s;
 	}
 
 	/** Set the current object value from a string generated by 'asString' (eg:
@@ -706,7 +777,7 @@ class CPose3D : public CPose<CPose3D, 6>,
 	}
 	/** @} */
 
-};  // End of class def.
+};	// End of class def.
 
 std::ostream& operator<<(std::ostream& o, const CPose3D& p);
 

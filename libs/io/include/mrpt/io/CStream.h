@@ -2,13 +2,14 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 #pragma once
 
 #include <mrpt/core/common.h>  // MRPT_printf_format_check
+
 #include <cstdint>
 #include <string>
 
@@ -45,11 +46,10 @@ class CStream
 	 * number of bytes actually written. */
 	virtual size_t Write(const void* Buffer, size_t Count) = 0;
 
-	/* Constructor
-	 */
+	/** Constructor */
 	CStream() = default;
-	/* Destructor
-	 */
+
+	/** Destructor */
 	virtual ~CStream();
 
 	/** Reads a block of bytes from the stream into Buffer, and returns the
@@ -93,7 +93,7 @@ class CStream
 	 * \sa CStdOutStream
 	 */
 	virtual int printf(const char* fmt, ...)
-		MRPT_printf_format_check(2, 3);  // The first argument (1) is "this" !!!
+		MRPT_printf_format_check(2, 3);	 // The first argument (1) is "this" !!!
 
 	/** Prints a vector in the format [A,B,C,...] using CStream::printf, and the
 	 * fmt string for <b>each</b> vector element `T`.
@@ -112,12 +112,18 @@ class CStream
 		this->printf("]");
 	}
 
-	/** Reads from the stream until a '\n' character is found ('\r' characters
+	/** Reads from the stream until a `\n` character is found (`\r` characters
 	 * are ignored).
 	 * \return false on EOF or any other read error.
 	 */
 	bool getline(std::string& out_str);
 
-};  // End of class def.
+	/** Returns a human-friendly description of the stream, e.g. a filename. */
+	virtual std::string getStreamDescription() const
+	{
+		return "Generic mrpt::io::CStream";
+	}
+
+};	// End of class def.
 
 }  // namespace mrpt::io

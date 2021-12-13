@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -12,6 +12,8 @@
 #include <mrpt/math/CMatrixFixed.h>
 #include <mrpt/math/CVectorDynamic.h>
 #include <mrpt/math/math_frwds.h>
+
+#include <limits>  // numeric_limits
 
 namespace mrpt::math
 {
@@ -167,12 +169,13 @@ class CProbabilityDensityFunction
 	double getCovarianceEntropy() const
 	{
 		static const double ln_2PI = 1.8378770664093454835606594728112;
-		return 0.5 * (STATE_LEN + STATE_LEN * ln_2PI +
-					  log(std::max(
-						  getCovariance().det(),
-						  std::numeric_limits<double>::epsilon())));
+		return 0.5 *
+			(STATE_LEN + STATE_LEN * ln_2PI +
+			 log(std::max(
+				 getCovariance().det(),
+				 std::numeric_limits<double>::epsilon())));
 	}
 
-};  // End of class def.
+};	// End of class def.
 
 }  // namespace mrpt::math

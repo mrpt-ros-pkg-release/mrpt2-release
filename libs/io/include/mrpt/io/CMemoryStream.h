@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -63,6 +63,8 @@ class CMemoryStream : public CStream
 	/** Clears the memory buffer. */
 	void clear();
 
+	std::string getStreamDescription() const override;
+
 	// See docs in base class
 	uint64_t Seek(
 		int64_t Offset, CStream::TSeekOrigin Origin = sFromBeginning) override;
@@ -77,12 +79,10 @@ class CMemoryStream : public CStream
 	void* getRawBufferData();
 	const void* getRawBufferData() const;
 
-	/** Saves the entire buffer to a file \return true on success, false on
-	 * error */
+	/** Saves the entire buffer to a file \return true on success */
 	bool saveBufferToFile(const std::string& file_name);
 
-	/** Loads the entire buffer from a file * \return true on success, false on
-	 * error */
+	/** Loads the entire buffer from a file \return true on success */
 	bool loadBufferFromFile(const std::string& file_name);
 
 	/** Change the size of the additional memory block that is reserved whenever
@@ -92,7 +92,7 @@ class CMemoryStream : public CStream
 		ASSERT_(alloc_block_size > 0);
 		m_alloc_block_size = alloc_block_size;
 	}
-};  // End of class def.
+};	// End of class def.
 
 namespace internal
 {

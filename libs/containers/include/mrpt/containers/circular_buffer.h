@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -64,7 +64,8 @@ class circular_buffer
 	 */
 	void push_many(T* array_elements, size_t count)
 	{
-		while (count--) push(*array_elements++);
+		while (count--)
+			push(*array_elements++);
 	}
 
 	/** Retrieve an element from the buffer.
@@ -97,7 +98,8 @@ class circular_buffer
 	 * requested. */
 	void pop_many(T* out_array, size_t count)
 	{
-		while (count--) pop(*out_array++);
+		while (count--)
+			pop(*out_array++);
 	}
 
 	/** Peek (see without modifying) what is to be read from the buffer if pop()
@@ -142,8 +144,7 @@ class circular_buffer
 	 * \sa capacity */
 	size_t size() const
 	{
-		if (m_next_write >= m_next_read)
-			return m_next_write - m_next_read;
+		if (m_next_write >= m_next_read) return m_next_write - m_next_read;
 		else
 			return m_next_write + (m_size - m_next_read);
 	}
@@ -158,6 +159,6 @@ class circular_buffer
 	size_t available() const { return (capacity() - size()) - 1; }
 	/** Delete all the stored data, if any. */
 	void clear() { m_next_write = m_next_read = 0; }
-};  // end class circular_buffer
+};	// end class circular_buffer
 
 }  // namespace mrpt::containers

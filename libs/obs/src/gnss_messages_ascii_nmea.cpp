@@ -2,14 +2,15 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "obs-precomp.h"  // Precompiled headers
-
+//
 #include <mrpt/obs/gnss_messages_ascii_nmea.h>
+
 #include <iostream>
 
 using namespace std;
@@ -55,8 +56,7 @@ void Message_NMEA_GGA::dumpToStream(std::ostream& out) const
 		out << "(UNKNOWN!)\n";
 
 	out << "  HDOP (Horizontal Dilution of Precision): ";
-	if (fields.thereis_HDOP)
-		out << mrpt::format(" %f\n", fields.HDOP);
+	if (fields.thereis_HDOP) out << mrpt::format(" %f\n", fields.HDOP);
 	else
 		out << " N/A\n";
 }
@@ -204,7 +204,8 @@ bool Message_NMEA_RMC::getAllFieldValues(std::ostream& o) const
 // ---------------------------------------
 Message_NMEA_GSA::content_t::content_t()
 {
-	for (int i = 0; i < 12; i++) PRNs[i][0] = PRNs[i][1] = '\0';
+	for (int i = 0; i < 12; i++)
+		PRNs[i][0] = PRNs[i][1] = '\0';
 }
 void Message_NMEA_GSA::dumpToStream(std::ostream& out) const
 {
@@ -234,9 +235,8 @@ bool Message_NMEA_GSA::getAllFieldDescriptions(std::ostream& o) const
 bool Message_NMEA_GSA::getAllFieldValues(std::ostream& o) const
 {
 	o << mrpt::format(
-		"%04c %02c %07.2s %07.2s  %07.2s %07.2s %07.2s %07.2s %07.2s %07.2s "
-		"%07.2s %07.2s %07.2s "
-		"%07.2s %.05f %.05f %.05f",
+		"%4c %2c %7.2s %7.2s  %7.2s %7.2s %7.2s %7.2s %7.2s %7.2s %7.2s %7.2s "
+		"%7.2s %7.2s %.05f %.05f %.05f",
 		fields.auto_selection_fix, fields.fix_2D_3D, fields.PRNs[0],
 		fields.PRNs[1], fields.PRNs[2], fields.PRNs[3], fields.PRNs[4],
 		fields.PRNs[5], fields.PRNs[6], fields.PRNs[7], fields.PRNs[8],

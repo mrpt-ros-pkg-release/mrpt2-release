@@ -2,15 +2,15 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
+#include "CLogView.h"
+
 #include "slamdemoApp.h"  // These are just to avoid weird WX compile issues with UNICODE, etc..
 #include "slamdemoMain.h"
-
-#include "CLogView.h"
 
 //(*InternalHeaders(CLogView)
 #include <wx/font.h>
@@ -46,9 +46,7 @@ CLogView::CLogView(
 		this, ID_TEXTCTRL1, wxEmptyString, wxDefaultPosition, wxSize(835, 437),
 		wxTE_MULTILINE | wxTE_READONLY | wxHSCROLL | wxTE_DONTWRAP,
 		wxDefaultValidator, _T("ID_TEXTCTRL1"));
-	wxFont edLogFont(
-		wxDEFAULT, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, wxNORMAL, false,
-		wxEmptyString, wxFONTENCODING_DEFAULT);
+	wxFont edLogFont(-1, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, wxNORMAL);
 	edLog->SetFont(edLogFont);
 	FlexGridSizer1->Add(
 		edLog, 1, wxALL | wxEXPAND | wxALIGN_LEFT | wxALIGN_TOP, 5);

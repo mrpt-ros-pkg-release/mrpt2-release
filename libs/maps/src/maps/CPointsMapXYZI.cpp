@@ -2,13 +2,13 @@
 |                     Mobile Robot Programming Toolkit (MRPT)            |
 |                          https://www.mrpt.org/                         |
 |                                                                        |
-| Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+| Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
 | See: https://www.mrpt.org/Authors - All rights reserved.               |
 | Released under BSD License. See: https://www.mrpt.org/License          |
 +------------------------------------------------------------------------+ */
 
 #include "maps-precomp.h"  // Precomp header
-
+//
 #include <mrpt/core/bits_mem.h>
 #include <mrpt/io/CFileGZInputStream.h>
 #include <mrpt/io/CFileGZOutputStream.h>
@@ -19,6 +19,7 @@
 #include <mrpt/serialization/aligned_serialization.h>
 #include <mrpt/system/filesystem.h>
 #include <mrpt/system/os.h>
+
 #include <iostream>
 
 #include "CPointsMap_crtp_common.h"
@@ -153,8 +154,7 @@ void CPointsMapXYZI::serializeFrom(
 			likelihoodOptions.readFromStream(in);
 		}
 		break;
-		default:
-			MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
 	};
 }
 
@@ -205,11 +205,8 @@ void CPointsMapXYZI::insertPointRGB(
 	mark_as_modified();
 }
 
-void CPointsMapXYZI::getAs3DObject(
-	mrpt::opengl::CSetOfObjects::Ptr& outObj) const
+void CPointsMapXYZI::getVisualizationInto(mrpt::opengl::CSetOfObjects& o) const
 {
-	ASSERT_(outObj);
-
 	if (!genericMapParams.enableSaveAs3DObject) return;
 
 	auto obj = mrpt::opengl::CPointCloudColoured::Create();
@@ -218,7 +215,7 @@ void CPointsMapXYZI::getAs3DObject(
 	obj->setColor(1, 1, 1, 1.0);
 	obj->setPointSize(this->renderOptions.point_size);
 
-	outObj->insert(obj);
+	o.insert(obj);
 }
 
 void CPointsMapXYZI::getPointRGB(
@@ -269,10 +266,7 @@ bool CPointsMapXYZI::loadXYZI_from_text_file(const std::string& file)
 		std::stringstream ss(line);
 
 		float x, y, z, i;
-		if (!(ss >> x >> y >> z >> i))
-		{
-			break;
-		}
+		if (!(ss >> x >> y >> z >> i)) { break; }
 
 		insertPointFast(x, y, z);
 		m_intensity.push_back(i);
@@ -382,7 +376,8 @@ struct pointmap_traits<CPointsMapXYZI>
 }  // namespace mrpt::maps::detail
 /** See CPointsMap::loadFromRangeScan() */
 void CPointsMapXYZI::loadFromRangeScan(
-	const CObservation2DRangeScan& rangeScan, const CPose3D* robotPose)
+	const CObservation2DRangeScan& rangeScan,
+	const std::optional<const mrpt::poses::CPose3D>& robotPose)
 {
 	mrpt::maps::detail::loadFromRangeImpl<
 		CPointsMapXYZI>::templ_loadFromRangeScan(*this, rangeScan, robotPose);
@@ -390,7 +385,8 @@ void CPointsMapXYZI::loadFromRangeScan(
 
 /** See CPointsMap::loadFromRangeScan() */
 void CPointsMapXYZI::loadFromRangeScan(
-	const CObservation3DRangeScan& rangeScan, const CPose3D* robotPose)
+	const CObservation3DRangeScan& rangeScan,
+	const std::optional<const mrpt::poses::CPose3D>& robotPose)
 {
 	mrpt::maps::detail::loadFromRangeImpl<
 		CPointsMapXYZI>::templ_loadFromRangeScan(*this, rangeScan, robotPose);
@@ -452,8 +448,7 @@ bool CPointsMapXYZI::loadFromKittiVelodyneFile(const std::string& filename)
 			constexpr std::size_t nToRead = sizeof(float) * 4;
 			float xyzi[4];
 			std::size_t nRead = f->Read(&xyzi, nToRead);
-			if (nRead == 0)
-				break;  // EOF
+			if (nRead == 0) break;	// EOF
 			else if (nRead == nToRead)
 			{
 				m_x.push_back(xyzi[0]);

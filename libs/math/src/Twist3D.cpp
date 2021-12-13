@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "math-precomp.h"  // Precompiled headers
-
+//
 #include <mrpt/core/bits_math.h>
 #include <mrpt/math/CMatrixFixed.h>
 #include <mrpt/math/TPose3D.h>
@@ -31,11 +31,14 @@ void TTwist3D::fromString(const std::string& s)
 {
 	CMatrixDouble m;
 	if (!m.fromMatlabStringFormat(s))
-		THROW_EXCEPTION("Malformed expression in ::fromString");
+		THROW_EXCEPTION_FMT(
+			"Malformed expression in ::fromString, s=\"%s\"", s.c_str());
 	ASSERTMSG_(
 		m.rows() == 1 && m.cols() == 6, "Wrong size of vector in ::fromString");
-	for (int i = 0; i < 3; i++) (*this)[i] = m(0, i);
-	for (int i = 0; i < 3; i++) (*this)[3 + i] = DEG2RAD(m(0, 3 + i));
+	for (int i = 0; i < 3; i++)
+		(*this)[i] = m(0, i);
+	for (int i = 0; i < 3; i++)
+		(*this)[3 + i] = DEG2RAD(m(0, 3 + i));
 }
 // Transform all 6 components for a change of reference frame from "A" to
 // another frame "B" whose rotation with respect to "A" is given by `rot`. The
@@ -56,19 +59,21 @@ void TTwist3D::rotate(const TPose3D& rot)
 bool TTwist3D::operator==(const TTwist3D& o) const
 {
 	return vx == o.vx && vy == o.vy && vz == o.vz && wx == o.wx && wy == o.wy &&
-		   wz == o.wz;
+		wz == o.wz;
 }
 bool TTwist3D::operator!=(const TTwist3D& o) const { return !(*this == o); }
 
 mrpt::serialization::CArchive& mrpt::math::operator>>(
 	mrpt::serialization::CArchive& in, mrpt::math::TTwist3D& o)
 {
-	for (size_t i = 0; i < o.size(); i++) in >> o[i];
+	for (size_t i = 0; i < o.size(); i++)
+		in >> o[i];
 	return in;
 }
 mrpt::serialization::CArchive& mrpt::math::operator<<(
 	mrpt::serialization::CArchive& out, const mrpt::math::TTwist3D& o)
 {
-	for (size_t i = 0; i < o.size(); i++) out << o[i];
+	for (size_t i = 0; i < o.size(); i++)
+		out << o[i];
 	return out;
 }

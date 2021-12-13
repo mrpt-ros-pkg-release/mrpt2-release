@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -11,6 +11,7 @@
 #include <mrpt/core/optional_ref.h>
 #include <mrpt/core/pimpl.h>
 #include <mrpt/io/CStream.h>
+#include <mrpt/io/open_flags.h>
 
 namespace mrpt::io
 {
@@ -30,12 +31,18 @@ class CFileGZOutputStream : public CStream
 	mrpt::pimpl<Impl> m_f;
 
    public:
-	/** Constructor: opens an output file with compression level = 1 (minimum,
-	 * fastest).
+	/** Constructor: opens an output file with the given compression level
+	 * (Default= 1, the minimum, fastest).
+	 *
 	 * \param fileName The file to be open in this stream
-	 * \sa open
+	 * \param append If set to true, the file will be opened for writing and the
+	 * current cursor position set at the end of the file. Otherwise, previous
+	 * contents will be lost.
+	 * \exception std::exception if the file cannot be opened.
 	 */
-	CFileGZOutputStream(const std::string& fileName);
+	CFileGZOutputStream(
+		const std::string& fileName, const OpenMode mode = OpenMode::TRUNCATE,
+		int compressionLevel = 1);
 
 	/** Constructor, without opening the file.
 	 * \sa open
@@ -48,6 +55,8 @@ class CFileGZOutputStream : public CStream
 	/** Destructor */
 	~CFileGZOutputStream() override;
 
+	std::string getStreamDescription() const override;
+
 	/** Open a file for write, choosing the compression level
 	 * \param fileName The file to be open in this stream
 	 * \param compress_level 0:no compression, 1:fastest, 9:best
@@ -55,7 +64,9 @@ class CFileGZOutputStream : public CStream
 	 */
 	bool open(
 		const std::string& fileName, int compress_level = 1,
-		mrpt::optional_ref<std::string> error_msg = std::nullopt);
+		mrpt::optional_ref<std::string> error_msg = std::nullopt,
+		const OpenMode mode = OpenMode::TRUNCATE);
+
 	/** Close the file */
 	void close();
 	/** Returns true if the file was open without errors. */
@@ -72,7 +83,7 @@ class CFileGZOutputStream : public CStream
 	uint64_t getTotalBytesCount() const override;
 	size_t Read(void* Buffer, size_t Count) override;
 	size_t Write(const void* Buffer, size_t Count) override;
-};  // End of class def.
+};	// End of class def.
 static_assert(
 	!std::is_copy_constructible_v<CFileGZOutputStream> &&
 		!std::is_copy_assignable_v<CFileGZOutputStream>,

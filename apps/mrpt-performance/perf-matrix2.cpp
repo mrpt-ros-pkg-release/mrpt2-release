@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -12,6 +12,7 @@
 #include <mrpt/math/CSparseMatrix.h>
 #include <mrpt/math/CVectorFixed.h>
 #include <mrpt/random.h>
+
 #include <Eigen/Dense>
 
 #include "common.h"
@@ -138,7 +139,7 @@ double matrix_test_loadFromArray(int N, int a2)
 
 double matrix_test_loadWithEigenMap(int N, int a2)
 {
-	alignas(16) double nums[4 * 4] = {0, 1, 2,  3,  4,  5,  6,  7,
+	alignas(16) double nums[4 * 4] = {0, 1, 2,	3,	4,	5,	6,	7,
 									  8, 9, 10, 11, 12, 13, 14, 15};
 
 	CMatrixFixed<double, 4, 4> M;

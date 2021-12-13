@@ -2,19 +2,21 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 #pragma once
 
 #include <mrpt/math/TPoseOrPoint.h>
+
 #include <vector>
 
 namespace mrpt::math
 {
 /** 2D twist: 2D velocity vector (vx,vy) + planar angular velocity (omega)
  * \sa mrpt::math::TTwist3D, mrpt::math::TPose2D
+ * \ingroup geometry_grp
  */
 struct TTwist2D : public internal::ProvideStaticResize<TTwist2D>
 {
@@ -34,19 +36,29 @@ struct TTwist2D : public internal::ProvideStaticResize<TTwist2D>
 	}
 	/** Default fast constructor. Initializes to zeros  */
 	TTwist2D() = default;
+
+	/** Builds from the first 3 elements of a vector-like object: [vx vy w]
+	 *
+	 * \tparam Vector It can be std::vector<double>, Eigen::VectorXd, etc.
+	 */
+	template <typename Vector>
+	static TTwist2D FromVector(const Vector& v)
+	{
+		TTwist2D o;
+		for (int i = 0; i < 3; i++)
+			o[i] = v[i];
+		return o;
+	}
+
 	/** Coordinate access using operator[]. Order: vx,vy,vphi */
 	double& operator[](size_t i)
 	{
 		switch (i)
 		{
-			case 0:
-				return vx;
-			case 1:
-				return vy;
-			case 2:
-				return omega;
-			default:
-				throw std::out_of_range("index out of range");
+			case 0: return vx;
+			case 1: return vy;
+			case 2: return omega;
+			default: throw std::out_of_range("index out of range");
 		}
 	}
 	/** Coordinate access using operator[]. Order: vx,vy,vphi */
@@ -54,27 +66,45 @@ struct TTwist2D : public internal::ProvideStaticResize<TTwist2D>
 	{
 		switch (i)
 		{
-			case 0:
-				return vx;
-			case 1:
-				return vy;
-			case 2:
-				return omega;
-			default:
-				throw std::out_of_range("index out of range");
+			case 0: return vx;
+			case 1: return vy;
+			case 2: return omega;
+			default: throw std::out_of_range("index out of range");
 		}
 	}
-	/** Transformation into vector */
-	void asVector(std::vector<double>& v) const
+	/** Gets the twist as a vector of doubles.
+	 * \tparam Vector It can be std::vector<double>, Eigen::VectorXd, etc.
+	 */
+	template <typename Vector>
+	void asVector(Vector& v) const
 	{
 		v.resize(3);
 		v[0] = vx;
 		v[1] = vy;
 		v[2] = omega;
 	}
+	/// \overload
+	template <typename Vector>
+	Vector asVector() const
+	{
+		Vector v;
+		asVector(v);
+		return v;
+	}
+
 	/** Transform the (vx,vy) components for a counterclockwise rotation of
 	 * `ang` radians. */
 	void rotate(const double ang);
+
+	/** Like rotate(), but returning a copy of the rotated twist.
+	 *  \note New in MRPT 2.3.2 */
+	[[nodiscard]] TTwist2D rotated(const double ang) const
+	{
+		TTwist2D r = *this;
+		r.rotate(ang);
+		return r;
+	}
+
 	bool operator==(const TTwist2D& o) const;
 	bool operator!=(const TTwist2D& o) const;
 	/** Returns the pose increment of multiplying each twist component times

@@ -2,20 +2,21 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
-#include "bayes-precomp.h"  // Precompiled headers
-
-#include <mrpt/bayes/CParticleFilter.h>  // for CParticleFilter::TPar...
-#include <mrpt/bayes/CParticleFilterCapable.h>  // for CParticleFilterCapable
+#include "bayes-precomp.h"	// Precompiled headers
+//
+#include <mrpt/bayes/CParticleFilter.h>	 // for CParticleFilter::TPar...
+#include <mrpt/bayes/CParticleFilterCapable.h>	// for CParticleFilterCapable
 #include <mrpt/config/CConfigFileBase.h>  // for CConfigFileBase, MRPT...
 #include <mrpt/core/bits_math.h>  // square()
-#include <mrpt/system/COutputLogger.h>  // for COutputLogger, MRPT_L...
+#include <mrpt/system/COutputLogger.h>	// for COutputLogger, MRPT_L...
+
 #include <cmath>  // for exp
-#include <cstddef>  // for size_t
+#include <cstddef>	// for size_t
 #include <exception>  // for exception
 #include <string>  // for string, allocator
 
@@ -44,7 +45,8 @@ CParticleFilter::CParticleFilter()
 
 void CParticleFilter::executeOn(
 	CParticleFilterCapable& obj, const mrpt::obs::CActionCollection* action,
-	const mrpt::obs::CSensoryFrame* observation, TParticleFilterStats* stats)
+	const mrpt::obs::CSensoryFrame* observation,
+	TParticleFilterStats* stats) const
 {
 	MRPT_START
 
@@ -69,7 +71,8 @@ void CParticleFilter::executeOn(
 		if (M > 1)
 		{
 			double weightsMean = 0, var = 0;
-			for (size_t i = 0; i < M; i++) weightsMean += exp(obj.getW(i));
+			for (size_t i = 0; i < M; i++)
+				weightsMean += exp(obj.getW(i));
 			weightsMean /= M;
 			for (size_t i = 0; i < M; i++)
 				var += square(exp(obj.getW(i)) - weightsMean);
@@ -87,8 +90,8 @@ void CParticleFilter::executeOn(
 	{
 		if (obj.ESS() < m_options.BETA)
 		{
-			MRPT_LOG_DEBUG(mrpt::format(
-				"Resampling particles (ESS was %.02f)\n", obj.ESS()));
+			MRPT_LOG_DEBUG_FMT(
+				"Resampling particles (ESS was %.02f)\n", obj.ESS());
 			obj.performResampling(m_options);  // Resample
 		}
 	}

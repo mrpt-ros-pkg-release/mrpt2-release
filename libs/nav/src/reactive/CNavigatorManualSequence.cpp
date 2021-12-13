@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "nav-precomp.h"  // Precomp header
-
+//
 #include <mrpt/config/CConfigFileBase.h>
 #include <mrpt/kinematics/CVehicleVelCmd_DiffDriven.h>
 #include <mrpt/kinematics/CVehicleVelCmd_Holo.h>
@@ -63,8 +63,7 @@ void CNavigatorManualSequence::loadConfigFile(
 			case 4:
 				krc.cmd_vel = mrpt::kinematics::CVehicleVelCmd_Holo::Create();
 				break;
-			default:
-				THROW_EXCEPTION("Expected 2 or 4 velocity components!");
+			default: THROW_EXCEPTION("Expected 2 or 4 velocity components!");
 		};
 
 		for (size_t j = 0; j < nComps; j++)

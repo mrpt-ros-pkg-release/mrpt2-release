@@ -2,19 +2,20 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "obs-precomp.h"  // Precompiled headers
-
+//
 #include <mrpt/core/round.h>
 #include <mrpt/math/CMatrixF.h>
 #include <mrpt/math/wrap2pi.h>
 #include <mrpt/obs/CObservation2DRangeScan.h>
 #include <mrpt/poses/CPosePDF.h>
 #include <mrpt/serialization/CArchive.h>
+
 #if MRPT_HAS_MATLAB
 #include <mexplus.h>
 #endif
@@ -110,22 +111,17 @@ void CObservation2DRangeScan::serializeFrom(
 			else
 			{
 				// validRange: Default values: If distance is not maxRange
-				for (i = 0; i < N; i++) m_validRange[i] = m_scan[i] < maxRange;
+				for (i = 0; i < N; i++)
+					m_validRange[i] = m_scan[i] < maxRange;
 			}
 
-			if (version >= 2)
-			{
-				in >> stdError;
-			}
+			if (version >= 2) { in >> stdError; }
 			else
 			{
 				stdError = 0.01f;
 			}
 
-			if (version >= 3)
-			{
-				in >> timestamp;
-			}
+			if (version >= 3) { in >> timestamp; }
 
 			// Default values for newer versions:
 			beamAperture = DEG2RAD(0.25f);
@@ -175,14 +171,11 @@ void CObservation2DRangeScan::serializeFrom(
 				in >> hasIntensity;
 				setScanHasIntensity(hasIntensity);
 				if (hasIntensity && N)
-				{
-					in.ReadBufferFixEndianness(&m_intensity[0], N);
-				}
+				{ in.ReadBufferFixEndianness(&m_intensity[0], N); }
 			}
 		}
 		break;
-		default:
-			MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
 	};
 
 	m_cachedMap.reset();
@@ -199,20 +192,21 @@ IMPLEMENTS_MEXPLUS_FROM(mrpt::obs::CObservation2DRangeScan)
 mxArray* CObservation2DRangeScan::writeToMatlab() const
 {
 #if MRPT_HAS_MATLAB
-	const char* fields[] = {"class",  // Data common to any MRPT class
-							"ts",
-							"sensorLabel",  // Data common to any observation
-							"scan",
-							"validRange",
-							"intensity"  // Received raw data
-							"aperture",
-							"rightToLeft",
-							"maxRange",  // Scan plane geometry and properties
-							"stdError",
-							"beamAperture",
-							"deltaPitch",  // Ray properties
-							"pose",  // Sensor pose
-							"map"};  // Points map
+	const char* fields[] = {
+		"class",  // Data common to any MRPT class
+		"ts",
+		"sensorLabel",	// Data common to any observation
+		"scan",
+		"validRange",
+		"intensity"	 // Received raw data
+		"aperture",
+		"rightToLeft",
+		"maxRange",	 // Scan plane geometry and properties
+		"stdError",
+		"beamAperture",
+		"deltaPitch",  // Ray properties
+		"pose",	 // Sensor pose
+		"map"};	 // Points map
 	mexplus::MxArray obs_struct(
 		mexplus::MxArray::Struct(sizeof(fields) / sizeof(fields[0]), fields));
 
@@ -309,12 +303,25 @@ void CObservation2DRangeScan::filterByExclusionAreas(
 				(Gz >= area.second.first && Gz <= area.second.second))
 			{
 				*valid_it = false;
-				break;  // Go for next point
+				break;	// Go for next point
 			}
 		}  // for each area
 	}  // for each point
 
 	MRPT_END
+}
+
+float CObservation2DRangeScan::getScanAngle(const size_t idx) const
+{
+	float Ang = -0.5f * aperture, dA = aperture / (m_scan.size() - 1);
+	ASSERT_BELOW_(idx, m_scan.size());
+
+	if (!rightToLeft)
+	{
+		Ang = -Ang;
+		dA = -dA;
+	}
+	return Ang + dA * idx;
 }
 
 /*---------------------------------------------------------------
@@ -387,11 +394,13 @@ void CObservation2DRangeScan::filterByExclusionAngles(
 
 		if (idx_end >= idx_ini)
 		{
-			for (size_t i = idx_ini; i <= idx_end; i++) m_validRange[i] = false;
+			for (size_t i = idx_ini; i <= idx_end; i++)
+				m_validRange[i] = false;
 		}
 		else
 		{
-			for (size_t i = 0; i < idx_end; i++) m_validRange[i] = false;
+			for (size_t i = 0; i < idx_end; i++)
+				m_validRange[i] = false;
 
 			for (size_t i = idx_ini; i < sizeRangeScan; i++)
 				m_validRange[i] = false;
@@ -455,13 +464,13 @@ void CObservation2DRangeScan::getDescriptionAsText(std::ostream& o) const
 	CObservation::getDescriptionAsText(o);
 	o << "Homogeneous matrix for the sensor's 3D pose, relative to robot "
 		 "base:\n";
-	o << sensorPose.getHomogeneousMatrixVal<CMatrixDouble44>() << sensorPose
-	  << endl;
+	o << sensorPose.getHomogeneousMatrixVal<CMatrixDouble44>() << "\n"
+	  << sensorPose << "\n";
 
 	o << format(
 		"Samples direction: %s\n",
 		(rightToLeft) ? "Right->Left" : "Left->Right");
-	o << format("Points in the scan: %u\n", m_scan.size());
+	o << "Points in the scan: " << m_scan.size() << "\n";
 	o << format("Estimated sensor 'sigma': %f\n", stdError);
 	o << format(
 		"Increment in pitch during the scan: %f deg\n", RAD2DEG(deltaPitch));
@@ -476,7 +485,8 @@ void CObservation2DRangeScan::getDescriptionAsText(std::ostream& o) const
 		"Sensor field-of-view (\"aperture\"): %.01f deg\n", RAD2DEG(aperture));
 
 	o << "Raw scan values: [";
-	for (i = 0; i < m_scan.size(); i++) o << format("%.03f ", m_scan[i]);
+	for (i = 0; i < m_scan.size(); i++)
+		o << format("%.03f ", m_scan[i]);
 	o << "]\n";
 
 	o << "Raw valid-scan values: [";
@@ -566,4 +576,31 @@ void CObservation2DRangeScan::loadFromVectors(
 		m_scan[i] = scanRanges[i];
 		m_validRange[i] = scanValidity[i];
 	}
+}
+
+// See base class docs:
+std::string CObservation2DRangeScan::exportTxtHeader() const
+{
+	std::string ret = "RANGES[i] ... VALID[i]";
+	if (hasIntensity()) ret += " ... INTENSITY[i]";
+	return ret;
+}
+
+std::string CObservation2DRangeScan::exportTxtDataRow() const
+{
+	std::stringstream o;
+	for (size_t i = 0; i < m_scan.size(); i++)
+		o << format("%.03f ", m_scan[i]);
+	o << "    ";
+
+	for (size_t i = 0; i < m_validRange.size(); i++)
+		o << format("%u ", m_validRange[i] ? 1 : 0);
+	o << "    ";
+
+	if (hasIntensity())
+	{
+		for (size_t i = 0; i < m_intensity.size(); i++)
+			o << format("%d ", m_intensity[i]);
+	}
+	return o.str();
 }

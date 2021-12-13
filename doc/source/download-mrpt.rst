@@ -10,7 +10,8 @@ Download MRPT
 Source code
 -------------
 
-Get the latest development version with:
+Get the latest development version from the official
+`MRPT GitHub repository <https://github.com/MRPT/mrpt/>`_ with:
 
 .. code-block:: bash
 
@@ -51,36 +52,10 @@ Last **stable release** (`mrpt-stable PPA status <https://launchpad.net/~joselui
    sudo add-apt-repository ppa:joseluisblancoc/mrpt   # develop branch
    sudo apt install libmrpt-dev mrpt-apps
 
-.. note::
-   **Ubuntu 16.04 LTS users**: If you want to compile MRPT or install it from
-   a PPA, you must upgrade your gcc compiler to version >=7.
-   See `instructions here <https://gist.github.com/jlblancoc/99521194aba975286c80f93e47966dc5>`_.
-
-Last **stable release** (`mrpt-stable-xenial PPA status <https://launchpad.net/~joseluisblancoc/+archive/ubuntu/mrpt-stable-xenial>`_), for Ubuntu 16.04 LTS Xenial (EOL: April 2021):
-
-.. code-block:: bash
-
-   # Install pre-requisites (** ONLY FOR Ubuntu 16.04 Xenial **)
-   sudo add-apt-repository ppa:ubuntu-toolchain-r/test # gcc-7 Backport
-   sudo add-apt-repository ppa:joseluisblancoc/mrpt-stable-xenial
-   sudo apt-get update
-   sudo apt-get install libmrpt-dev mrpt-apps
-
-**Nightly builds** (`mrpt-nightly-xenial PPA status <https://launchpad.net/~joseluisblancoc/+archive/ubuntu/mrpt-unstable-xenial>`_), for Ubuntu 16.04 LTS Xenial (EOL: April 2021):
-
-.. code-block:: bash
-
-   # Install pre-requisites (** ONLY FOR Ubuntu 16.04 Xenial **)
-   sudo add-apt-repository ppa:ubuntu-toolchain-r/test # gcc-7 Backport
-   sudo add-apt-repository ppa:joseluisblancoc/mrpt-unstable-xenial
-   sudo apt-get update
-   sudo apt-get install libmrpt-dev mrpt-apps
-
 
 Windows installers
 --------------------
 
 Executables (.exes and .dlls) and development libraries (.hs and .libs) included:
 
-   - `Last stable version <https://bintray.com/mrpt/mrpt-win-binaries/MRPT-nightly-builds/win64-stable>`_
-   - `Nightly builds <https://bintray.com/mrpt/mrpt-win-binaries/MRPT-nightly-builds/win64-develop>`_
+   - `Nightly builds <https://github.com/MRPT/mrpt/releases/tag/Windows-nightly-builds>`_

@@ -2,14 +2,16 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "slamdemoMain.h"
+
 #include <wx/filedlg.h>
 #include <wx/msgdlg.h>
+
 #include "CDlgParams.h"
 #include "CLogView.h"
 #include "slamdemoApp.h"
@@ -23,9 +25,8 @@
 #include <wx/intl.h>
 #include <wx/string.h>
 //*)
-#include <mrpt/gui/wx28-fixes.h>
-
 #include <mrpt/gui/about_box.h>
+#include <mrpt/gui/wx28-fixes.h>
 #include <mrpt/io/CFileGZOutputStream.h>
 #include <mrpt/io/vector_loadsave.h>
 #include <mrpt/math/ops_matrices.h>
@@ -35,7 +36,6 @@
 #include <mrpt/random.h>
 #include <mrpt/serialization/CArchive.h>
 
-#include <mrpt/serialization/CArchive.h>
 #include <memory>
 
 using namespace std;
@@ -239,8 +239,7 @@ slamdemoFrame::slamdemoFrame(wxWindow* parent, wxWindowID id)
 		Panel3, ID_STATICTEXT1, _("Ground truth"), wxDefaultPosition,
 		wxDefaultSize, 0, _T("ID_STATICTEXT1"));
 	wxFont lbGTFont(
-		wxDEFAULT, wxDEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD, false,
-		wxEmptyString, wxFONTENCODING_DEFAULT);
+		-1, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
 	lbGT->SetFont(lbGTFont);
 	GridSizer1->Add(
 		lbGT, 1, wxALL | wxALIGN_CENTER_HORIZONTAL | wxALIGN_CENTER_VERTICAL,
@@ -263,8 +262,7 @@ slamdemoFrame::slamdemoFrame(wxWindow* parent, wxWindowID id)
 		Panel4, ID_STATICTEXT2, _("Observation"), wxDefaultPosition,
 		wxDefaultSize, wxALIGN_CENTRE, _T("ID_STATICTEXT2"));
 	wxFont lbObsFont(
-		wxDEFAULT, wxDEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD, false,
-		wxEmptyString, wxFONTENCODING_DEFAULT);
+		-1, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
 	lbObs->SetFont(lbObsFont);
 	GridSizer2->Add(
 		lbObs, 1, wxALL | wxALIGN_CENTER_HORIZONTAL | wxALIGN_CENTER_VERTICAL,
@@ -293,8 +291,7 @@ slamdemoFrame::slamdemoFrame(wxWindow* parent, wxWindowID id)
 		Panel5, ID_STATICTEXT10, _("Map"), wxDefaultPosition, wxDefaultSize,
 		wxALIGN_CENTRE, _T("ID_STATICTEXT10"));
 	wxFont lbMapFont(
-		wxDEFAULT, wxDEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD, false,
-		wxEmptyString, wxFONTENCODING_DEFAULT);
+		-1, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
 	lbMap->SetFont(lbMapFont);
 	GridSizer3->Add(
 		lbMap, 1, wxALL | wxALIGN_CENTER_HORIZONTAL | wxALIGN_CENTER_VERTICAL,
@@ -317,8 +314,7 @@ slamdemoFrame::slamdemoFrame(wxWindow* parent, wxWindowID id)
 		Panel6, ID_STATICTEXT3, _("Indiv. compat (95% ellips.)"),
 		wxDefaultPosition, wxDefaultSize, wxALIGN_CENTRE, _T("ID_STATICTEXT3"));
 	wxFont lmIndCompatFont(
-		wxDEFAULT, wxDEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD, false,
-		wxEmptyString, wxFONTENCODING_DEFAULT);
+		-1, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
 	lmIndCompat->SetFont(lmIndCompatFont);
 	GridSizer4->Add(
 		lmIndCompat, 1,
@@ -346,8 +342,7 @@ slamdemoFrame::slamdemoFrame(wxWindow* parent, wxWindowID id)
 		Panel7, ID_STATICTEXT4, _("Dat assoc"), wxDefaultPosition,
 		wxDefaultSize, wxALIGN_CENTRE, _T("ID_STATICTEXT4"));
 	wxFont lbDatAssocFont(
-		wxDEFAULT, wxDEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD, false,
-		wxEmptyString, wxFONTENCODING_DEFAULT);
+		-1, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
 	lbDatAssoc->SetFont(lbDatAssocFont);
 	GridSizer5->Add(
 		lbDatAssoc, 1,
@@ -394,8 +389,7 @@ slamdemoFrame::slamdemoFrame(wxWindow* parent, wxWindowID id)
 		Panel8, ID_STATICTEXT5, _("Vehicle X (err,99% bounds)"),
 		wxDefaultPosition, wxDefaultSize, wxALIGN_CENTRE, _T("ID_STATICTEXT5"));
 	wxFont StaticText2Font(
-		wxDEFAULT, wxDEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD, false,
-		wxEmptyString, wxFONTENCODING_DEFAULT);
+		-1, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
 	StaticText2->SetFont(StaticText2Font);
 	GridSizer7->Add(
 		StaticText2, 1,
@@ -418,8 +412,7 @@ slamdemoFrame::slamdemoFrame(wxWindow* parent, wxWindowID id)
 		Panel9, ID_STATICTEXT6, _("Vehicle Y (err,99% bounds)"),
 		wxDefaultPosition, wxDefaultSize, wxALIGN_CENTRE, _T("ID_STATICTEXT6"));
 	wxFont StaticText3Font(
-		wxDEFAULT, wxDEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD, false,
-		wxEmptyString, wxFONTENCODING_DEFAULT);
+		-1, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
 	StaticText3->SetFont(StaticText3Font);
 	GridSizer8->Add(
 		StaticText3, 1,
@@ -442,8 +435,7 @@ slamdemoFrame::slamdemoFrame(wxWindow* parent, wxWindowID id)
 		Panel10, ID_STATICTEXT7, _("Vehicle Phi (err,99% bounds)"),
 		wxDefaultPosition, wxDefaultSize, wxALIGN_CENTRE, _T("ID_STATICTEXT7"));
 	wxFont StaticText4Font(
-		wxDEFAULT, wxDEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD, false,
-		wxEmptyString, wxFONTENCODING_DEFAULT);
+		-1, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
 	StaticText4->SetFont(StaticText4Font);
 	GridSizer9->Add(
 		StaticText4, 1,
@@ -478,8 +470,7 @@ slamdemoFrame::slamdemoFrame(wxWindow* parent, wxWindowID id)
 		Panel13, ID_STATICTEXT9, _("True positives:"), wxDefaultPosition,
 		wxDefaultSize, wxALIGN_CENTRE, _T("ID_STATICTEXT9"));
 	wxFont lbDaTPFont(
-		wxDEFAULT, wxDEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD, false,
-		wxEmptyString, wxFONTENCODING_DEFAULT);
+		-1, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
 	lbDaTP->SetFont(lbDaTPFont);
 	GridSizer6->Add(
 		lbDaTP, 1, wxALL | wxALIGN_CENTER_HORIZONTAL | wxALIGN_CENTER_VERTICAL,
@@ -502,8 +493,7 @@ slamdemoFrame::slamdemoFrame(wxWindow* parent, wxWindowID id)
 		Panel14, ID_STATICTEXT11, _("True negatives:"), wxDefaultPosition,
 		wxDefaultSize, wxALIGN_CENTRE, _T("ID_STATICTEXT11"));
 	wxFont lbDaTNFont(
-		wxDEFAULT, wxDEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD, false,
-		wxEmptyString, wxFONTENCODING_DEFAULT);
+		-1, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
 	lbDaTN->SetFont(lbDaTNFont);
 	GridSizer11->Add(
 		lbDaTN, 1, wxALL | wxALIGN_CENTER_HORIZONTAL | wxALIGN_CENTER_VERTICAL,
@@ -526,8 +516,7 @@ slamdemoFrame::slamdemoFrame(wxWindow* parent, wxWindowID id)
 		Panel15, ID_STATICTEXT12, _("False positives:"), wxDefaultPosition,
 		wxDefaultSize, wxALIGN_CENTRE, _T("ID_STATICTEXT12"));
 	wxFont StaticText6Font(
-		wxDEFAULT, wxDEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD, false,
-		wxEmptyString, wxFONTENCODING_DEFAULT);
+		-1, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
 	StaticText6->SetFont(StaticText6Font);
 	GridSizer12->Add(
 		StaticText6, 1,
@@ -550,8 +539,7 @@ slamdemoFrame::slamdemoFrame(wxWindow* parent, wxWindowID id)
 		Panel16, ID_STATICTEXT13, _("False negatives:"), wxDefaultPosition,
 		wxDefaultSize, wxALIGN_CENTRE, _T("ID_STATICTEXT13"));
 	wxFont StaticText7Font(
-		wxDEFAULT, wxDEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD, false,
-		wxEmptyString, wxFONTENCODING_DEFAULT);
+		-1, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
 	StaticText7->SetFont(StaticText7Font);
 	GridSizer13->Add(
 		StaticText7, 1,
@@ -583,8 +571,7 @@ slamdemoFrame::slamdemoFrame(wxWindow* parent, wxWindowID id)
 		Panel12, ID_STATICTEXT8, _("Computation time (ms)"), wxDefaultPosition,
 		wxDefaultSize, wxALIGN_CENTRE, _T("ID_STATICTEXT8"));
 	wxFont StaticText1Font(
-		wxDEFAULT, wxDEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD, false,
-		wxEmptyString, wxFONTENCODING_DEFAULT);
+		-1, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
 	StaticText1->SetFont(StaticText1Font);
 	GridSizer10->Add(
 		StaticText1, 1,
@@ -608,8 +595,7 @@ slamdemoFrame::slamdemoFrame(wxWindow* parent, wxWindowID id)
 		wxDefaultPosition, wxDefaultSize, wxALIGN_CENTRE,
 		_T("ID_STATICTEXT14"));
 	wxFont StaticText5Font(
-		wxDEFAULT, wxDEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD, false,
-		wxEmptyString, wxFONTENCODING_DEFAULT);
+		-1, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
 	StaticText5->SetFont(StaticText5Font);
 	GridSizer14->Add(
 		StaticText5, 1,
@@ -807,10 +793,10 @@ slamdemoFrame::slamdemoFrame(wxWindow* parent, wxWindowID id)
 	mnuStop->Enable(false);
 
 // Init graphs:
-#define INIT_PLOT_LABELS(_PL, _LBX, _LBY)   \
-	_PL->AddLayer(new mpScaleX(wxT(_LBX))); \
-	_PL->AddLayer(new mpScaleY(wxT(_LBY))); \
-	_PL->LockAspect(true);                  \
+#define INIT_PLOT_LABELS(_PL, _LBX, _LBY)                                      \
+	_PL->AddLayer(new mpScaleX(wxT(_LBX)));                                    \
+	_PL->AddLayer(new mpScaleY(wxT(_LBY)));                                    \
+	_PL->LockAspect(true);                                                     \
 	_PL->Fit(-10, 10, -10, 10);
 
 #define INIT_PLOT(_PL) INIT_PLOT_LABELS(_PL, "x", "y")
@@ -861,7 +847,6 @@ slamdemoFrame::slamdemoFrame(wxWindow* parent, wxWindowID id)
 	plotGT->AddLayer(m_lyGTvisibleRange);
 
 	plotGT->LockAspect();
-	plotGT->EnableDoubleBuffer(true);
 
 	// Map plot ------------
 	m_lyMapRobot = new mpPolygon();
@@ -871,7 +856,6 @@ slamdemoFrame::slamdemoFrame(wxWindow* parent, wxWindowID id)
 	m_lyMapRobot->SetCoordinateBase(0, 0, 0);
 	plotMap->AddLayer(m_lyMapRobot);
 	plotMap->LockAspect();
-	plotMap->EnableDoubleBuffer(true);
 
 	// Observations plot ------------
 	m_lyObsRobot = new mpPolygon();
@@ -888,7 +872,6 @@ slamdemoFrame::slamdemoFrame(wxWindow* parent, wxWindowID id)
 	plotObs->AddLayer(m_lyObsvisibleRange);
 
 	plotObs->LockAspect();
-	plotObs->EnableDoubleBuffer(true);
 
 	// IC plot ------------
 	m_lyICvisibleRange = new mpPolygon();
@@ -898,7 +881,6 @@ slamdemoFrame::slamdemoFrame(wxWindow* parent, wxWindowID id)
 	plotIndivCompat->AddLayer(m_lyICvisibleRange);
 
 	plotIndivCompat->LockAspect(false);
-	plotIndivCompat->EnableDoubleBuffer(true);
 
 	// X ERROR plot ------------
 	m_lyERRX_err = new mpFXYVector();
@@ -917,7 +899,6 @@ slamdemoFrame::slamdemoFrame(wxWindow* parent, wxWindowID id)
 	plotErrorX->AddLayer(m_lyERRX_boundDown);
 
 	plotErrorX->LockAspect(false);
-	plotErrorX->EnableDoubleBuffer(true);
 
 	// Y ERROR plot ------------
 	m_lyERRY_err = new mpFXYVector();
@@ -936,7 +917,6 @@ slamdemoFrame::slamdemoFrame(wxWindow* parent, wxWindowID id)
 	plotErrorY->AddLayer(m_lyERRY_boundDown);
 
 	plotErrorY->LockAspect(false);
-	plotErrorY->EnableDoubleBuffer(true);
 
 	// Phi ERROR plot ------------
 	m_lyERRPHI_err = new mpFXYVector();
@@ -955,7 +935,6 @@ slamdemoFrame::slamdemoFrame(wxWindow* parent, wxWindowID id)
 	plotErrorPhi->AddLayer(m_lyERRPHI_boundDown);
 
 	plotErrorPhi->LockAspect(false);
-	plotErrorPhi->EnableDoubleBuffer(true);
 
 	// Stats Time plot ------------
 	m_lyStatTimes = new mpFXYVector();
@@ -964,16 +943,14 @@ slamdemoFrame::slamdemoFrame(wxWindow* parent, wxWindowID id)
 	plotStatTime->AddLayer(m_lyStatTimes);
 
 	plotStatTime->LockAspect(false);
-	plotStatTime->EnableDoubleBuffer(true);
 
 // DA Stats plots ------------
-#define INIT_DA_PLOT(CODE)                             \
-	m_lyDa##CODE = new mpFXYVector();                  \
-	m_lyDa##CODE->SetPen(wxPen(wxColour(0, 0, 0), 5)); \
-	m_lyDa##CODE->SetContinuity(false);                \
-	plotDa##CODE->AddLayer(m_lyDa##CODE);              \
-	plotDa##CODE->LockAspect(false);                   \
-	plotDa##CODE->EnableDoubleBuffer(true);
+#define INIT_DA_PLOT(CODE)                                                     \
+	m_lyDa##CODE = new mpFXYVector();                                          \
+	m_lyDa##CODE->SetPen(wxPen(wxColour(0, 0, 0), 5));                         \
+	m_lyDa##CODE->SetContinuity(false);                                        \
+	plotDa##CODE->AddLayer(m_lyDa##CODE);                                      \
+	plotDa##CODE->LockAspect(false);
 
 	INIT_DA_PLOT(FP);
 	INIT_DA_PLOT(FN);
@@ -1098,12 +1075,13 @@ void slamdemoFrame::OnbtnRunBatchClicked(wxCommandEvent& event)
 	static CTicTac tictac;
 
 	wxBusyCursor info;
-	wxTheApp->Yield();  // Let the app. process messages
+	wxTheApp->Yield();	// Let the app. process messages
 
 	tictac.Tic();
 	const size_t N =
 		(options.path_square_len / options.robot_step_length) * 4 + 50;
-	for (size_t i = 0; i < N; i++) executeOneStep();
+	for (size_t i = 0; i < N; i++)
+		executeOneStep();
 
 	const double T = tictac.Tac();
 
@@ -1260,11 +1238,9 @@ void slamdemoFrame::updateAllGraphs(bool alsoGTMap)
 	for (size_t i = 0; i < AREA_SEGS; i++)
 	{
 		double a = options.sensor_fov * (-0.5 + double(i) / (AREA_SEGS - 1));
-		xs_area[i] =
-			options.sensorOnTheRobot.x() +
+		xs_area[i] = options.sensorOnTheRobot.x() +
 			options.sensor_max_range * cos(a + options.sensorOnTheRobot.phi());
-		ys_area[i] =
-			options.sensorOnTheRobot.y() +
+		ys_area[i] = options.sensorOnTheRobot.y() +
 			options.sensor_max_range * sin(a + options.sensorOnTheRobot.phi());
 	}
 	xs_area[AREA_SEGS] = options.sensorOnTheRobot.x();
@@ -1307,7 +1283,8 @@ void slamdemoFrame::updateAllGraphs(bool alsoGTMap)
 						(unsigned)m_lastObservation.sensedData.size())
 						.c_str());
 
-	for (auto& m_lyObsLM : m_lyObsLMs) plotObs->DelLayer(m_lyObsLM, true);
+	for (auto& m_lyObsLM : m_lyObsLMs)
+		plotObs->DelLayer(m_lyObsLM, true);
 	m_lyObsLMs.clear();
 
 	CMatrixDouble22 NOISE;
@@ -1359,7 +1336,7 @@ void slamdemoFrame::updateAllGraphs(bool alsoGTMap)
 		vector<TPoint2D> LMs;
 		map<unsigned int, CLandmark::TLandmarkID> landmarkIDs;
 
-		CVectorDouble Xkk;  // Full mean & cov
+		CVectorDouble Xkk;	// Full mean & cov
 		CMatrixDouble Pkk;
 
 		m_SLAM.getCurrentState(estRobotPose, LMs, landmarkIDs, Xkk, Pkk);
@@ -1498,10 +1475,7 @@ void slamdemoFrame::updateAllGraphs(bool alsoGTMap)
 		plotErrorPhi->Refresh();
 
 		// Execution times: --------------
-		if (m_lyStatTimes->GetDataLength() >= N)
-		{
-			m_lyStatTimes->Clear();
-		}
+		if (m_lyStatTimes->GetDataLength() >= N) { m_lyStatTimes->Clear(); }
 		for (size_t i = m_lyStatTimes->GetDataLength(); i < N; i++)
 		{
 			THistoric& h = m_historicData[i];
@@ -1689,9 +1663,9 @@ void slamdemoFrame::updateAllGraphs(bool alsoGTMap)
 
 				const double v = da.results.indiv_distances(p, o);
 				if (v > 500)
-					gridDA->SetCellValue(p, o, wxT("\u221E"));  // Infinity
+					gridDA->SetCellValue(p, o, wxT("\u221E"));	// Infinity
 				else if (v < -950)
-					gridDA->SetCellValue(p, o, wxT("-\u221E"));  // -Infinity
+					gridDA->SetCellValue(p, o, wxT("-\u221E"));	 // -Infinity
 				else
 					gridDA->SetCellValue(
 						p, o, wxString::Format(wxT("%.02f"), v));
@@ -1720,7 +1694,8 @@ void slamdemoFrame::updateAllGraphs(bool alsoGTMap)
 			m_lyDaTP->AppendDataPoint(i, m_historicData[i].da_true_pos);
 
 		unsigned int totalTP = 0;
-		for (size_t i = 0; i < N; i++) totalTP += m_historicData[i].da_true_pos;
+		for (size_t i = 0; i < N; i++)
+			totalTP += m_historicData[i].da_true_pos;
 		lbDaTP->SetLabel(wxString::Format(wxT("True positives: %u"), totalTP));
 
 		// DA True negatives --------------
@@ -1729,7 +1704,8 @@ void slamdemoFrame::updateAllGraphs(bool alsoGTMap)
 			m_lyDaTN->AppendDataPoint(i, m_historicData[i].da_true_neg);
 
 		unsigned int totalTN = 0;
-		for (size_t i = 0; i < N; i++) totalTN += m_historicData[i].da_true_neg;
+		for (size_t i = 0; i < N; i++)
+			totalTN += m_historicData[i].da_true_neg;
 		lbDaTN->SetLabel(wxString::Format(wxT("True negatives: %u"), totalTN));
 
 		// DA false positives --------------
@@ -1907,7 +1883,7 @@ void slamdemoFrame::executeOneStep()
 				m_SLAM.options.std_sensor_range /
 					options.uncert_overestim_sensor,
 				m_SLAM.options.std_sensor_yaw / options.uncert_overestim_sensor,
-				0,  // sigma_pitch: we are in 2D
+				0,	// sigma_pitch: we are in 2D
 				&m_lastObservation_GT_indices, options.spurious_count_mean,
 				options.spurious_count_std);
 		}
@@ -1926,10 +1902,10 @@ void slamdemoFrame::executeOneStep()
 			odo_opts.modelSelection = CActionRobotMovement2D::mmGaussian;
 
 			// Model as a constant noise in X,Y,PHI:
-			odo_opts.gaussianModel.a1 = 0;  // 0.01f;
-			odo_opts.gaussianModel.a2 = 0;  // RAD2DEG( 0.0001f );
-			odo_opts.gaussianModel.a3 = 0;  // DEG2RAD( 0.1f );
-			odo_opts.gaussianModel.a4 = 0;  // 0.01; //0.05f;
+			odo_opts.gaussianModel.a1 = 0;	// 0.01f;
+			odo_opts.gaussianModel.a2 = 0;	// RAD2DEG( 0.0001f );
+			odo_opts.gaussianModel.a3 = 0;	// DEG2RAD( 0.1f );
+			odo_opts.gaussianModel.a4 = 0;	// 0.01; //0.05f;
 			odo_opts.gaussianModel.minStdXY = options.odometry_noise_std_xy;
 			odo_opts.gaussianModel.minStdPHI = options.odometry_noise_std_phi;
 
@@ -1942,8 +1918,9 @@ void slamdemoFrame::executeOneStep()
 				0,
 				options.odometry_noise_std_xy / options.uncert_overestim_odom));
 			noisyPoseIncr.phi_incr(getRandomGenerator().drawGaussian1D(
-				0, options.odometry_noise_std_phi /
-					   options.uncert_overestim_odom));
+				0,
+				options.odometry_noise_std_phi /
+					options.uncert_overestim_odom));
 
 			actmov.computeFromOdometry(noisyPoseIncr, odo_opts);
 			actmov.timestamp = mrpt::system::now();
@@ -1963,9 +1940,7 @@ void slamdemoFrame::executeOneStep()
 
 			// Save dataset to file?
 			if (m_rawlog_out_file.fileOpenCorrectly())
-			{
-				archiveFrom(m_rawlog_out_file) << act << sf;
-			}
+			{ archiveFrom(m_rawlog_out_file) << act << sf; }
 		}
 
 		// For the case of doing D.A., save the correspondences REAL_MAP <->
@@ -2011,11 +1986,10 @@ void slamdemoFrame::executeOneStep()
 				const size_t o_realmap_idx =
 					m_lastObservation_GT_indices[o];  // Note: This can be "-1"
 				// for spurious readings!
-				const bool o_was_mapped =
-					(o_realmap_idx == std::string::npos)
-						? false
-						: old_realIDX_already_mapped.find(o_realmap_idx) !=
-							  old_realIDX_already_mapped.end();
+				const bool o_was_mapped = (o_realmap_idx == std::string::npos)
+					? false
+					: old_realIDX_already_mapped.find(o_realmap_idx) !=
+						old_realIDX_already_mapped.end();
 				const bool o_has_been_just_inserted =
 					da.newly_inserted_landmarks.find(o) !=
 					da.newly_inserted_landmarks.end();
@@ -2103,7 +2077,7 @@ void slamdemoFrame::OntimSimulTrigger(wxTimerEvent& event)
 		_("Step %u done in %.03fms"), (unsigned)m_historicData.size(),
 		1e3 * T));
 
-	wxTheApp->Yield(true);  // Let the app. process messages
+	wxTheApp->Yield(true);	// Let the app. process messages
 
 	// Prepare next step:
 	timSimul.Start(20, true);
@@ -2206,8 +2180,7 @@ void slamdemoFrame::OnConfigClicked(wxCommandEvent& event)
 		//		m_SLAM.KF_options.fusion_strategy =
 		// TKFFusionMethod(dlg.rbFusion->GetSelection());
 
-		if (dlg.rbMapCorridor->GetValue())
-			options.map_generator = "1";
+		if (dlg.rbMapCorridor->GetValue()) options.map_generator = "1";
 		else if (dlg.rbMapRandom->GetValue())
 			options.map_generator = "2";
 		else
@@ -2267,7 +2240,7 @@ void slamdemoFrame::OnMenuSaveFilterState(wxCommandEvent& event)
 	vector<TPoint2D> LMs;
 	map<unsigned int, CLandmark::TLandmarkID> landmarkIDs;
 
-	CVectorDouble Xkk;  // Full mean & cov
+	CVectorDouble Xkk;	// Full mean & cov
 	CMatrixDouble Pkk;
 
 	m_SLAM.getCurrentState(estRobotPose, LMs, landmarkIDs, Xkk, Pkk);
@@ -2411,12 +2384,12 @@ void slamdemoFrame::OnmnuItemSaveRawlogSelected(wxCommandEvent& event)
 		obs.text = std::string(
 					   "Rawlog generated by 2d-slam-demo\n"
 					   " MRPT version: ") +
-				   mrpt::system::MRPT_getVersion() +
-				   std::string(
+			mrpt::system::MRPT_getVersion() +
+			std::string(
 					   "\n"
 					   " Creation date: ") +
-				   mrpt::system::dateTimeLocalToString(mrpt::system::now()) +
-				   std::string("\n");
+			mrpt::system::dateTimeLocalToString(mrpt::system::now()) +
+			std::string("\n");
 
 		mrpt::serialization::archiveFrom(m_rawlog_out_file) << obs;
 	}

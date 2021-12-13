@@ -2,21 +2,25 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "nav-precomp.h"  // Precomp header
-
+//
 #include <mrpt/nav/tpspace/CParameterizedTrajectoryGenerator.h>
 #include <mrpt/opengl/CSetOfLines.h>
 #include <mrpt/serialization/CArchive.h>
 #include <mrpt/system/filesystem.h>
 #include <mrpt/system/os.h>
+
 #include <fstream>
 
 using namespace mrpt::nav;
+
+IMPLEMENTS_VIRTUAL_SERIALIZABLE(
+	CParameterizedTrajectoryGenerator, CSerializable, mrpt::nav)
 
 static std::string OUTPUT_DEBUG_PATH_PREFIX = "./reactivenav.logs";
 static PTG_collision_behavior_t COLLISION_BEHAVIOR =
@@ -31,15 +35,6 @@ PTG_collision_behavior_t&
 	CParameterizedTrajectoryGenerator::COLLISION_BEHAVIOR()
 {
 	return ::COLLISION_BEHAVIOR;
-}
-
-IMPLEMENTS_VIRTUAL_SERIALIZABLE(
-	CParameterizedTrajectoryGenerator, CSerializable, mrpt::nav)
-
-CParameterizedTrajectoryGenerator::CParameterizedTrajectoryGenerator()
-	: m_nav_dyn_state(), m_nav_dyn_state_target_k(INVALID_PTG_PATH_INDEX)
-
-{
 }
 
 void CParameterizedTrajectoryGenerator::loadDefaultParams()
@@ -171,19 +166,15 @@ void CParameterizedTrajectoryGenerator::internal_readFromStream(
 			if (version == 2)
 			{
 				bool old_use_approx_clearance;
-				in >> old_use_approx_clearance;  // ignored in v>=3
+				in >> old_use_approx_clearance;	 // ignored in v>=3
 			}
-			if (version >= 4)
-			{
-				in >> m_clearance_decimated_paths;
-			}
+			if (version >= 4) { in >> m_clearance_decimated_paths; }
 			else
 			{
 				m_clearance_decimated_paths = m_alphaValuesCount;
 			}
 			break;
-		default:
-			MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
 	};
 }
 
@@ -237,7 +228,7 @@ void CParameterizedTrajectoryGenerator::renderPathAsSimpleLine(
 	for (size_t n = 0; n < nPointsInPath; n++)
 	{
 		const double d = this->getPathDist(
-			k, n);  // distance thru path "k" until timestep "n"
+			k, n);	// distance thru path "k" until timestep "n"
 
 		// Draw the TP only until we reach the target of the "motion" segment:
 		if (max_path_distance >= 0.0 && d >= max_path_distance) break;
@@ -247,8 +238,7 @@ void CParameterizedTrajectoryGenerator::renderPathAsSimpleLine(
 
 		last_added_dist = d;
 
-		mrpt::math::TPose2D p;
-		this->getPathPose(k, n, p);
+		const mrpt::math::TPose2D p = this->getPathPose(k, n);
 
 		if (first)
 		{
@@ -268,12 +258,10 @@ void CParameterizedTrajectoryGenerator::initTPObstacles(
 		initTPObstacleSingle(k, TP_Obstacles[k]);
 }
 void CParameterizedTrajectoryGenerator::initTPObstacleSingle(
-	uint16_t k, double& TP_Obstacle_k) const
+	[[maybe_unused]] uint16_t k, double& TP_Obstacle_k) const
 {
-	TP_Obstacle_k = std::min(
-		refDistance, m_nav_dyn_state_target_k != INVALID_PTG_PATH_INDEX
-						 ? refDistance
-						 : this->getPathDist(k, this->getPathStepCount(k) - 1));
+	// Always initialize to the maximum possible free space:
+	TP_Obstacle_k = refDistance;
 }
 
 bool CParameterizedTrajectoryGenerator::debugDumpInFiles(
@@ -325,7 +313,8 @@ bool CParameterizedTrajectoryGenerator::debugDumpInFiles(
 	   << endl;
 
 	vector<size_t> path_length(nPaths);
-	for (size_t k = 0; k < nPaths; k++) path_length[k] = getPathStepCount(k);
+	for (size_t k = 0; k < nPaths; k++)
+		path_length[k] = getPathStepCount(k);
 
 	size_t maxPoints = 0;
 	for (size_t k = 0; k < nPaths; k++)
@@ -336,8 +325,7 @@ bool CParameterizedTrajectoryGenerator::debugDumpInFiles(
 		for (size_t n = 0; n < maxPoints; n++)
 		{
 			const size_t nn = std::min(n, path_length[k] - 1);
-			mrpt::math::TPose2D p;
-			this->getPathPose(k, nn, p);
+			const mrpt::math::TPose2D p = this->getPathPose(k, nn);
 			fx << p.x << " ";
 			fy << p.y << " ";
 			fp << p.phi << " ";
@@ -402,12 +390,10 @@ void CParameterizedTrajectoryGenerator::initialize(
 {
 	if (m_is_initialized) return;
 
-	const std::string sCache =
-		!cacheFilename.empty()
-			? cacheFilename
-			: std::string("cache_") +
-				  mrpt::system::fileNameStripInvalidChars(getDescription()) +
-				  std::string(".bin.gz");
+	const std::string sCache = !cacheFilename.empty() ? cacheFilename
+													  : std::string("cache_") +
+			mrpt::system::fileNameStripInvalidChars(getDescription()) +
+			std::string(".bin.gz");
 
 	this->internal_initialize(sCache, verbose);
 	m_is_initialized = true;
@@ -434,9 +420,7 @@ void CParameterizedTrajectoryGenerator::internal_TPObsDistancePostprocess(
 	// of the PTG path:
 	switch (COLLISION_BEHAVIOR())
 	{
-		case COLL_BEH_STOP:
-			inout_tp_obs = .0;
-			break;
+		case COLL_BEH_STOP: inout_tp_obs = .0; break;
 
 		case COLL_BEH_BACK_AWAY:
 		{
@@ -480,7 +464,7 @@ void mrpt::nav::CParameterizedTrajectoryGenerator::initClearanceDiagram(
 		{
 			const size_t step = mrpt::round(step_pointer_dbl);
 			const double dist_over_path = this->getPathDist(real_k, step);
-			cl_path[dist_over_path] = 1.0;  // create entry in map<>
+			cl_path[dist_over_path] = 1.0;	// create entry in map<>
 		}
 	}
 }
@@ -533,7 +517,7 @@ void CParameterizedTrajectoryGenerator::evalClearanceSingleObstacle(
 		(numPathSteps - 1.0) / (inout_realdist2clearance.size());
 
 	double step_pointer_dbl = 0.0;
-	const mrpt::math::TPoint2D og(ox, oy);  // obstacle in "global" frame
+	const mrpt::math::TPoint2D og(ox, oy);	// obstacle in "global" frame
 	mrpt::math::TPoint2D ol;  // obstacle in robot frame
 
 	for (auto& e : inout_realdist2clearance)
@@ -552,14 +536,13 @@ void CParameterizedTrajectoryGenerator::evalClearanceSingleObstacle(
 			continue;
 		}
 
-		mrpt::math::TPose2D pose;
-		this->getPathPose(k, step, pose);
+		const mrpt::math::TPose2D pose = getPathPose(k, step);
 
 		// obstacle to robot clearance:
 		ol = pose.inverseComposePoint(og);
-		const double this_clearance =
-			treat_as_obstacle ? this->evalClearanceToRobotShape(ol.x, ol.y)
-							  : ol.norm();
+		const double this_clearance = treat_as_obstacle
+			? this->evalClearanceToRobotShape(ol.x, ol.y)
+			: ol.norm();
 		if (this_clearance <= .0 && treat_as_obstacle &&
 			(dist_over_path > 0.5 ||
 			 std::abs(mrpt::math::angDistance(
@@ -610,7 +593,7 @@ bool CParameterizedTrajectoryGenerator::TNavDynamicState::operator==(
 	const TNavDynamicState& o) const
 {
 	return (curVelLocal == o.curVelLocal) && (relTarget == o.relTarget) &&
-		   (targetRelSpeed == o.targetRelSpeed);
+		(targetRelSpeed == o.targetRelSpeed);
 }
 
 void mrpt::nav::CParameterizedTrajectoryGenerator::TNavDynamicState::
@@ -629,10 +612,7 @@ void mrpt::nav::CParameterizedTrajectoryGenerator::TNavDynamicState::
 	in >> version;
 	switch (version)
 	{
-		case 0:
-			in >> curVelLocal >> relTarget >> targetRelSpeed;
-			break;
-		default:
-			MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
+		case 0: in >> curVelLocal >> relTarget >> targetRelSpeed; break;
+		default: MRPT_THROW_UNKNOWN_SERIALIZATION_VERSION(version);
 	};
 }

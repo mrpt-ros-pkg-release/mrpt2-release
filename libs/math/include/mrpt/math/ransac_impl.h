@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -10,6 +10,7 @@
 
 #include <mrpt/core/exceptions.h>
 #include <mrpt/random/RandomGenerators.h>
+
 #include <cstddef>
 #include <vector>
 
@@ -128,8 +129,7 @@ bool RANSAC_Template<NUMTYPE, DATASET, MODEL>::execute(
 			// Update estimate of N, the number of trials to ensure we pick,
 			// with probability p, a data set with no outliers.
 			double fracinliers = ninliers / static_cast<double>(Npts);
-			double pNoOutliers =
-				1 -
+			double pNoOutliers = 1 -
 				pow(fracinliers, static_cast<double>(minimumSizeSamplesToFit));
 
 			pNoOutliers = std::max(

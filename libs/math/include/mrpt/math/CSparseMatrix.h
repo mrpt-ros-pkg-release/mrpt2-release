@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -14,7 +14,8 @@
 #include <mrpt/math/CSparseMatrixTemplate.h>
 #include <mrpt/math/CVectorDynamic.h>
 #include <mrpt/math/math_frwds.h>
-#include <cstring>  // memcpy
+
+#include <cstring>	// memcpy
 #include <stdexcept>
 
 // Include CSparse lib headers, either from the system or embedded:
@@ -139,7 +140,7 @@ class CSparseMatrix
 			sizeof(content_list[0]) * content_list.size());
 
 		sparse_matrix.nz =
-			-1;  // <0 means "column compressed", ">=0" means triplet.
+			-1;	 // <0 means "column compressed", ">=0" means triplet.
 	}
 
 	/** Initialization from a triplet "cs", which is first compressed */
@@ -505,5 +506,5 @@ class CSparseMatrix
 
 	/** @} */
 
-};  // end class CSparseMatrix
+};	// end class CSparseMatrix
 }  // namespace mrpt::math

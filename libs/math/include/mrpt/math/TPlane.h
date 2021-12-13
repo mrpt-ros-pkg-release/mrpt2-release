@@ -2,20 +2,25 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 #pragma once
 
 #include <mrpt/math/TPoint3D.h>
+#include <mrpt/math/TPose3D.h>
 #include <mrpt/math/TPoseOrPoint.h>
 #include <mrpt/math/TSegment3D.h>
+
 #include <array>
 #include <iosfwd>
 
 namespace mrpt::math
 {
+/** \addtogroup  geometry_grp
+ * @{ */
+
 /**
  * 3D Plane, represented by its equation \f$Ax+By+Cz+D=0\f$
  * \sa TSegment3D,TLine3D,TPolygon3D,TPoint3D
@@ -59,6 +64,7 @@ struct TPlane
 	void unitarize();
 	void getAsPose3D(mrpt::math::TPose3D& outPose) const;
 	void getAsPose3DForcingOrigin(const TPoint3D& center, TPose3D& pose) const;
+	TPose3D getAsPose3DForcingOrigin(const TPoint3D& center) const;
 	/** Get normal vector */
 	TVector3D getUnitaryNormalVector() const;
 	/** Defines a plane which contains these three points.
@@ -123,7 +129,8 @@ struct TPlane
 	 */
 	TPlane(const double (&vec)[4])
 	{
-		for (size_t i = 0; i < 4; i++) coefs[i] = vec[i];
+		for (size_t i = 0; i < 4; i++)
+			coefs[i] = vec[i];
 	}
 
 	/** Returns "[A, B, C, D]"
@@ -141,6 +148,8 @@ mrpt::serialization::CArchive& operator<<(
 
 /** Text streaming function */
 std::ostream& operator<<(std::ostream& o, const TPlane& p);
+
+/** @} */
 
 }  // namespace mrpt::math
 

@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -19,21 +19,21 @@ using namespace mrpt::opengl;
 
 // CDisplayWindow3D
 tuple CDisplayWindow3D_waitForKey(
-	CDisplayWindow3D& self, bool ignoreControlKeys = true)
+	CDisplayWindow3D& me, bool ignoreControlKeys = true)
 {
 	list ret_val;
 	mrptKeyModifier out_pushModifier = mrptKeyModifier::MRPTKMOD_NONE;
-	int key = self.waitForKey(ignoreControlKeys, &out_pushModifier);
+	int key = me.waitForKey(ignoreControlKeys, &out_pushModifier);
 	ret_val.append(key);
 	ret_val.append(out_pushModifier);
 	return tuple(ret_val);
 }
 
-tuple CDisplayWindow3D_getPushedKey(CDisplayWindow3D& self)
+tuple CDisplayWindow3D_getPushedKey(CDisplayWindow3D& me)
 {
 	list ret_val;
 	mrptKeyModifier out_pushModifier = mrptKeyModifier::MRPTKMOD_NONE;
-	int key = self.getPushedKey(&out_pushModifier);
+	int key = me.getPushedKey(&out_pushModifier);
 	ret_val.append(key);
 	ret_val.append(out_pushModifier);
 	return tuple(ret_val);
@@ -43,7 +43,7 @@ BOOST_PYTHON_FUNCTION_OVERLOADS(
 	CDisplayWindow3D_waitForKey_overloads, CDisplayWindow3D_waitForKey, 1, 2)
 // end of CDisplayWindow3D
 
-#define MAKE_ENUM_VALUE(enum_type, enum_name) \
+#define MAKE_ENUM_VALUE(enum_type, enum_name)                                  \
 	.value(#enum_name, enum_type::enum_name)
 
 void export_gui()
@@ -173,7 +173,7 @@ void export_gui()
 					"Gets a reference to the smart shared pointer that holds "
 					"the internal scene (carefuly read introduction in "
 					"gui::CDisplayWindow3D before use!) This also locks the "
-					"critical section for accesing the scene, thus the window "
+					"critical section for accessing the scene, thus the window "
 					"will not be repainted until it is unlocked.")
 				.def(
 					"unlockAccess3DScene",

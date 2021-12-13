@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "nav-precomp.h"  // Precomp header
-
+//
 #include <mrpt/nav/reactive/CMultiObjMotionOpt_Scalarization.h>
 
 using namespace mrpt::nav;
@@ -56,7 +56,7 @@ int CMultiObjMotionOpt_Scalarization::impl_decide(
 	std::vector<double>& final_evaluation = extra_info.final_evaluation;
 	final_evaluation.clear();
 
-	if (extra_info.score_values.empty()) return -1;  // No valid candidate
+	if (extra_info.score_values.empty()) return -1;	 // No valid candidate
 
 	// compile expression upon first use:
 	if (m_expr_scalar_vars.empty())
@@ -82,7 +82,7 @@ int CMultiObjMotionOpt_Scalarization::impl_decide(
 		catch (std::exception&)
 		{
 			m_expr_scalar_vars.clear();
-			throw;  // rethrow
+			throw;	// rethrow
 		}
 	}
 

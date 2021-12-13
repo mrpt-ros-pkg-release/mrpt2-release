@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -105,6 +105,10 @@ class CRenderizableShaderPoints : public virtual CRenderizable
    protected:
 	mutable std::vector<mrpt::math::TPoint3Df> m_vertex_buffer_data;
 	mutable std::vector<mrpt::img::TColor> m_color_buffer_data;
+
+	/** Returns the bounding box of m_vertex_buffer_data, or (0,0,0)-(0,0,0) if
+	 * empty. */
+	const mrpt::math::TBoundingBox verticesBoundingBox() const;
 
 	float m_pointSize = 1.0f;
 	bool m_variablePointSize = true;

@@ -2,16 +2,18 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "math-precomp.h"  // Precompiled headers
-
+//
 #include <mrpt/math/TSegment2D.h>
-#include <mrpt/math/geometry.h>  // distance()
+#include <mrpt/math/geometry.h>	 // distance()
 #include <mrpt/serialization/CArchive.h>  // impl of << operator
+
+#include <iostream>
 
 using namespace mrpt::math;
 
@@ -38,7 +40,7 @@ double TSegment2D::signedDistance(const TPoint2D& point) const
 	if (ds1 > (ds2 + ds3) || ds2 > (ds1 + ds3))
 		// Fix sign:
 		return std::min(d1, d2) *
-			   (TLine2D(*this).signedDistance(point) < 0 ? -1 : 1);
+			(TLine2D(*this).signedDistance(point) < 0 ? -1 : 1);
 	else
 		return TLine2D(*this).signedDistance(point);
 }
@@ -62,8 +64,7 @@ TSegment2D::TSegment2D(const TSegment3D& s)
 
 bool TSegment2D::operator<(const TSegment2D& s) const
 {
-	if (point1 < s.point1)
-		return true;
+	if (point1 < s.point1) return true;
 	else if (s.point1 < point1)
 		return false;
 	else
@@ -79,4 +80,10 @@ mrpt::serialization::CArchive& mrpt::math::operator<<(
 	mrpt::serialization::CArchive& out, const mrpt::math::TSegment2D& s)
 {
 	return out << s.point1 << s.point2;
+}
+
+std::ostream& mrpt::math::operator<<(std::ostream& o, const TSegment2D& p)
+{
+	o << p.point1 << "-" << p.point2;
+	return o;
 }

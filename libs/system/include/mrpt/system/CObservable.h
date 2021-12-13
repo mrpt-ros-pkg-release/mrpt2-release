@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2020, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -51,6 +51,6 @@ class CObservable
 	 *  subscribed, so it can save the wasted time preparing an event that will
 	 * be not read. */
 	inline bool hasSubscribers() const { return !m_subscribers.empty(); }
-};  // End of class def.
+};	// End of class def.
 
 }  // namespace mrpt::system
