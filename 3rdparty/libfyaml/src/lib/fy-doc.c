@@ -1265,9 +1265,11 @@ bool fy_node_compare_user(struct fy_node *fyn1, struct fy_node *fyn2,
 		}
 
 		fynpp1 = alloca(sizeof(*fynpp1) * (count1 + 1));
-		fynpp2 = alloca(sizeof(*fynpp2) * (count2 + 1));
-
+		fy_node_mapping_fill_array(fyn1, fynpp1, count1);
 		fy_node_mapping_perform_sort(fyn1, sort_fn, sort_fn_arg, fynpp1, count1);
+
+		fynpp2 = alloca(sizeof(*fynpp2) * (count2 + 1));
+		fy_node_mapping_fill_array(fyn2, fynpp2, count2);
 		fy_node_mapping_perform_sort(fyn2, sort_fn, sort_fn_arg, fynpp2, count2);
 
 		for (i = 0; i < count1; i++) {
@@ -1663,12 +1665,16 @@ fy_parse_document_load_mapping(struct fy_parser *fyp, struct fy_document *fyd,
 		fyp_error_check(fyp, !rc, err_out_rc,
 				"fy_parse_document_load_node() failed");
 
-		/* make sure we don't add an already existing key */
-		duplicate = fy_node_mapping_key_is_duplicate(fyn, fyn_key);
+		/* if we don't allow duplicate keys */
+		if (!(fyd->parse_cfg.flags & FYPCF_ALLOW_DUPLICATE_KEYS)) {
 
-		FYP_NODE_ERROR_CHECK(fyp, fyn_key, FYEM_DOC,
-				!duplicate, err_out,
-				"duplicate key");
+			/* make sure we don't add an already existing key */
+			duplicate = fy_node_mapping_key_is_duplicate(fyn, fyn_key);
+
+			FYP_NODE_ERROR_CHECK(fyp, fyn_key, FYEM_DOC,
+					!duplicate, err_out,
+					"duplicate key");
+		}
 
 		fyep = fy_parse_private(fyp);
 
@@ -1733,12 +1739,6 @@ err_out_rc:
 	fy_node_detach_and_free(fyn_value);
 	fy_node_detach_and_free(fyn);
 	return rc;
-}
-
-/* TODO vary according to platfom */
-static inline int fy_depth_limit(void)
-{
-	return FYPCF_GUARANTEED_MINIMUM_DEPTH_LIMIT;
 }
 
 static int
@@ -1919,6 +1919,7 @@ err_out:
 
 struct fy_document *fy_parse_load_document_with_builder(struct fy_parser *fyp)
 {
+	struct fy_document_builder_cfg cfg;
 	struct fy_document *fyd;
 	int rc;
 
@@ -1926,7 +1927,12 @@ struct fy_document *fy_parse_load_document_with_builder(struct fy_parser *fyp)
 		return NULL;
 
 	if (!fyp->fydb) {
-		fyp->fydb = fy_document_builder_create(&fyp->cfg);
+		memset(&cfg, 0, sizeof(cfg));
+		cfg.parse_cfg = fyp->cfg;
+		cfg.userdata = fyp;
+		cfg.diag = fy_diag_ref(fyp->diag);
+
+		fyp->fydb = fy_document_builder_create(&cfg);
 		if (!fyp->fydb)
 			return NULL;
 	}
@@ -2722,9 +2728,13 @@ static int fy_resolve_merge_key_populate(struct fy_document *fyd, struct fy_node
 	for (fynpi = fy_node_pair_list_head(&fynm->mapping); fynpi;
 		fynpi = fy_node_pair_next(&fynm->mapping, fynpi)) {
 
-		/* make sure we don't override an already existing key */
-		if (fy_node_mapping_key_is_duplicate(fyn, fynpi->key))
-			continue;
+		/* if we don't allow duplicate keys */
+		if (!(fyd->parse_cfg.flags & FYPCF_ALLOW_DUPLICATE_KEYS)) {
+
+			/* make sure we don't override an already existing key */
+			if (fy_node_mapping_key_is_duplicate(fyn, fynpi->key))
+				continue;
+		}
 
 		fynpn = fy_node_pair_alloc(fyd);
 		fyd_error_check(fyd, fynpn, err_out,
@@ -3106,6 +3116,10 @@ struct fy_document *fy_document_create(const struct fy_parse_cfg *cfg)
 	fyd->fyds = fy_document_state_default(NULL, NULL);
 	fyd_error_check(fyd, fyd->fyds, err_out,
 			"fy_document_state_default() failed");
+
+	/* turn on JSON mode if it's forced */
+	fyd->fyds->json_mode = (cfg->flags &
+			(FYPCF_JSON_MASK << FYPCF_JSON_SHIFT)) == FYPCF_JSON_FORCE;
 
 	fy_document_list_init(&fyd->children);
 
@@ -3812,6 +3826,40 @@ fy_node_mapping_lookup_key_by_string(struct fy_node *fyn,
 
 	fynp = fy_node_mapping_lookup_pair_by_string(fyn, key, len);
 	return fynp ? fynp->key : NULL;
+}
+
+bool fy_node_is_empty(struct fy_node *fyn)
+{
+	struct fy_node *fyni;
+	struct fy_node_pair *fynp;
+	struct fy_atom *atom;
+
+	/* skip if no value node or token */
+	if (!fyn)
+		return true;
+
+	switch (fyn->type) {
+	case FYNT_SCALAR:
+		atom = fy_token_atom(fyn->scalar);
+		if (atom && !atom->size0 && !atom->empty)
+			return false;
+		break;
+	case FYNT_SEQUENCE:
+		for (fyni = fy_node_list_head(&fyn->sequence); fyni;
+				fyni = fy_node_next(&fyn->sequence, fyni)) {
+			if (!fy_node_is_empty(fyni))
+				return false;
+		}
+		break;
+	case FYNT_MAPPING:
+		for (fynp = fy_node_pair_list_head(&fyn->mapping); fynp;
+				fynp = fy_node_pair_next(&fyn->mapping, fynp)) {
+			if (!fy_node_is_empty(fynp->value))
+				return false;
+		}
+		break;
+	}
+	return true;
 }
 
 #define fy_node_walk_ctx_create_a(_max_depth, _mark) \
@@ -5424,8 +5472,12 @@ fy_node_mapping_pair_insert_prepare(struct fy_node *fyn_map,
 	    (fyn_value && fyn_value->attached))
 		return NULL;
 
-	 if (fy_node_mapping_key_is_duplicate(fyn_map, fyn_key))
-		return NULL;
+	/* if we don't allow duplicate keys */
+	if (!(fyd->parse_cfg.flags & FYPCF_ALLOW_DUPLICATE_KEYS)) {
+
+		 if (fy_node_mapping_key_is_duplicate(fyn_map, fyn_key))
+			return NULL;
+	}
 
 	fynp = fy_node_pair_alloc(fyd);
 	if (!fynp)
@@ -5589,7 +5641,7 @@ const void *a, const void *b, void *arg
 }
 
 /* not! thread safe! */
-#if !defined(HAVE_QSORT_R) || !HAVE_QSORT_R
+#if !defined(HAVE_QSORT_R) || !HAVE_QSORT_R || defined(__EMSCRIPTEN__)
 static struct fy_node_mapping_sort_ctx *fy_node_mapping_sort_ctx_no_qsort_r;
 
 static int fy_node_mapping_sort_cmp_no_qsort_r(const void *a, const void *b)
@@ -5675,14 +5727,11 @@ static int fy_node_mapping_sort_cmp_default(const struct fy_node_pair *fynp_a,
 	return idx_a > idx_b ? 1 : (idx_a < idx_b ? -1 : 0);
 }
 
-void fy_node_mapping_perform_sort(struct fy_node *fyn_map,
-		fy_node_mapping_sort_fn key_cmp, void *arg,
+void fy_node_mapping_fill_array(struct fy_node *fyn_map,
 		struct fy_node_pair **fynpp, int count)
 {
-	int i;
 	struct fy_node_pair *fynpi;
-	struct fy_node_mapping_sort_ctx ctx;
-	struct fy_node_cmp_arg def_arg;
+	int i;
 
 	for (i = 0, fynpi = fy_node_pair_list_head(&fyn_map->mapping); i < count && fynpi;
 		fynpi = fy_node_pair_next(&fyn_map->mapping, fynpi), i++)
@@ -5692,6 +5741,15 @@ void fy_node_mapping_perform_sort(struct fy_node *fyn_map,
 	if (i < count)
 		fynpp[i++] = NULL;
 	assert(i == count);
+
+}
+
+void fy_node_mapping_perform_sort(struct fy_node *fyn_map,
+		fy_node_mapping_sort_fn key_cmp, void *arg,
+		struct fy_node_pair **fynpp, int count)
+{
+	struct fy_node_mapping_sort_ctx ctx;
+	struct fy_node_cmp_arg def_arg;
 
 	if (!key_cmp) {
 		def_arg.cmp_fn = fy_node_scalar_cmp_default;
@@ -5704,7 +5762,7 @@ void fy_node_mapping_perform_sort(struct fy_node *fyn_map,
 	ctx.arg = key_cmp ? arg : &def_arg;
 	ctx.fynpp = fynpp;
 	ctx.count = count;
-#if defined(HAVE_QSORT_R) && HAVE_QSORT_R
+#if defined(HAVE_QSORT_R) && HAVE_QSORT_R && !defined(__EMSCRIPTEN__)
 #ifdef __APPLE__
 	qsort_r(fynpp, count, sizeof(*fynpp), &ctx, fy_node_mapping_sort_cmp);
 #else
@@ -5734,6 +5792,7 @@ struct fy_node_pair **fy_node_mapping_sort_array(struct fy_node *fyn_map,
 
 	memset(fynpp, 0, (count + 1) * sizeof(*fynpp));
 
+	fy_node_mapping_fill_array(fyn_map, fynpp, count);
 	fy_node_mapping_perform_sort(fyn_map, key_cmp, arg, fynpp, count);
 
 	if (countp)
@@ -5742,7 +5801,7 @@ struct fy_node_pair **fy_node_mapping_sort_array(struct fy_node *fyn_map,
 	return fynpp;
 }
 
-void fy_node_mapping_sort_release_array(struct fy_node *fyn_map, struct fy_node_pair **fynpp)
+void fy_node_mapping_release_array(struct fy_node *fyn_map, struct fy_node_pair **fynpp)
 {
 	if (!fyn_map || !fynpp)
 		return;
@@ -5767,7 +5826,7 @@ int fy_node_mapping_sort(struct fy_node *fyn_map,
 		fy_node_pair_list_add_tail(&fyn_map->mapping, fynpi);
 	}
 
-	fy_node_mapping_sort_release_array(fyn_map, fynpp);
+	fy_node_mapping_release_array(fyn_map, fynpp);
 
 	return 0;
 }
@@ -6387,6 +6446,8 @@ fy_node_hash_internal(struct fy_node *fyn, fy_hash_update_fn update_fn, void *st
 		count = fy_node_mapping_item_count(fyn);
 
 		fynpp = alloca(sizeof(*fynpp) * (count + 1));
+
+		fy_node_mapping_fill_array(fyn, fynpp, count);
 		fy_node_mapping_perform_sort(fyn, NULL, NULL, fynpp, count);
 
 		/* MAPPING */
@@ -6472,856 +6533,6 @@ int fy_document_set_document_state(struct fy_document *fyd, struct fy_document_s
 	return 0;
 }
 
-const char *fy_document_builder_state_txt[] = {
-	[FYDBS_NODE]	= "node",
-	[FYDBS_MAP_KEY]	= "map-key",
-	[FYDBS_MAP_VAL]	= "map-val",
-	[FYDBS_SEQ]	= "seq",
-};
-
-void
-fy_document_builder_reset(struct fy_document_builder *fydb)
-{
-	struct fy_document_builder_ctx *c;
-	unsigned int i;
-
-	if (!fydb)
-		return;
-
-	for (i = 0, c = fydb->stack; i < fydb->next; i++, c++) {
-		fy_node_free(c->fyn);
-		c->fyn = NULL;
-		fy_node_pair_free(c->fynp);
-		c->fynp = NULL;
-	}
-	fydb->next = 0;
-
-	if (fydb->fyd) {
-		fy_document_destroy(fydb->fyd);
-		fydb->fyd = NULL;
-	}
-	fydb->in_stream = false;
-	fydb->doc_done = false;
-}
-
-struct fy_document_builder *
-fy_document_builder_create(const struct fy_parse_cfg *cfg)
-{
-	struct fy_document_builder *fydb = NULL;
-
-	if (!cfg)
-		cfg = &doc_parse_default_cfg;
-
-	fydb = malloc(sizeof(*fydb));
-	if (!fydb)
-		goto err_out;
-
-	memset(fydb, 0, sizeof(*fydb));
-	fydb->cfg = *cfg;
-	fydb->next = 0;
-	fydb->in_stream = false;
-	fydb->doc_done = false;
-	fydb->alloc = fy_depth_limit();	/* always start with this */
-	fydb->max_depth = (cfg->flags & FYPCF_DISABLE_DEPTH_LIMIT) ? 0 : fy_depth_limit();
-
-	fydb->stack = malloc(fydb->alloc * sizeof(*fydb->stack));
-	if (!fydb->stack)
-		goto err_out;
-
-	return fydb;
-
-err_out:
-	if (fydb) {
-		if (fydb->stack)
-			free(fydb->stack);
-		free(fydb);
-	}
-
-	return NULL;
-}
-
-void
-fy_document_builder_destroy(struct fy_document_builder *fydb)
-{
-	if (!fydb)
-		return;
-
-	fy_document_builder_reset(fydb);
-
-	if (fydb->stack)
-		free(fydb->stack);
-	free(fydb);
-}
-
-struct fy_document *
-fy_document_builder_get_document(struct fy_document_builder *fydb)
-{
-	return fydb ? fydb->fyd : NULL;
-}
-
-bool
-fy_document_builder_is_in_stream(struct fy_document_builder *fydb)
-{
-	return fydb && fydb->in_stream;
-}
-
-bool
-fy_document_builder_is_in_document(struct fy_document_builder *fydb)
-{
-	return fydb && fydb->fyd != NULL && !fydb->doc_done;
-}
-
-bool
-fy_document_builder_is_document_complete(struct fy_document_builder *fydb)
-{
-	return fydb && fydb->fyd != NULL && fydb->doc_done;
-}
-
-struct fy_document *
-fy_document_builder_take_document(struct fy_document_builder *fydb)
-{
-	struct fy_document *fyd;
-
-	if (!fy_document_builder_is_document_complete(fydb))
-		return NULL;
-	fyd = fydb->fyd;
-	fydb->fyd = NULL;
-	fydb->doc_done = false;
-	return fyd;
-}
-
-struct fy_document *
-fy_document_builder_peek_document(struct fy_document_builder *fydb)
-{
-	struct fy_document *fyd;
-	struct fy_document_builder_ctx *c;
-
-	if (!fydb)
-		return NULL;
-
-	/* just peek; may be incomplete */
-	fyd = fydb->fyd;
-
-	assert(fydb->next > 0);
-	c = &fydb->stack[0];
-
-	/* wire the root */
-	if (!fyd->root)
-		fyd->root = c->fyn;
-
-	return fyd;
-}
-
-
-void
-fy_document_builder_set_in_stream(struct fy_document_builder *fydb)
-{
-	if (!fydb)
-		return;
-	/* reset */
-	fy_document_builder_reset(fydb);
-
-	fydb->in_stream = true;
-}
-
-int
-fy_document_builder_set_in_document(struct fy_document_builder *fydb, struct fy_document_state *fyds, bool single)
-{
-	struct fy_document_builder_ctx *c;
-	int rc;
-
-	if (!fydb)
-		return -1;
-
-	/* reset */
-	fy_document_builder_reset(fydb);
-
-	fydb->in_stream = true;
-
-	fydb->fyd = fy_document_create(&fydb->cfg);
-	if (!fydb->fyd)
-		return -1;
-
-	if (fyds) {
-		rc = fy_document_set_document_state(fydb->fyd, fyds);
-		if (rc)
-			return rc;
-	}
-
-	fydb->doc_done = false;
-	fydb->single_mode = single;
-
-	/* be paranoid */
-	assert(fydb->next < fydb->alloc);
-
-	c = &fydb->stack[++fydb->next - 1];
-	memset(c, 0, sizeof(*c));
-	c->s = FYDBS_NODE;
-
-	return 0;
-}
-
-#undef DBG
-// #define DBG fyp_info
-#define DBG fyp_doc_debug
-
-int
-fy_document_builder_process_event(struct fy_document_builder *fydb,
-		struct fy_parser *fyp, struct fy_eventp *fyep)
-{
-	struct fy_event *fye;
-	enum fy_event_type etype;
-	struct fy_document *fyd;
-	struct fy_document_builder_ctx *c, *cp;
-	struct fy_node *fyn, *fyn_parent;
-	struct fy_node_pair *fynp;
-	struct fy_document_builder_ctx *newc;
-	struct fy_token *fyt;
-	int rc;
-
-	fye = fyep ? &fyep->e : NULL;
-	etype = fye ? fye->type : FYET_NONE;
-	fyt = fye ? fy_event_get_token(fye) : NULL;
-
-	/* not in document */
-	if (!fydb->next) {
-		switch (etype) {
-		case FYET_STREAM_START:
-			FYP_TOKEN_ERROR_CHECK(fyp, fyt, FYEM_DOC,
-					!fydb->in_stream, err_out,
-					"STREAM_START while in stream error");
-			fydb->in_stream = true;
-			break;
-
-		case FYET_STREAM_END:
-			FYP_TOKEN_ERROR_CHECK(fyp, fyt, FYEM_DOC,
-					fydb->in_stream, err_out,
-					"STREAM_END while not in stream error");
-			fydb->in_stream = false;
-			return 1;
-
-		case FYET_DOCUMENT_START:
-			FYP_TOKEN_ERROR_CHECK(fyp, fyt, FYEM_DOC,
-					fydb->in_stream, err_out,
-					"DOCUMENT_START while not in stream error");
-
-			/* no-one cares, destroy the document */
-			if (!fydb->fyd)
-				fy_document_destroy(fydb->fyd);
-
-			fydb->fyd = fy_document_create(&fydb->cfg);
-			fyp_error_check(fyp, fydb->fyd, err_out,
-					"fy_document_create() failed");
-
-			rc = fy_document_set_document_state(fydb->fyd, fyep->e.document_start.document_state);
-			fyp_error_check(fyp, !rc, err_out,
-					"fy_document_set_document_state() failed");
-
-			fydb->doc_done = false;
-			goto push;
-
-		case FYET_DOCUMENT_END:
-			FYP_TOKEN_ERROR_CHECK(fyp, fyt, FYEM_DOC,
-					fydb->in_stream, err_out,
-					"DOCUMENT_END while not in stream error");
-
-			FYP_TOKEN_ERROR_CHECK(fyp, fyt, FYEM_DOC,
-					fydb->fyd, err_out,
-					"DOCUMENT_END without a document");
-
-			fydb->doc_done = true;
-			break;
-
-		default:
-			/* unexpected event */
-			FYP_TOKEN_ERROR(fyp, fyt, FYEM_DOC,
-					"Unexpected event %s in non-build mode\n",
-						fy_event_type_txt[etype]);
-			goto err_out;
-		}
-
-		return 0;
-	}
-
-	fyd = fydb->fyd;
-
-	c = &fydb->stack[fydb->next - 1];
-	fyn = NULL;
-
-	/* verify that we have a document */
-	assert(fydb->fyd);
-	/* the top state must always be NODE for processing the event */
-	assert(c->s == FYDBS_NODE);
-
-	// DBG(fyp, "%d: %s <- %s (%s)\n", fydb->next - 1, fy_document_builder_state_txt[c->s], fy_event_type_txt[etype], fy_token_debug_text_a(fyt));
-
-	switch (etype) {
-	case FYET_SCALAR:
-	case FYET_ALIAS:
-		fyn = fy_node_alloc(fyd, FYNT_SCALAR);
-		fyp_error_check(fyp, fyn, err_out,
-				"fy_node_alloc() SCALAR failed");
-
-		if (etype == FYET_SCALAR) {
-			if (fye->scalar.value)
-				fyn->style = fy_node_style_from_scalar_style(fye->scalar.value->scalar.style);
-			else
-				fyn->style = FYNS_PLAIN;
-			fyn->tag = fy_token_ref(fye->scalar.tag);
-			if (fye->scalar.anchor) {
-				rc = fy_document_register_anchor(fyd, fyn, fy_token_ref(fye->scalar.anchor));
-				fyp_error_check(fyp, !rc, err_out,
-						"fy_document_register_anchor() failed");
-			}
-			fyn->scalar = fy_token_ref(fye->scalar.value);
-		} else {
-			fyn->style = FYNS_ALIAS;
-			fyn->scalar = fy_token_ref(fye->alias.anchor);
-		}
-		goto complete;
-
-	case FYET_MAPPING_START:
-		// DBG(fyp, "%d: %s -> %s\n", fydb->next - 1, fy_document_builder_state_txt[c->s], fy_document_builder_state_txt[FYDBS_MAP_KEY]);
-		c->s = FYDBS_MAP_KEY;
-
-		fyn = fy_node_alloc(fyd, FYNT_MAPPING);
-		fyp_error_check(fyp, fyn, err_out,
-				"fy_node_alloc() MAPPING failed");
-
-		c->fyn = fyn;
-		fyn->style = fye->mapping_start.mapping_start->type == FYTT_FLOW_MAPPING_START ? FYNS_FLOW : FYNS_BLOCK;
-		fyn->tag = fy_token_ref(fye->mapping_start.tag);
-		if (fye->mapping_start.anchor) {
-			rc = fy_document_register_anchor(fyd, fyn, fy_token_ref(fye->mapping_start.anchor));
-			fyp_error_check(fyp, !rc, err_out,
-					"fy_document_register_anchor() failed");
-		}
-		fyn->mapping_start = fy_token_ref(fye->mapping_start.mapping_start);
-		break;
-
-	case FYET_MAPPING_END:
-
-		FYP_TOKEN_ERROR_CHECK(fyp, fyt, FYEM_DOC, fydb->next > 1, err_out,
-				"Unexpected MAPPING_END (unexpected end of mapping)");
-
-		cp = &fydb->stack[fydb->next - 2];
-
-		FYP_TOKEN_ERROR_CHECK(fyp, fyt, FYEM_DOC, cp->s == FYDBS_MAP_KEY, err_out,
-				"Unexpected MAPPING_END (not in mapping)");
-
-		fyn = cp->fyn;
-		fyn->mapping_end = fy_token_ref(fye->mapping_end.mapping_end);
-		fydb->next--;
-		goto complete;
-
-	case FYET_SEQUENCE_START:
-		// DBG(fyp, "%d: %s -> %s\n", fydb->next - 1, fy_document_builder_state_txt[c->s], fy_document_builder_state_txt[FYDBS_SEQ]);
-		c->s = FYDBS_SEQ;
-		fyn = fy_node_alloc(fyd, FYNT_SEQUENCE);
-		fyp_error_check(fyp, fyn, err_out,
-				"fy_node_alloc() SEQUENCE failed");
-
-		c->fyn = fyn;
-		fyn->style = fye->sequence_start.sequence_start->type == FYTT_FLOW_SEQUENCE_START ? FYNS_FLOW : FYNS_BLOCK;
-		fyn->tag = fy_token_ref(fye->sequence_start.tag);
-		if (fye->sequence_start.anchor) {
-			rc = fy_document_register_anchor(fyd, fyn, fy_token_ref(fye->sequence_start.anchor));
-			fyp_error_check(fyp, !rc, err_out,
-					"fy_document_register_anchor() failed");
-		}
-		fyn->sequence_start = fy_token_ref(fye->sequence_start.sequence_start);
-		break;
-
-	case FYET_SEQUENCE_END:
-
-		FYP_TOKEN_ERROR_CHECK(fyp, fyt, FYEM_DOC, fydb->next > 1, err_out,
-				"Unexpected SEQUENCE_END (unexpected end of sequence)");
-
-		cp = &fydb->stack[fydb->next - 2];
-
-		FYP_TOKEN_ERROR_CHECK(fyp, fyt, FYEM_DOC, cp->s == FYDBS_SEQ, err_out,
-				"Unexpected MAPPING_SEQUENCE (not in sequence)");
-
-		fyn = cp->fyn;
-		fyn->sequence_end = fy_token_ref(fye->sequence_end.sequence_end);
-		fydb->next--;
-		goto complete;
-
-	default:
-		/* unexpected event */
-		FYP_TOKEN_ERROR(fyp, fyt, FYEM_DOC,
-				"Unexpected event %s in build mode\n",
-					fy_event_type_txt[etype]);
-		goto err_out;
-	}
-
-push:
-	FYP_PARSE_ERROR_CHECK(fyp, 0, 0, FYEM_DOC,
-			!fydb->max_depth || fydb->next < fydb->max_depth, err_out,
-			"Max depth (%d) exceeded\n", fydb->next);
-
-	/* grow the stack? */
-	if (fydb->next >= fydb->alloc) {
-		newc = realloc(fydb->stack, fydb->alloc * 2 * sizeof(*fydb->stack));
-		fyp_error_check(fyp, newc, err_out,
-				"Unable to grow the context stack");
-		fydb->alloc *= 2;
-		fydb->stack = newc;
-	}
-	assert(fydb->next < fydb->alloc);
-
-	// DBG(fyp, "%d: PUSH %s -> %s\n", fydb->next - 1,
-	//		fydb->next > 0 ? fy_document_builder_state_txt[fydb->stack[fydb->next - 1].s] : "<NIL>",
-	//		fy_document_builder_state_txt[FYDBS_NODE]);
-
-	c = &fydb->stack[++fydb->next - 1];
-	memset(c, 0, sizeof(*c));
-	c->s = FYDBS_NODE;
-	return 0;
-
-err_out:
-	return -1;
-
-complete:
-	assert(fydb->next > 0);
-	c = &fydb->stack[fydb->next - 1];
-	c->fyn = fyn;
-	// DBG(fyp, "%d: COMPLETE %s -> %s\n", fydb->next - 1,
-	//	fy_document_builder_state_txt[c->s],
-	//	fydb->next > 1 ? fy_document_builder_state_txt[fydb->stack[fydb->next - 2].s] : "<NIL>");
-	assert(fydb->next > 0);
-	fydb->next--;
-
-	/* root */
-	if (fydb->next == 0) {
-		fyd->root = fyn;
-		// DBG(fyp, "root done\n");
-		/* if we're in single mode, don't wait for doc end */
-		if (fydb->single_mode)
-			fydb->doc_done = true;
-		return 1;
-	}
-
-	c = &fydb->stack[fydb->next - 1];
-
-	// DBG(fyp, "%d: %s - COMPLETE\n", fydb->next - 1, fy_document_builder_state_txt[c->s]);
-
-	fyn_parent = c->fyn;
-
-	switch (c->s) {
-
-	case FYDBS_MAP_KEY:
-		fynp = fy_node_pair_alloc(fyd);
-		assert(fynp);
-		fynp->key = fyn;
-		c->fynp = fynp;
-
-		/* make sure we don't add an already existing key */
-		if (fy_node_mapping_key_is_duplicate(fyn_parent, fyn)) {
-			FYP_NODE_ERROR(fyp, fyn, FYEM_DOC, "duplicate key");
-			goto err_out;
-		}
-
-		// DBG(fyp, "%d: %s -> %s\n", fydb->next - 1, fy_document_builder_state_txt[c->s], fy_document_builder_state_txt[FYDBS_MAP_VAL]);
-		c->s = FYDBS_MAP_VAL;
-		goto push;
-
-	case FYDBS_MAP_VAL:
-		fynp = c->fynp;
-		assert(fynp);
-		fynp->value = fyn;
-
-		/* set the parent of the node pair and value */
-		fynp->parent = fyn_parent;
-		if (fynp->key) {
-			fynp->key->parent = fyn_parent;
-			fynp->key->key_root = true;
-		}
-		if (fynp->value)
-			fynp->value->parent = fyn_parent;
-
-		fy_node_pair_list_add_tail(&c->fyn->mapping, fynp);
-		if (fyn->xl) {
-			rc = fy_accel_insert(fyn->xl, fynp->key, fynp);
-			assert(!rc);
-		}
-		if (fynp->key)
-			fynp->key->attached = true;
-		if (fynp->value)
-			fynp->value->attached = true;
-
-		c->fynp = NULL;
-		// DBG(fyp, "%d: %s -> %s\n", fydb->next - 1, fy_document_builder_state_txt[c->s], fy_document_builder_state_txt[FYDBS_MAP_KEY]);
-		c->s = FYDBS_MAP_KEY;
-		goto push;
-
-	case FYDBS_SEQ:
-		/* append sequence */
-		fyn->parent = fyn_parent;
-		fy_node_list_add_tail(&c->fyn->sequence, fyn);
-		fyn->attached = true;
-		goto push;
-
-	case FYDBS_NODE:
-		/* complete is a scalar */
-		fyn->parent = fyn_parent;
-		return 0;
-	}
-
-	return 0;
-}
-
-struct fy_document *
-fy_document_builder_load_document(struct fy_document_builder *fydb,
-				  struct fy_parser *fyp)
-{
-	struct fy_eventp *fyep = NULL;
-	int rc;
-
-	if (fyp->state == FYPS_END)
-		return NULL;
-
-	while (!fy_document_builder_is_document_complete(fydb) &&
-		(fyep = fy_parse_private(fyp)) != NULL) {
-		rc = fy_document_builder_process_event(fydb, fyp, fyep);
-		fy_parse_eventp_recycle(fyp, fyep);
-		if (rc < 0) {
-			fyp->stream_error = true;
-			return NULL;
-		}
-	}
-
-	/* get ownership of the document */
-	return fy_document_builder_take_document(fydb);
-}
-
-static bool fy_node_iterator_ensure_space(struct fy_node_iterator *fyi)
-{
-	struct fy_node_iterator_state *new_stack;
-	size_t size;
-
-	if (fyi->count < fyi->alloc)
-		return true;
-
-	size = fyi->alloc * sizeof(*new_stack);
-
-	if (fyi->stack == fyi->in_place) {
-		new_stack = malloc(size * 2);
-		if (!new_stack) {
-			fyi->result = FYNIR_NOMEM;
-			assert(0);
-			return false;
-		}
-		memcpy(new_stack, fyi->stack, size);
-	} else {
-		new_stack = realloc(fyi->stack, size * 2);
-		if (!new_stack) {
-			fyi->result = FYNIR_NOMEM;
-			assert(0);
-			return false;
-		}
-	}
-	fyi->stack = new_stack;
-	fyi->alloc *= 2;
-	return true;
-}
-
-void fy_node_iterator_setup(struct fy_node_iterator *fyi, enum fy_node_iterator_flags flags)
-{
-	fyi->flags = flags;
-	fyi->result = FYNIR_OK;
-	fyi->count = 0;
-	fyi->alloc = sizeof(fyi->in_place) / sizeof(fyi->in_place[0]);
-	fyi->stack = fyi->in_place;
-}
-
-void fy_node_iterator_cleanup(struct fy_node_iterator *fyi)
-{
-	if (!fyi)
-		return;
-	if (fyi->stack != fyi->in_place)
-		free(fyi->stack);
-	fyi->result = FYNIR_OK;
-	fyi->count = 0;
-	fyi->alloc = sizeof(fyi->in_place) / sizeof(fyi->in_place[0]);
-	fyi->stack = fyi->in_place;
-}
-
-struct fy_node_iterator *fy_node_iterator_create(enum fy_node_iterator_flags flags)
-{
-	struct fy_node_iterator *fyi;
-
-	fyi = malloc(sizeof(*fyi));
-	if (!fyi)
-		return NULL;
-	fy_node_iterator_setup(fyi, flags);
-	return fyi;
-}
-
-void fy_node_iterator_destroy(struct fy_node_iterator *fyi)
-{
-	if (!fyi)
-		return;
-	fy_node_iterator_cleanup(fyi);
-	free(fyi);
-}
-
-void fy_node_iterator_start(struct fy_node_iterator *fyi, struct fy_node *fyn)
-{
-	if (!fyi || !fyn)
-		return;
-
-	fyi->count = 1;
-	fyi->stack[0].fyn = fyn;
-	fyi->result = FYNIR_OK;
-}
-
-#define fy_node_info_a(_fyn) \
-	({ \
-		struct fy_node *__fyn = (_fyn); \
-		const char *__text = NULL; \
-		\
-		if (!__fyn) { \
-			__text = "<NULL>"; \
-		} else { \
-			switch (__fyn->type) { \
-			case FYNT_SCALAR: \
-				__text = fy_node_get_scalar0(__fyn); \
-				break; \
-			case FYNT_MAPPING: \
-				__text = "{"; \
-				break; \
-			case FYNT_SEQUENCE: \
-				__text = "["; \
-				break; \
-			} \
-		} \
-		__text; \
-	})
-
-struct fy_node *fy_node_iterator_next(struct fy_node_iterator *fyi, struct fy_node *fyn)
-{
-	struct fy_node *fyni, *parent;
-	struct fy_node_pair *fynp;
-	struct fy_node *fyna;
-	unsigned int i;
-
-	if (!fyi || fyi->count == 0)
-		return NULL;
-
-	if (!fyn) {
-		assert(fyi->count == 1);
-		/* start */
-		fyn = fyi->stack[fyi->count - 1].fyn;
-		assert(fyn);
-		// fprintf(stderr, "start: %s\n", fy_node_get_path_a(fyn));
-		goto out;
-	}
-
-	if (fyi->count == 0)
-		return NULL;
-
-	assert(fyi->count > 0);
-
-	/* protect against stupid calls */
-	if (fyn != fyi->stack[fyi->count - 1].fyn) {
-		fyi->result = FYNIR_ARGS;
-		return NULL;
-	}
-
-from_the_top:
-
-	/* if we're following links, check for self reference loop */
-	if (fyi->flags & FYNIF_FOLLOW_LINKS) {
-		for (i = 0; i < fyi->count-1; i++) {
-			if (fyn == fyi->stack[i].fyn) {
-				/* loop! */
-				fyi->result = FYNIR_LOOP;
-				return NULL;
-			}
-		}
-	}
-
-	switch (fyn->type) {
-	case FYNT_SCALAR:
-		/* we do not follow links, or node is not an alias */
-		if (!(fyi->flags & FYNIF_FOLLOW_LINKS) || !fy_node_is_alias(fyn))
-			break;
-
-		fyna = fy_node_resolve_alias(fyn);
-		if (!fyna) {
-			fyi->result = FYNIR_BAD_ALIAS;
-			return NULL;
-		}
-
-		if (!fy_node_iterator_ensure_space(fyi))
-			return NULL;
-
-		fyi->count++;
-		fyi->stack[fyi->count - 1].fyn = fyna;
-		fyi->stack[fyi->count - 1].fynp = NULL;
-		// fprintf(stderr, "+alias: %s @%s - %s @%s\n",
-		//		fy_node_info_a(fyn), fy_node_get_path_a(fyn),
-		//		fy_node_info_a(fyna), fy_node_get_path(fyna));
-		fyn = fyna;
-		goto out;
-
-	case FYNT_SEQUENCE:
-		fyni = fy_node_list_head(&fyn->sequence);
-
-		/* if there are no items, next */
-		if (!fyni)
-			break;
-
-		if (!fy_node_iterator_ensure_space(fyi))
-			return NULL;
-
-		fyi->count++;
-		fyi->stack[fyi->count - 1].fyn = fyni;
-		fyi->stack[fyi->count - 1].idx = 0;
-
-		// fprintf(stderr, "+seq: %s @%s - first %s @%s\n",
-		//		fy_node_info_a(fyn), fy_node_get_path_a(fyn),
-		//		fy_node_info_a(fyni), fy_node_get_path(fyni));
-
-		goto out;
-
-	case FYNT_MAPPING:
-		fynp = fy_node_pair_list_head(&fyn->mapping);
-
-		/* empty mapping? next */
-		if (!fynp || (!fynp->key && !fynp->value))
-			break;
-
-		/* we're not following keys, and there's no value? next */
-		if (!(fyi->flags & FYNIF_FOLLOW_KEYS) && !fynp->value)
-			break;
-
-		if (!fy_node_iterator_ensure_space(fyi))
-			return NULL;
-
-		fyi->count++;
-		if ((fyi->flags & FYNIF_FOLLOW_KEYS) && fynp->key) {
-			fyi->stack[fyi->count - 1].fyn = fynp->key;
-			// fprintf(stderr, "+map: %s @%s - first key %s @%s\n",
-			//		fy_node_info_a(fyn), fy_node_get_path_a(fyn),
-			//		fy_node_info_a(fynp->key), fy_node_get_path(fynp->key));
-		} else {
-			fyi->stack[fyi->count - 1].fyn = fynp->value;
-			// fprintf(stderr, "+map: %s @%s - first key %s @%s\n",
-			//		fy_node_info_a(fyn), fy_node_get_path_a(fyn),
-			//		fy_node_info_a(fynp->value), fy_node_get_path(fynp->value));
-		}
-		fyi->stack[fyi->count - 1].fynp = fynp;
-		goto out;
-	}
-
-	/* next */
-again:
-	if (fyi->count == 0) {
-		// fprintf(stderr, "end: count=0\n");
-		return NULL;
-	}
-	if (fyi->count == 1) {
-		// fprintf(stderr, "end: count=1\n");
-		/* last one */
-		fyi->count--;
-		return NULL;
-	}
-
-	parent = fyi->stack[fyi->count - 2].fyn;
-	switch (parent->type) {
-	case FYNT_SCALAR:
-		assert(fy_node_is_alias(parent));
-		// fprintf(stderr, "alias-next: %s @%s\n", fy_node_info_a(fyn), fy_node_get_path_a(fyn));
-		fyi->count--;
-		fyn = fyi->stack[fyi->count - 1].fyn;
-		goto again;
-
-	case FYNT_SEQUENCE:
-		fyn = fy_node_next(&parent->sequence, fyn);
-		if (!fyn) {
-			fyi->count--;
-			assert(fyi->count > 0);
-
-			// fprintf(stderr, "seq-end: %s @%s\n", fy_node_info_a(parent), fy_node_get_path_a(parent));
-
-			fyn = fyi->stack[fyi->count - 1].fyn;
-			goto again;
-		}
-
-		// fprintf(stderr, "seq-next: %s @%s\n", fy_node_info_a(fyn), fy_node_get_path_a(fyn));
-
-		fyi->stack[fyi->count - 1].fyn = fyn;
-		fyi->stack[fyi->count - 1].idx++;
-		break;
-
-	case FYNT_MAPPING:
-		fynp = fyi->stack[fyi->count - 1].fynp;
-		assert(fynp);
-		assert(fyn == fynp->key || fyn == fynp->value);
-
-		/* got key? now get value */
-		if (fyn == fynp->key && fynp->value) {
-			fyi->stack[fyi->count - 1].fyn = fynp->value;
-
-			// fprintf(stderr, "map-next: value1 %s @%s\n", fy_node_info_a(fynp->value), fy_node_get_path_a(fynp->value));
-
-			break;
-		}
-
-		for (;;) {
-			fynp = fy_node_pair_next(&parent->mapping, fynp);
-			if (!fynp) {
-				fyi->count--;
-				assert(fyi->count > 0);
-
-				// fprintf(stderr, "map-end: %s @%s\n", fy_node_info_a(parent), fy_node_get_path_a(parent));
-
-				fyn = fyi->stack[fyi->count - 1].fyn;
-				goto again;
-			}
-			if ((fyi->flags & FYNIF_FOLLOW_KEYS) && fynp->key) {
-				fyi->stack[fyi->count - 1].fyn = fynp->key;
-				// fprintf(stderr, "map-next: key %s @%s\n", fy_node_info_a(fynp->key), fy_node_get_path_a(fynp->key));
-				break;
-			}
-			if (fynp->value) {
-				fyi->stack[fyi->count - 1].fyn = fynp->value;
-				// fprintf(stderr, "map-next: value2 %s @%s\n", fy_node_info_a(fynp->value), fy_node_get_path_a(fynp->value));
-				break;
-			}
-		}
-		fyi->stack[fyi->count - 1].fynp = fynp;
-		break;
-	}
-
-out:
-	fyn = fyi->stack[fyi->count - 1].fyn;
-	assert(fyn);
-
-	/* if we're following and erasing the links and an alias, redo */
-	if ((fyi->flags & (FYNIF_FOLLOW_LINKS | FYNIF_ERASE_LINKS)) ==
-			  (FYNIF_FOLLOW_LINKS | FYNIF_ERASE_LINKS) &&
-		fy_node_is_alias(fyn))
-		goto from_the_top;
-
-	return fyn;
-}
-
-enum fy_node_iterator_result fy_node_iterator_end(struct fy_node_iterator *fyi)
-{
-	enum fy_node_iterator_result res;
-
-	if (!fyi)
-		return FYNIR_ARGS;
-
-	res = fyi->result;
-	fyi->result = FYNIR_OK;
-
-	return res;
-}
-
 struct fy_ptr_node *fy_ptr_node_create(struct fy_node *fyn)
 {
 	struct fy_ptr_node *fypn;
@@ -7361,153 +6572,6 @@ bool fy_ptr_node_list_contains(struct fy_ptr_node_list *fypnl, struct fy_node *f
 			return true;
 	}
 	return false;
-}
-
-int fy_node_linearize_recursive(struct fy_ptr_node_list *fypnl, struct fy_node *fyn)
-{
-	struct fy_ptr_node *fypn;
-	struct fy_node *fyni;
-	struct fy_node_pair *fynp;
-	int ret;
-
-	if (!fyn)
-		return 0;
-
-	/* recursive loop */
-	if (fy_ptr_node_list_contains(fypnl, fyn))
-		return 1;
-
-	fypn = fy_ptr_node_create(fyn);
-	if (!fypn)
-		return -1;
-
-	fy_ptr_node_list_add_tail(fypnl, fypn);
-
-	switch (fyn->type) {
-	case FYNT_SCALAR:
-		break;
-
-	case FYNT_SEQUENCE:
-		for (fyni = fy_node_list_head(&fyn->sequence); fyni;
-				fyni = fy_node_next(&fyn->sequence, fyni)) {
-
-			ret = fy_node_linearize_recursive(fypnl, fyni);
-			if (ret != 0)
-				return ret;
-		}
-		break;
-
-	case FYNT_MAPPING:
-		for (fynp = fy_node_pair_list_head(&fyn->mapping); fynp;
-				fynp = fy_node_pair_next(&fyn->mapping, fynp)) {
-
-			ret = fy_node_linearize_recursive(fypnl, fynp->key);
-			if (ret != 0)
-				return ret;
-			ret = fy_node_linearize_recursive(fypnl, fynp->value);
-			if (ret != 0)
-				return ret;
-		}
-		break;
-	}
-
-	return 0;
-}
-
-int fy_node_linearize(struct fy_ptr_node_list *fypnl, struct fy_node *fyn)
-{
-	struct fy_node_iterator fyi_local, *fyi = &fyi_local;
-	enum fy_node_iterator_result res;
-	struct fy_ptr_node *fypn;
-	int ret;
-
-	fy_node_iterator_setup(fyi, FYNIF_DEPTH_FIRST | FYNIF_FOLLOW_KEYS);
-
-	ret = 0;
-	fy_node_iterator_start(fyi, fyn);
-	fyn = NULL;
-	while ((fyn = fy_node_iterator_next(fyi, fyn)) != NULL) {
-
-		/* recursive loop */
-		if (fy_ptr_node_list_contains(fypnl, fyn)) {
-			ret = 1;
-			break;
-		}
-		fypn = fy_ptr_node_create(fyn);
-		if (!fypn) {
-			ret = -1;
-			break;
-		}
-		fy_ptr_node_list_add_tail(fypnl, fypn);
-	}
-
-	res = fy_node_iterator_end(fyi);
-	if (res != FYNIR_OK)
-		return -1;
-
-	fy_node_iterator_cleanup(fyi);
-
-	return ret;
-}
-
-void fy_node_iterator_check(struct fy_node *fyn)
-{
-	struct fy_ptr_node_list l1, l2;
-	struct fy_ptr_node *fypn1, *fypn2;
-	int ret __FY_DEBUG_UNUSED__;
-
-	fy_ptr_node_list_init(&l1);
-	fy_ptr_node_list_init(&l2);
-
-	ret = fy_node_linearize_recursive(&l1, fyn);
-	assert(!ret);
-	ret = fy_node_linearize(&l2, fyn);
-	assert(!ret);
-
-	fypn1 = fy_ptr_node_list_head(&l1);
-	fypn2 = fy_ptr_node_list_head(&l2);
-
-	while (fypn1 && fypn2) {
-		if (fypn1->fyn != fypn2->fyn) {
-			fprintf(stderr, "%s: %s != %s\n", __func__, fy_node_get_path_a(fypn1->fyn), fy_node_get_path_a(fypn2->fyn));
-			break;
-		}
-
-		fypn1 = fy_ptr_node_next(&l1, fypn1);
-		fypn2 = fy_ptr_node_next(&l2, fypn2);
-	}
-
-	if (!fypn1) {
-		if (fypn2)
-			fprintf(stderr, "%s: <NULL> != %s\n", __func__, fy_node_get_path_a(fypn2->fyn));
-	}
-	if (!fypn2) {
-		if (fypn1)
-			fprintf(stderr, "%s: %s != <NULL>\n", __func__, fy_node_get_path_a(fypn1->fyn));
-	}
-
-	fy_ptr_node_list_free_all(&l2);
-	fy_ptr_node_list_free_all(&l1);
-}
-
-int fy_node_check_ref_loop(struct fy_node *fyn)
-{
-	struct fy_node_iterator fyi_local, *fyi = &fyi_local;
-	enum fy_node_iterator_result res;
-
-	fy_node_iterator_setup(fyi, FYNIF_DEPTH_FIRST | FYNIF_FOLLOW_KEYS | FYNIF_FOLLOW_LINKS);
-
-	fy_node_iterator_start(fyi, fyn);
-
-	/* if there's a reference loop the iterator will NULL with an error */
-	fyn = NULL;
-	while ((fyn = fy_node_iterator_next(fyi, fyn)) != NULL) { }
-
-	res = fy_node_iterator_end(fyi);
-
-	fy_node_iterator_cleanup(fyi);
-
-	return res == FYNIR_OK ? 0 : -1;
 }
 
 struct fy_document *
@@ -7674,12 +6738,16 @@ fy_node_pair_create_with_key(struct fy_document *fyd, struct fy_node *fyn_parent
 	if (!fyd || !fyn_parent || !fy_node_is_mapping(fyn_parent))
 		return NULL;
 
-	/* make sure we don't add an already existing key */
-	is_duplicate = fy_node_mapping_key_is_duplicate(fyn_parent, fyn);
-	if (is_duplicate) {
-		FYD_NODE_ERROR(fyd, fyn, FYEM_DOC,
-				"duplicate mapping key");
-		return NULL;
+	/* if we don't allow duplicate keys */
+	if (!(fyd->parse_cfg.flags & FYPCF_ALLOW_DUPLICATE_KEYS)) {
+
+		/* make sure we don't add an already existing key */
+		is_duplicate = fy_node_mapping_key_is_duplicate(fyn_parent, fyn);
+		if (is_duplicate) {
+			FYD_NODE_ERROR(fyd, fyn, FYEM_DOC,
+					"duplicate mapping key");
+			return NULL;
+		}
 	}
 
 	fynp = fy_node_pair_alloc(fyd);
@@ -7744,4 +6812,492 @@ fy_node_sequence_add_item(struct fy_node *fyn_parent, struct fy_node *fyn)
 	fy_node_list_add_tail(&fyn_parent->sequence, fyn);
 	fyn->attached = true;
 	return 0;
+}
+
+void fy_document_iterator_setup(struct fy_document_iterator *fydi)
+{
+	memset(fydi, 0, sizeof(*fydi));
+	fydi->state = FYDIS_WAITING_STREAM_START;
+	fydi->fyd = NULL;
+	fydi->iterate_root = NULL;
+
+	/* suppress recycling if we must */
+	fydi->suppress_recycling_force = getenv("FY_VALGRIND") && !getenv("FY_VALGRIND_RECYCLING");
+	fydi->suppress_recycling = fydi->suppress_recycling_force;
+
+	fy_eventp_list_init(&fydi->recycled_eventp);
+	fy_token_list_init(&fydi->recycled_token);
+
+	if (!fydi->suppress_recycling) {
+		fydi->recycled_eventp_list = &fydi->recycled_eventp;
+		fydi->recycled_token_list = &fydi->recycled_token;
+	} else {
+		fydi->recycled_eventp_list = NULL;
+		fydi->recycled_token_list = NULL;
+	}
+
+	/* start with the stack pointing to the in place data */
+	fydi->stack_top = (unsigned int)-1;
+	fydi->stack_alloc = sizeof(fydi->in_place) / sizeof(fydi->in_place[0]);
+	fydi->stack = fydi->in_place;
+}
+
+void fy_document_iterator_cleanup(struct fy_document_iterator *fydi)
+{
+	struct fy_token *fyt;
+	struct fy_eventp *fyep;
+
+	/* free the stack if it's not the inplace one */
+	if (fydi->stack != fydi->in_place)
+		free(fydi->stack);
+	fydi->stack_top = (unsigned int)-1;
+	fydi->stack_alloc = sizeof(fydi->in_place) / sizeof(fydi->in_place[0]);
+	fydi->stack = fydi->in_place;
+
+	while ((fyt = fy_token_list_pop(&fydi->recycled_token)) != NULL)
+		fy_token_free(fyt);
+
+	while ((fyep = fy_eventp_list_pop(&fydi->recycled_eventp)) != NULL)
+		fy_eventp_free(fyep);
+
+	fydi->state = FYDIS_WAITING_STREAM_START;
+	fydi->fyd = NULL;
+	fydi->iterate_root = NULL;
+}
+
+struct fy_document_iterator *fy_document_iterator_create(void)
+{
+	struct fy_document_iterator *fydi;
+
+	fydi = malloc(sizeof(*fydi));
+	if (!fydi)
+		return NULL;
+	fy_document_iterator_setup(fydi);
+	return fydi;
+}
+
+void fy_document_iterator_destroy(struct fy_document_iterator *fydi)
+{
+	if (!fydi)
+		return;
+	fy_document_iterator_cleanup(fydi);
+	free(fydi);
+}
+
+static struct fy_event *
+fydi_event_create(struct fy_document_iterator *fydi, struct fy_node *fyn, bool start)
+{
+	struct fy_eventp *fyep;
+	struct fy_event *fye;
+	struct fy_anchor *fya;
+	struct fy_token *anchor = NULL;
+
+	fyep = fy_document_iterator_eventp_alloc(fydi);
+	if (!fyep) {
+		fydi->state = FYDIS_ERROR;
+		return NULL;
+	}
+	fye = &fyep->e;
+
+	if (start) {
+		fya = fy_node_get_anchor(fyn);
+		anchor = fya ? fya->anchor : NULL;
+	}
+
+	switch (fyn->type) {
+
+	case FYNT_SCALAR:
+		if (fyn->style != FYNS_ALIAS) {
+			fye->type = FYET_SCALAR;
+			fye->scalar.anchor = fy_token_ref(anchor);
+			fye->scalar.tag = fy_token_ref(fyn->tag);
+			fye->scalar.value = fy_token_ref(fyn->scalar);
+		} else {
+			fye->type = FYET_ALIAS;
+			fye->alias.anchor = fy_token_ref(fyn->scalar);
+		}
+		break;
+
+	case FYNT_SEQUENCE:
+		if (start) {
+			fye->type = FYET_SEQUENCE_START;
+			fye->sequence_start.anchor = fy_token_ref(anchor);
+			fye->sequence_start.tag = fy_token_ref(fyn->tag);
+			fye->sequence_start.sequence_start = fy_token_ref(fyn->sequence_start);
+		} else {
+			fye->type = FYET_SEQUENCE_END;
+			fye->sequence_end.sequence_end = fy_token_ref(fyn->sequence_end);
+		}
+		break;
+
+	case FYNT_MAPPING:
+		if (start) {
+			fye->type = FYET_MAPPING_START;
+			fye->mapping_start.anchor = fy_token_ref(anchor);
+			fye->mapping_start.tag = fy_token_ref(fyn->tag);
+			fye->mapping_start.mapping_start = fy_token_ref(fyn->mapping_start);
+		} else {
+			fye->type = FYET_MAPPING_END;
+			fye->mapping_end.mapping_end = fy_token_ref(fyn->mapping_end);
+		}
+		break;
+	}
+
+	return fye;
+}
+
+struct fy_event *
+fy_document_iterator_stream_start(struct fy_document_iterator *fydi)
+{
+	struct fy_event *fye;
+
+	if (!fydi || fydi->state == FYDIS_ERROR)
+		return NULL;
+
+	/* both none and stream start are the same for this */
+	if (fydi->state != FYDIS_WAITING_STREAM_START &&
+	    fydi->state != FYDIS_WAITING_STREAM_END_OR_DOCUMENT_START)
+		goto err_out;
+
+	fye = fy_document_iterator_event_create(fydi, FYET_STREAM_START);
+	if (!fye)
+		goto err_out;
+
+	fydi->state = FYDIS_WAITING_DOCUMENT_START;
+	return fye;
+
+err_out:
+	fydi->state = FYDIS_ERROR;
+	return NULL;
+}
+
+struct fy_event *
+fy_document_iterator_stream_end(struct fy_document_iterator *fydi)
+{
+	struct fy_event *fye;
+
+	if (!fydi || fydi->state == FYDIS_ERROR)
+		return NULL;
+
+	if (fydi->state != FYDIS_WAITING_STREAM_END_OR_DOCUMENT_START &&
+	    fydi->state != FYDIS_WAITING_DOCUMENT_START)
+		goto err_out;
+
+	fye = fy_document_iterator_event_create(fydi, FYET_STREAM_END);
+	if (!fye)
+		goto err_out;
+
+	fydi->state = FYDIS_WAITING_STREAM_START;
+	return fye;
+
+err_out:
+	fydi->state = FYDIS_ERROR;
+	return NULL;
+}
+
+struct fy_event *
+fy_document_iterator_document_start(struct fy_document_iterator *fydi, struct fy_document *fyd)
+{
+	struct fy_event *fye = NULL;
+	struct fy_eventp *fyep;
+
+	if (!fydi || fydi->state == FYDIS_ERROR)
+		return NULL;
+
+	if (!fyd)
+		goto err_out;
+
+	/* we can transition to document start only from document start or stream end */
+	if (fydi->state != FYDIS_WAITING_DOCUMENT_START &&
+	    fydi->state != FYDIS_WAITING_STREAM_END_OR_DOCUMENT_START)
+		goto err_out;
+
+	fyep = fy_document_iterator_eventp_alloc(fydi);
+	if (!fyep)
+		goto err_out;
+	fye = &fyep->e;
+
+	fydi->fyd = fyd;
+
+	/* the iteration root is the document root */
+	fydi->iterate_root = fyd->root;
+
+	/* suppress recycling if we must */
+	fydi->suppress_recycling = (fyd->parse_cfg.flags & FYPCF_DISABLE_RECYCLING) ||
+				   fydi->suppress_recycling_force;
+
+	if (!fydi->suppress_recycling) {
+		fydi->recycled_eventp_list = &fydi->recycled_eventp;
+		fydi->recycled_token_list = &fydi->recycled_token;
+	} else {
+		fydi->recycled_eventp_list = NULL;
+		fydi->recycled_token_list = NULL;
+	}
+
+	fye->type = FYET_DOCUMENT_START;
+	fye->document_start.document_start = NULL;
+	fye->document_start.document_state = fy_document_state_ref(fyd->fyds);
+	fye->document_start.implicit = fyd->fyds->start_implicit;
+
+	/* and go into body */
+	fydi->state = FYDIS_WAITING_BODY_START_OR_DOCUMENT_END;
+
+	return fye;
+
+err_out:
+	fy_document_iterator_event_free(fydi, fye);
+	fydi->state = FYDIS_ERROR;
+	return NULL;
+}
+
+struct fy_event *
+fy_document_iterator_document_end(struct fy_document_iterator *fydi)
+{
+	struct fy_event *fye;
+
+	if (!fydi || fydi->state == FYDIS_ERROR)
+		return NULL;
+
+	if (!fydi->fyd || !fydi->fyd->fyds ||
+	    fydi->state != FYDIS_WAITING_DOCUMENT_END)
+		goto err_out;
+
+	fye = fy_document_iterator_event_create(fydi, FYET_DOCUMENT_END, (int)fydi->fyd->fyds->end_implicit);
+	if (!fye)
+		goto err_out;
+
+	fydi->fyd = NULL;
+	fydi->iterate_root = NULL;
+
+	fydi->state = FYDIS_WAITING_STREAM_END_OR_DOCUMENT_START;
+	return fye;
+
+err_out:
+	fydi->state = FYDIS_ERROR;
+	return NULL;
+}
+
+static bool
+fy_document_iterator_ensure_space(struct fy_document_iterator *fydi, unsigned int space)
+{
+	struct fy_document_iterator_body_state *new_stack;
+	size_t new_size, copy_size;
+	unsigned int new_stack_alloc;
+
+	/* empty stack should always have enough space */
+	if (fydi->stack_top == (unsigned int)-1) {
+		assert(fydi->stack_alloc >= space);
+		return true;
+	}
+
+	if (fydi->stack_top + space < fydi->stack_alloc)
+		return true;
+
+	/* make sure we have enough space */
+	new_stack_alloc = fydi->stack_alloc * 2;
+	while (fydi->stack_top + space >= new_stack_alloc)
+		new_stack_alloc *= 2;
+
+	new_size = new_stack_alloc * sizeof(*new_stack);
+
+	if (fydi->stack == fydi->in_place) {
+		new_stack = malloc(new_size);
+		if (!new_stack)
+			return false;
+		copy_size = (fydi->stack_top + 1) * sizeof(*new_stack);
+		memcpy(new_stack, fydi->stack, copy_size);
+	} else {
+		new_stack = realloc(fydi->stack, new_size);
+		if (!new_stack)
+			return false;
+	}
+	fydi->stack = new_stack;
+	fydi->stack_alloc = new_stack_alloc;
+	return true;
+}
+
+static bool
+fydi_push_collection(struct fy_document_iterator *fydi, struct fy_node *fyn)
+{
+	struct fy_document_iterator_body_state *s;
+
+	/* make sure there's enough space */
+	if (!fy_document_iterator_ensure_space(fydi, 1))
+		return false;
+
+	/* get the next */
+	fydi->stack_top++;
+	s = &fydi->stack[fydi->stack_top];
+	s->fyn = fyn;
+
+	switch (fyn->type) {
+	case FYNT_SEQUENCE:
+		s->fyni = fy_node_list_head(&fyn->sequence);
+		break;
+
+	case FYNT_MAPPING:
+		s->fynp = fy_node_pair_list_head(&fyn->mapping);
+		s->processed_key = false;
+		break;
+
+	default:
+		assert(0);
+		break;
+	}
+
+	return true;
+}
+
+static inline void
+fydi_pop_collection(struct fy_document_iterator *fydi)
+{
+	assert(fydi->stack_top != (unsigned int)-1);
+	fydi->stack_top--;
+}
+
+static inline struct fy_document_iterator_body_state *
+fydi_last_collection(struct fy_document_iterator *fydi)
+{
+	if (fydi->stack_top == (unsigned int)-1)
+		return NULL;
+	return &fydi->stack[fydi->stack_top];
+}
+
+bool
+fy_document_iterator_body_next_internal(struct fy_document_iterator *fydi,
+					struct fy_document_iterator_body_result *res)
+{
+	struct fy_document_iterator_body_state *s;
+	struct fy_node *fyn, *fyn_col;
+	bool end;
+
+	if (!fydi || !res || fydi->state == FYDIS_ERROR)
+		return false;
+
+	if (fydi->state != FYDIS_WAITING_BODY_START_OR_DOCUMENT_END &&
+	    fydi->state != FYDIS_BODY)
+		goto err_out;
+
+	end = false;
+	s = fydi_last_collection(fydi);
+	if (!s) {
+
+		fyn = fydi->iterate_root;
+		/* empty root, or last */
+		if (!fyn || fydi->state == FYDIS_BODY) {
+			fydi->state = FYDIS_WAITING_DOCUMENT_END;
+			return false;
+		}
+
+		/* ok, in body proper */
+		fydi->state = FYDIS_BODY;
+
+	} else {
+
+		fyn_col = s->fyn;
+		assert(fyn_col);
+
+		fyn = NULL;
+		if (fyn_col->type == FYNT_SEQUENCE) {
+			fyn = s->fyni;
+			if (fyn)
+				s->fyni = fy_node_next(&fyn_col->sequence, s->fyni);
+		} else {
+			assert(fyn_col->type == FYNT_MAPPING);
+			if (s->fynp) {
+				if (!s->processed_key) {
+					fyn = s->fynp->key;
+					s->processed_key = true;
+				} else {
+					fyn = s->fynp->value;
+					s->processed_key = false;
+
+					/* next in mapping after value */
+					s->fynp = fy_node_pair_next(&fyn_col->mapping, s->fynp);
+				}
+			}
+		}
+
+		/* if no next node in the collection, it's the end of the collection */
+		if (!fyn) {
+			fyn = fyn_col;
+			end = true;
+		}
+	}
+
+	assert(fyn);
+
+	/* only for collections */
+	if (fyn->type != FYNT_SCALAR) {
+		if (!end) {
+			/* push the new sequence */
+			if (!fydi_push_collection(fydi, fyn))
+				goto err_out;
+		} else
+			fydi_pop_collection(fydi);
+	}
+
+	res->fyn = fyn;
+	res->end = end;
+	return true;
+
+err_out:
+	fydi->state = FYDIS_ERROR;
+	return false;
+}
+
+struct fy_event *fy_document_iterator_body_next(struct fy_document_iterator *fydi)
+{
+	struct fy_document_iterator_body_result res;
+
+	if (!fydi)
+		return NULL;
+
+	if (!fy_document_iterator_body_next_internal(fydi, &res))
+		return NULL;
+
+	return fydi_event_create(fydi, res.fyn, !res.end);
+}
+
+void
+fy_document_iterator_node_start(struct fy_document_iterator *fydi, struct fy_node *fyn)
+{
+	/* do nothing on error */
+	if (!fydi || fydi->state == FYDIS_ERROR)
+		return;
+
+	/* and go into body */
+	fydi->state = FYDIS_WAITING_BODY_START_OR_DOCUMENT_END;
+	fydi->iterate_root = fyn;
+	fydi->fyd = NULL;
+}
+
+struct fy_node *fy_document_iterator_node_next(struct fy_document_iterator *fydi)
+{
+	struct fy_document_iterator_body_result res;
+
+	if (!fydi)
+		return NULL;
+
+	/* do not return ending nodes, are not interested in them */
+	do {
+		if (!fy_document_iterator_body_next_internal(fydi, &res))
+			return NULL;
+
+	} while (res.end);
+
+	return res.fyn;
+}
+
+bool fy_document_iterator_get_error(struct fy_document_iterator *fydi)
+{
+	if (!fydi)
+		return true;
+
+	if (fydi->state != FYDIS_ERROR)
+		return false;
+
+	fy_document_iterator_cleanup(fydi);
+
+	return true;
 }
