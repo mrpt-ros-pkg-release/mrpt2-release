@@ -131,10 +131,13 @@ void fy_path_component_clear_state(struct fy_path_component *fypc)
 					fy_document_destroy(fypc->map.complex_key);
 				fypc->map.complex_key = NULL;
 			} else {
-				fy_token_unref(fypc->map.scalar_key);
-				fypc->map.scalar_key = NULL;
+				fy_token_unref(fypc->map.scalar.tag);
+				fy_token_unref(fypc->map.scalar.key);
+				fypc->map.scalar.tag = NULL;
+				fypc->map.scalar.key = NULL;
 			}
 		}
+		fypc->map.root = true;
 		fypc->map.has_key = false;
 		fypc->map.await_key = true;
 		fypc->map.is_complex_key = false;
@@ -201,6 +204,7 @@ struct fy_path_component *fy_path_component_create_mapping(struct fy_path *fypp)
 
 	fypc->type = FYPCT_MAP;
 
+	fypc->map.root = true;
 	fypc->map.await_key = true;
 	fypc->map.is_complex_key = false;
 	fypc->map.accumulating_complex_key = false;
@@ -240,7 +244,13 @@ int fy_path_component_sequence_get_index(struct fy_path_component *fypc)
 struct fy_token *fy_path_component_mapping_get_scalar_key(struct fy_path_component *fypc)
 {
 	return fypc && fypc->type == FYPCT_MAP &&
-	       fypc->map.has_key && !fypc->map.is_complex_key ? fypc->map.scalar_key : NULL;
+	       fypc->map.has_key && !fypc->map.is_complex_key ? fypc->map.scalar.key : NULL;
+}
+
+struct fy_token *fy_path_component_mapping_get_scalar_key_tag(struct fy_path_component *fypc)
+{
+	return fypc && fypc->type == FYPCT_MAP &&
+	       fypc->map.has_key && !fypc->map.is_complex_key ? fypc->map.scalar.tag : NULL;
 }
 
 struct fy_document *fy_path_component_mapping_get_complex_key(struct fy_path_component *fypc)
@@ -252,6 +262,54 @@ struct fy_document *fy_path_component_mapping_get_complex_key(struct fy_path_com
 bool fy_path_component_is_sequence(struct fy_path_component *fypc)
 {
 	return fypc && fypc->type == FYPCT_SEQ;
+}
+
+static int fy_path_component_get_text_internal(struct fy_emit_accum *ea, struct fy_path_component *fypc)
+{
+	char *doctxt;
+	const char *text;
+	size_t len;
+
+	switch (fypc->type) {
+	case FYPCT_NONE:
+		abort();
+
+	case FYPCT_MAP:
+
+		/* we don't handle transitionals */
+		if (!fypc->map.has_key || fypc->map.await_key || fypc->map.root)
+			return -1;
+
+		if (!fypc->map.is_complex_key && fypc->map.scalar.key) {
+			text = fy_token_get_text(fypc->map.scalar.key, &len);
+			if (!text)
+				return -1;
+
+			if (fypc->map.scalar.key->type == FYTT_ALIAS)
+				fy_emit_accum_utf8_put_raw(ea, '*');
+			fy_emit_accum_utf8_write_raw(ea, text, len);
+
+		} else if (fypc->map.complex_key) {
+			/* complex key */
+			doctxt = fy_emit_document_to_string(fypc->map.complex_key,
+				FYECF_WIDTH_INF | FYECF_INDENT_DEFAULT |
+				FYECF_MODE_FLOW_ONELINE | FYECF_NO_ENDING_NEWLINE);
+			fy_emit_accum_utf8_write_raw(ea, doctxt, strlen(doctxt));
+			free(doctxt);
+		}
+		break;
+
+	case FYPCT_SEQ:
+
+		/* not started filling yet */
+		if (fypc->seq.idx < 0)
+			return -1;
+
+		fy_emit_accum_utf8_printf_raw(ea, "%d", fypc->seq.idx);
+		break;
+	}
+
+	return 0;
 }
 
 static int fy_path_get_text_internal(struct fy_emit_accum *ea, struct fy_path *fypp)
@@ -283,7 +341,7 @@ static int fy_path_get_text_internal(struct fy_emit_accum *ea, struct fy_path *f
 
 		case FYPCT_MAP:
 
-			if (!fypc->map.has_key)
+			if (!fypc->map.has_key || fypc->map.root)
 				break;
 
 			/* key reference ? wrap in .key(X)*/
@@ -296,12 +354,12 @@ static int fy_path_get_text_internal(struct fy_emit_accum *ea, struct fy_path *f
 
 			if (!fypc->map.is_complex_key) {
 
-				if (fypc->map.scalar_key) {
-					text = fy_token_get_text(fypc->map.scalar_key, &len);
+				if (fypc->map.scalar.key) {
+					text = fy_token_get_text(fypc->map.scalar.key, &len);
 					assert(text);
 					if (!text)
 						return -1;
-					if (fypc->map.scalar_key->type == FYTT_ALIAS)
+					if (fypc->map.scalar.key->type == FYTT_ALIAS)
 						fy_emit_accum_utf8_put_raw(ea, '*');
 					fy_emit_accum_utf8_write_raw(ea, text, len);
 				} else {
@@ -375,6 +433,32 @@ err_out:
 	fy_emit_accum_cleanup(&ea);
 
 	return path;
+}
+
+char *fy_path_component_get_text(struct fy_path_component *fypc)
+{
+	struct fy_emit_accum ea;	/* use an emit accumulator */
+	char *text = NULL;
+	size_t len;
+	int rc;
+
+	/* no inplace buffer; we will need the malloc'ed contents anyway */
+	fy_emit_accum_init(&ea, NULL, 0, 0, fylb_cr_nl);
+
+	fy_emit_accum_start(&ea, 0, fylb_cr_nl);
+
+	rc = fy_path_component_get_text_internal(&ea, fypc);
+	if (rc)
+		goto err_out;
+
+	fy_emit_accum_make_0_terminated(&ea);
+
+	text = fy_emit_accum_steal(&ea, &len);
+
+err_out:
+	fy_emit_accum_cleanup(&ea);
+
+	return text;
 }
 
 int fy_path_depth(struct fy_path *fypp)
@@ -498,7 +582,7 @@ bool fy_path_in_mapping_value(struct fy_path *fypp)
 	return fypc_last->type == FYPCT_MAP && !fypc_last->map.await_key;
 }
 
-bool fy_path_is_collection_root(struct fy_path *fypp)
+bool fy_path_in_collection_root(struct fy_path *fypp)
 {
 	struct fy_path_component *fypc_last;
 
@@ -510,6 +594,30 @@ bool fy_path_is_collection_root(struct fy_path *fypp)
 		return false;
 
 	return fy_path_component_is_collection_root(fypc_last);
+}
+
+void *fy_path_get_root_user_data(struct fy_path *fypp)
+{
+	if (!fypp)
+		return NULL;
+
+	if (!fypp->parent)
+		return fypp->user_data;
+
+	return fy_path_get_root_user_data(fypp->parent);
+}
+
+void fy_path_set_root_user_data(struct fy_path *fypp, void *data)
+{
+	if (!fypp)
+		return;
+
+	if (!fypp->parent) {
+		fypp->user_data = data;
+		return;
+	}
+
+	fy_path_set_root_user_data(fypp->parent, data);
 }
 
 void *fy_path_component_get_mapping_user_data(struct fy_path_component *fypc)

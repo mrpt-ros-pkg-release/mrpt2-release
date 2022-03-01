@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -293,6 +293,7 @@ bool mrpt::vision::checkerBoardCameraCalibration(
 			out_camera_params.intrinsicParams = M;
 		}
 
+		out_camera_params.distortion = DistortionModel::plumb_bob;
 		out_camera_params.dist.fill(0);
 		for (int k = 0; k < 5; k++)
 			out_camera_params.dist[k] = distCoeffs.ptr<double>()[k];

@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -195,6 +195,8 @@ class CPointCloudColoured : public CRenderizableShaderPoints,
 	void render_subset(
 		const bool all, const std::vector<size_t>& idxs,
 		const float render_area_sqpixels) const;
+
+	void toYAMLMap(mrpt::containers::yaml& propertiesMap) const override;
 
    protected:
 	/** @name PLY Import virtual methods to implement in base classes

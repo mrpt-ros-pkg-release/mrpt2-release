@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -142,6 +142,15 @@ template <typename EnumType>
 std::string enum2str(const EnumType& value)
 {
 	return TEnumType<EnumType>::value2name(value);
+}
+
+/** Syntactic sugar for easy conversion of strings into enum values.
+ * \note (New in MRPT 2.4.2)
+ */
+template <typename EnumType>
+EnumType str2enum(const std::string& enumValueName)
+{
+	return TEnumType<EnumType>::name2value(enumValueName);
 }
 
 }  // namespace typemeta
