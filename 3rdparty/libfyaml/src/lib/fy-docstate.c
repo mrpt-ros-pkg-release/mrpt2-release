@@ -151,6 +151,7 @@ struct fy_document_state *fy_document_state_default(
 	fyds->tags_explicit = false;
 	fyds->start_implicit = true;
 	fyds->end_implicit = true;
+	fyds->json_mode = false;
 
 	memset(&fyds->start_mark, 0, sizeof(fyds->start_mark));
 	memset(&fyds->end_mark, 0, sizeof(fyds->end_mark));
@@ -185,6 +186,7 @@ struct fy_document_state *fy_document_state_copy(struct fy_document_state *fyds)
 	fyds_new->tags_explicit = fyds->tags_explicit;
 	fyds_new->start_implicit = fyds->start_implicit;
 	fyds_new->end_implicit = fyds->end_implicit;
+	fyds_new->json_mode = fyds->json_mode;
 
 	fyds_new->start_mark = fyds->start_mark;
 	fyds_new->end_mark = fyds->end_mark;
@@ -214,6 +216,8 @@ struct fy_document_state *fy_document_state_copy(struct fy_document_state *fyds)
 		fyt_td->tag_directive.uri_length = fyt->tag_directive.uri_length;
 		fyt_td->tag_directive.is_default = fyt->tag_directive.is_default;
 		fyt_td->handle = fyt->handle;
+		fyt_td->tag_directive.prefix0 = NULL;
+		fyt_td->tag_directive.handle0 = NULL;
 
 		/* take reference */
 		fy_input_ref(fyt_td->handle.fyi);
@@ -306,6 +310,7 @@ int fy_document_state_merge(struct fy_document_state *fyds,
 	/* merge other document state */
 	fyds->version_explicit |= fydsc->version_explicit;
 	fyds->tags_explicit |= fydsc->tags_explicit;
+	/* NOTE: json mode is not carried over */
 
 	if (fyds->version.major < fydsc->version.major ||
 	    (fyds->version.major == fydsc->version.major &&
@@ -353,6 +358,11 @@ bool fy_document_state_start_implicit(struct fy_document_state *fyds)
 bool fy_document_state_end_implicit(struct fy_document_state *fyds)
 {
 	return fyds ? fyds->end_implicit : true;
+}
+
+bool fy_document_state_json_mode(struct fy_document_state *fyds)
+{
+	return fyds ? fyds->json_mode : true;
 }
 
 const struct fy_tag *

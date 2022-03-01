@@ -36,13 +36,17 @@ struct fy_document_builder;
 #define FY_PATH_MAPPING_SHORT_KEY	32
 
 struct fy_path_mapping_state {
+	bool root : 1;		/* no keys, values yet */
 	bool await_key : 1;
 	bool accumulating_complex_key : 1;
-	bool has_key : 1;	/* has a key */
+	bool has_key : 1;			/* has a key */
 	bool is_complex_key : 1;
 	bool complex_key_complete : 1;
 	union {
-		struct fy_token *scalar_key;
+		struct {
+			struct fy_token *tag;
+			struct fy_token *key;
+		} scalar;
 		struct fy_document *complex_key;
 	};
 	void *key_user_data;
@@ -75,7 +79,7 @@ fy_path_component_is_collection_root(struct fy_path_component *fypc)
 	case FYPCT_SEQ:
 		return fypc->seq.idx < 0;
 	case FYPCT_MAP:
-		return fypc->map.await_key && !fypc->map.has_key && !fypc->map.complex_key_complete;
+		return fypc->map.root;
 	}
 
 	return false;
@@ -88,6 +92,7 @@ struct fy_path {
 	struct fy_path_component_list components;
 	struct fy_document_builder *fydb;	/* for complex keys */
 	struct fy_path *parent;			/* when we have a parent */
+	void *user_data;
 };
 FY_TYPE_DECL_LIST(path);
 

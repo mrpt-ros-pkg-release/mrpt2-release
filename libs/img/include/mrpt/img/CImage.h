@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -958,6 +958,15 @@ class CImage : public mrpt::serialization::CSerializable, public CCanvas
 	 * \sa saveToFile, setExternalStorage,loadFromXPM, loadTGA
 	 */
 	bool loadFromFile(const std::string& fileName, int isColor = -1);
+
+	/** Static method to construct an CImage object from a file.
+	 * See CImage::loadFromFile() for meaning of parameters.
+	 *
+	 * \exception std::exception On load error.
+	 * \note New in MRPT 2.4.2
+	 */
+	static mrpt::img::CImage LoadFromFile(
+		const std::string& fileName, int isColor = -1);
 
 	/** Loads a TGA true-color RGBA image as two CImage objects, one for the RGB
 	 * channels plus a separate gray-level image with A channel.
