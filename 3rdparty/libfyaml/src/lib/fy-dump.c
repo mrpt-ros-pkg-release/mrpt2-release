@@ -235,7 +235,7 @@ char *fy_simple_key_list_dump_format(struct fy_parser *fyp, struct fy_simple_key
 	return buf;
 }
 
-#ifndef NDEBUG
+#ifdef FY_DEVMODE
 
 void fyp_debug_dump_token_list(struct fy_parser *fyp, struct fy_token_list *fytl,
 		struct fy_token *fyt_highlight, const char *banner)
@@ -292,9 +292,8 @@ void fyp_debug_dump_input(struct fy_parser *fyp, const struct fy_input_cfg *fyic
 				fyic->file.filename);
 		break;
 	case fyit_stream:
-		fyp_scan_debug(fyp, "%s: stream=\"%s\" fileno=%d chunk=%zu\n", banner,
-				fyic->stream.name, fileno(fyic->stream.fp),
-				fyic->stream.chunk);
+		fyp_scan_debug(fyp, "%s: stream=\"%s\" fileno=%d\n", banner,
+				fyic->stream.name, fileno(fyic->stream.fp));
 		break;
 	case fyit_memory:
 		fyp_scan_debug(fyp, "%s: start=%p size=%zu\n", banner,

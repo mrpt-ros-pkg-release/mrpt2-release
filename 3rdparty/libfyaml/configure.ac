@@ -23,14 +23,49 @@ m4_ifdef([AM_EXTRA_RECURSIVE_TARGETS],
 m4_define(fyaml_major, `echo $VERSION | cut -d. -f1 | cut -d- -f1`)
 m4_define(fyaml_minor, `echo $VERSION | cut -d. -f2 | cut -d- -f1`)
 m4_define(fyaml_patch, `echo $VERSION | cut -d. -f3- | cut -d- -f1`)
-m4_define(fyaml_extra, `echo $VERSION | cut -d- -f2-`)
+m4_define(fyaml_extra, `echo $VERSION | cut -d- -f2- -s`)
 
 AC_SUBST(MAJOR, fyaml_major)
 AC_SUBST(MINOR, fyaml_minor)
 AC_SUBST(PATCH, fyaml_patch)
 AC_SUBST(EXTRA, fyaml_extra)
 
-AC_SUBST(DEBVERSION, "$MAJOR.$MINOR")
+# libtool version is of the following format <current>:<revision>:<age>
+# and it is the library ABI version
+#
+# - Increase current when an interface has been added removed or changed
+# - Increase revision every time a release is made
+# - Increase age when changes are backwards compatible
+#
+# examples of semantic versioning progression mapping to libtool abi versions
+#
+# v0.7.4 -> v0.7.5 - patch number changes, backwards compatible (1)
+#                    increase revision, increase age (age must be <= current), current unchanged
+#
+# v0.7.5 -> v0.8.0 - minor number changes, backwards compatible (same as (1)) (2)
+#                    increase revision, increase age (age must be <= current), current unchanged
+#
+# v0.8.0 -> v0.9.0 - minor number changes, but breaks backwards compatibility - should not happen (3)
+#                    with semantic versioning for major version number >= 1, allowed for major == 0
+#                    increase revision, increase current, age reset to 0
+#
+# v0.9.0 -> v1.0.0 - major number changes, first public release (4)
+#                    increase current, set revision and age to 0
+#
+# v1.0.0 -> v1.0.1 - patch number changes, _must_ be backwards compatible (same as (1)) (5)
+#                    increase revision, increase age (age must be <= current), current unchanged
+#
+# v1.0.1 -> v1.1.0 - minor number changes, backwards compatible (same as (5)) (6)
+#                    increase revision, increase age (age must be <= current), current unchanged
+#
+# v1.1.0 -> v1.2.0 - minor number changes, breaking backwards compatibility (7)
+#                    XXX illegal in semantic versioning and should not happen
+#
+# v1.1.0 -> v2.0.0 - major number changes, breaking backwards compatibility (same as (4)) (8)
+#                    increase current, set revision and age to 0
+
+m4_define(fyaml_libtool_version, m4_normalize(m4_include([.libtool-version])))
+AC_SUBST(LIBTOOL_VERSION, fyaml_libtool_version)
 
 dnl AX_* requires 2.64
 m4_version_prereq(2.64, [AX_CHECK_ENABLE_DEBUG()], [true])
@@ -84,7 +119,7 @@ AC_CHECK_DECLS(environ)
 
 dnl for old autoconf version AX_APPEND_COMPILE_FLAGS does not work
 m4_version_prereq(2.64,
-	 [AX_APPEND_COMPILE_FLAGS([-Wall -Wsign-compare],
+	 [AX_APPEND_COMPILE_FLAGS([-Wall -Wsign-compare -Wno-stringop-overflow -fvisibility=hidden],
 				  [CFLAGS], [-pedantic -Werror])],
          [CFLAGS="$CFLAGS -Wall -Wsign-compare"])
 
@@ -92,6 +127,17 @@ dnl -O2 is universal no need for AX_APPEND_COMPILE_FLAGS
 if test "x$ax_enable_debug" != "xyes" ; then
 	CFLAGS="$CFLAGS -O2"
 fi
+
+# need that as conditional because some internal tools compile as static
+# to have access to internal libfyaml APIs
+if test "x$enable_static" = "xyes" ; then
+HAVE_STATIC=1
+else
+HAVE_STATIC=0
+fi
+AC_SUBST(HAVE_STATIC)
+AC_DEFINE_UNQUOTED([HAVE_STATIC], [$HAVE_STATIC], [Define to 1 if static linking is available])
+AM_CONDITIONAL([HAVE_STATIC], [ test x$HAVE_STATIC = x1 ])
 
 # include -lm in the link
 AC_SEARCH_LIBS([llrintf], [m], [], [AC_MSG_ERROR([unable to find the llrintf() function])])
@@ -151,14 +197,29 @@ AC_ARG_ENABLE([network],
 	      AS_HELP_STRING([--disable-network],
 			     [Disable tests requiring network access]))
 
-if test "x$enable_network" != "xno" ; then 
+if test "x$enable_network" != "xno" ; then
 	HAVE_NETWORK=1
 else
 	HAVE_NETWORK=0
-fi	
+fi
 AC_SUBST(HAVE_NETWORK)
 AM_CONDITIONAL([HAVE_NETWORK],
 	       [ test x$HAVE_NETWORK = x1 ])
+
+dnl enable internet available when checking
+AC_ARG_ENABLE([devmode],
+	      AS_HELP_STRING([--enable-devmode],
+			     [Enable development mode only debugging]))
+
+if test "x$enable_devmode" != "xno" ; then
+	HAVE_DEVMODE=1
+else
+	HAVE_DEVMODE=0
+fi
+AC_SUBST(HAVE_DEVMODE)
+AM_CONDITIONAL([HAVE_DEVMODE],
+	       [ test x$HAVE_DEVMODE = x1 ])
+AC_DEFINE_UNQUOTED([HAVE_DEVMODE], [$HAVE_DEVMODE], [Define to 1 if developer mode is enabled])
 
 # check for sphinx
 AC_PATH_PROG([SPHINX], [sphinx-build])
@@ -233,10 +294,10 @@ if test "x$TESTSUITEURL" == "x" ; then
 	TESTSUITEURL="https://github.com/yaml/yaml-test-suite"
 fi
 
-AC_ARG_VAR(TESTSUITECHECKOUT, [Testsuite checkout (default: 80f289435a56189bbc5ca2f318574e48dbeef8aa)])
+AC_ARG_VAR(TESTSUITECHECKOUT, [Testsuite checkout (default: 6e6c296ae9c9d2d5c4134b4b64d01b29ac19ff6f)])
 
 if test "x$TESTSUITECHECKOUT" == "x" ; then
-	TESTSUITECHECKOUT="80f289435a56189bbc5ca2f318574e48dbeef8aa"
+	TESTSUITECHECKOUT="6e6c296ae9c9d2d5c4134b4b64d01b29ac19ff6f"
 fi
 
 AC_ARG_VAR(JSONTESTSUITEURL, [JSON Testsuite git repo URL (default: https://github.com/nst/JSONTestSuite)])
@@ -296,6 +357,7 @@ echo "
     MAJOR.MINOR:           ${MAJOR}.${MINOR}
     PATCH:                 ${PATCH}
     EXTRA:                 ${EXTRA}
+    LIBTOOL_VERSION:       ${LIBTOOL_VERSION}
     prefix:                ${prefix}
     C compiler:            ${CC}
     CFLAGS:                ${CFLAGS}
@@ -305,6 +367,7 @@ echo "
     HAVE_CHECK:            ${HAVE_CHECK}
     HAVE_COMPATIBLE_CHECK: ${HAVE_COMPATIBLE_CHECK}
     HAVE_NETWORK:          ${HAVE_NETWORK}
+    HAVE_DEVMODE:          ${HAVE_DEVMODE}
     HAVE_SPHINX:           ${HAVE_SPHINX}
     GIT:                   $GIT
     DOCKER:                $DOCKER
