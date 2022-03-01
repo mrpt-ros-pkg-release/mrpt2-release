@@ -77,6 +77,11 @@ struct fy_emitter {
 	int flow_level;
 	unsigned int flags;
 	bool output_error : 1;
+	bool source_json : 1;		/* the source was json */
+	bool force_json : 1;		/* force JSON mode unconditionally */
+	bool suppress_recycling_force : 1;
+	bool suppress_recycling : 1;
+
 	/* current document */
 	struct fy_emitter_cfg cfg;	/* yeah, it isn't worth just to save a few bytes */
 	struct fy_document *fyd;
@@ -103,6 +108,12 @@ struct fy_emitter {
 	/* recycled */
 	struct fy_eventp_list recycled_eventp;
 	struct fy_token_list recycled_token;
+
+	struct fy_eventp_list *recycled_eventp_list;	/* NULL when suppressing */
+	struct fy_token_list *recycled_token_list;	/* NULL when suppressing */
+
+	/* for special needs */
+	void (*finalizer)(struct fy_emitter *emit);
 };
 
 int fy_emit_setup(struct fy_emitter *emit, const struct fy_emitter_cfg *cfg);

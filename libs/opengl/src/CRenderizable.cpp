@@ -2,13 +2,14 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "opengl-precomp.h"	 // Precompiled header
 //
+#include <mrpt/containers/yaml.h>
 #include <mrpt/math/TPose3D.h>
 #include <mrpt/math/utils.h>
 #include <mrpt/opengl/CRenderizable.h>	// Include these before windows.h!!
@@ -239,4 +240,12 @@ CText& CRenderizable::labelObject() const
 		m_label_obj->setString(m_name);
 	}
 	return *m_label_obj;
+}
+
+void CRenderizable::toYAMLMap(mrpt::containers::yaml& propertiesMap) const
+{
+	propertiesMap["name"] = m_name;
+	propertiesMap["show_name"] = m_show_name;
+	propertiesMap["location"] = getPose().asString();
+	propertiesMap["visible"] = m_visible;
 }

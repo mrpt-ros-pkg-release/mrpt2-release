@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -599,6 +599,21 @@ class yaml
 	yaml& operator=(uint32_t v);
 	yaml& operator=(int64_t v);
 	yaml& operator=(uint64_t v);
+
+	// Additional operator for "size_t", in systems/compilers where
+	// size_t != all other types above
+	// (e.g. OSX with clang, see https://stackoverflow.com/a/11603907/1631514 )
+	template <
+		typename = std::enable_if<
+			!std::is_same_v<std::size_t, uint64_t> &&
+			!std::is_same_v<std::size_t, int64_t> &&
+			!std::is_same_v<std::size_t, uint32_t> &&
+			!std::is_same_v<std::size_t, int32_t>>	//
+		>
+	yaml& operator=(std::size_t v)
+	{
+		return operator=(static_cast<uint64_t>(v));
+	}
 
 	yaml& operator=(const std::string& v);
 	inline yaml& operator=(const char* v) { return operator=(std::string(v)); }

@@ -2,12 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 #pragma once
 
+#include <mrpt/containers/yaml_frwd.h>
 #include <mrpt/img/TColor.h>
 #include <mrpt/math/TBoundingBox.h>
 #include <mrpt/math/TPoint3D.h>
@@ -255,6 +256,10 @@ class CRenderizable : public mrpt::serialization::CSerializable
 	}
 
 	/** @} */
+
+	/** Used from COpenGLScene::asYAML().
+	 * \note (New in MRPT 2.4.2) */
+	virtual void toYAMLMap(mrpt::containers::yaml& propertiesMap) const;
 
 	/** Default constructor:  */
 	CRenderizable();

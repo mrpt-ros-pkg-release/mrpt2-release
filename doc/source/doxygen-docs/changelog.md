@@ -1,10 +1,69 @@
 \page changelog Change Log
 
+# Version 2.4.3: Released Feb 22nd, 2022
+- Changes in applications:
+  - navlog-viewer:
+    - The timestamp is now always shown.
+- BUG FIXES:
+  - Do not run offscreen rendering unit tests in MIPS arch, since they seem to fail in autobuilders.
+  - mrpt::vision::checkerBoardCameraCalibration() did not return the distortion model (so if parameters are printed, it would look like no distortion at all!).
+  - mrpt::gui::CDisplayWindowGUI::createManagedSubWindow() created the subwindows helper UI on top of the other user windows. It now remains on the back of other windows.
+
+# Version 2.4.2: Released Feb 3rd, 2022
+- Changes in libraries:
+  - \ref mrpt_containers_grp
+    - mrpt::container::yaml::operator(size_t) added, conditionally to `size_t` being a different type than `uint64_t` and such (Fixes build errors on OSX).
+  - \ref mrpt_core_grp
+    - mrpt::callStackBackTrace() (and exception backtraces) now only use BFD to solve for line numbers in DEBUG builds, to avoid the large delay in processing each exception.
+    - New method mrpt::WorkerThreadsPool::size().
+  - \ref mrpt_expr_grp
+    - ExprTk updated to latest version.
+  - \ref mrpt_gui_grp
+    - GUI windows can now have custom icons via mrpt::gui::CDisplayWindowGUI::setIcon() or mrpt::gui::CDisplayWindowGUI::setIconFromData()
+  - \ref mrpt_img_grp
+    - New static method mrpt::img::CImage::LoadFromFile()
+  - \ref mrpt_math_grp
+    - Vector and matrix classes: add [[nodiscard]] to static "constructor" methods to avoid mistakes.
+  - \ref mrpt_opengl_grp
+    - mrpt::opengl::CFBORender now does not rely on GLUT to create opengl contexts, but on EGL.
+  - \ref mrpt_typemeta_grp
+    - Add syntactic sugar function mrpt::typemeta::str2enum<>().
+- BUG FIXES:
+  - mrpt::opengl::CFBORender did only render the `main` viewport, it now processes all of them.
+  - Fix FTBFS with ffmpeg 5.0 (Debian Bug #[1004585](https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=1004585))
+
+# Version 2.4.1: Released Jan 5th, 2022
+- Changes in build system:
+    - Disable -flto in nanogui (to avoid an [Eigen regression](https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=1000780)).
+- Changes in applications:
+  - rawlog-edit:
+    - New flag `--externals-filename-format`
+  - RawlogViewer:
+    - Better handling of exceptions failing to load delayed-load images.
+- Changes in libraries:
+  - \ref mrpt_core_grp
+    - Remove unused header `<mrpt/3rdparty/llvm/propagate_const.h>`.
+  - \ref mrpt_graphs_grp
+    - mrpt::graphs::CDijkstra now has an optional maximum topological search range.
+  - \ref mrpt_math_grp
+    - New geometry functions:
+      - mrpt::math::intersect(const TPolygon2D& subject, const TPolygon2D& clipping)
+      - mrpt::math::signedArea(const mrpt::math::TPolygon2D& p)
+  - \ref mrpt_obs_grp
+    - New function mrpt::obs::format_externals_filename()
+  - Embedded copy of nanoflann: upgraded to v1.4.0.
+- BUG FIXES:
+  - Fix bug in mrpt::math::getAngle(const TPlane&, const TPlane&).
+  - Fix exception if mrpt::opengl::CFBORender is used with setProjectiveFromPinhole() camera models.
+  - Fix CMake Warning at cmakemodules/FindFilesystem.cmake and failure to detect the std::filesystem feature in some g++ versions.
+  - Fix numerical innacuracies with planar bounding boxes, fixed via new `epsilon` parameter in mrpt::math::TBoundingBox::intersection()
+  - Fix sluggish rendering in opengl+wxWidgets controls (e.g. within RawLogViewer, etc.).
+
 # Version 2.4.0: Released Dec 12th, 2021
 - Changes in build system:
   - Most important CMake variables now are prefixed with `MRPT_` to avoid name collisions if using MRPT as a git submodule in a larger project.
   - `GNUInstallDirs` directories are now always honored when installing.
-- Changes in applications:
+- Changes in acpplications:
   - ptg-configurator:
     - Show selected PTG path output motion command.
   - navlog-viewer:

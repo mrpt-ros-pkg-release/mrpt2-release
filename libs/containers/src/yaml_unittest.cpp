@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -38,6 +38,7 @@ MRPT_TEST(yaml, assignments)
 	p["enabled"] = true;
 	p["visible"] = false;
 	p["hidden"] = "true";
+	p["val_of_size_t"] = size_t(10);
 	auto nHidden1 = p["hidden"];
 
 	EXPECT_FALSE(p.empty());
@@ -54,6 +55,8 @@ MRPT_TEST(yaml, assignments)
 	EXPECT_TRUE(p["enabled"]);
 	EXPECT_FALSE(p["visible"]);
 	EXPECT_TRUE(p["hidden"]);
+
+	EXPECT_EQ(p["val_of_size_t"].as<size_t>(), size_t(10));
 
 	EXPECT_EQ(p["K"].scalarType(), typeid(double));
 	EXPECT_EQ(p["K"].as<double>(), 2.0);
