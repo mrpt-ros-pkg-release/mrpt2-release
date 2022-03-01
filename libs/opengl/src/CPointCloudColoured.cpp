@@ -2,13 +2,14 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #include "opengl-precomp.h"	 // Precompiled header
 //
+#include <mrpt/containers/yaml.h>
 #include <mrpt/core/round.h>  // round()
 #include <mrpt/math/ops_containers.h>  // for << ops
 #include <mrpt/opengl/CPointCloudColoured.h>
@@ -257,4 +258,11 @@ void CPointCloudColoured::recolorizeByCoordinate(
 		mrpt::img::colormap(color_map, col_idx, r, g, b);
 		this->setPointColor_fast(i, r, g, b);
 	}
+}
+
+void CPointCloudColoured::toYAMLMap(mrpt::containers::yaml& propertiesMap) const
+{
+	CRenderizable::toYAMLMap(propertiesMap);
+	propertiesMap["point_count"] = m_points.size();
+	propertiesMap["bounding_box"] = this->getBoundingBox().asString();
 }

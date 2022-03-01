@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -87,7 +87,7 @@ class MatrixVectorBase
 		setConstant(nrows, 1, value);
 	}
 
-	static Derived Constant(const Scalar value)
+	[[nodiscard]] static Derived Constant(const Scalar value)
 	{
 		ASSERTMSG_(
 			Derived::RowsAtCompileTime > 0 && Derived::ColsAtCompileTime > 0,
@@ -97,7 +97,8 @@ class MatrixVectorBase
 		m.fill(value);
 		return m;
 	}
-	static Derived Constant(size_t nrows, size_t ncols, const Scalar value)
+	[[nodiscard]] static Derived Constant(
+		size_t nrows, size_t ncols, const Scalar value)
 	{
 		Derived m;
 		m.setConstant(nrows, ncols, value);
@@ -123,8 +124,8 @@ class MatrixVectorBase
 		setConstant(nrows, 1, 0);
 	}
 
-	static Derived Zero() { return Constant(0); }
-	static Derived Zero(size_t nrows, size_t ncols)
+	[[nodiscard]] static Derived Zero() { return Constant(0); }
+	[[nodiscard]] static Derived Zero(size_t nrows, size_t ncols)
 	{
 		return Constant(nrows, ncols, 0);
 	}

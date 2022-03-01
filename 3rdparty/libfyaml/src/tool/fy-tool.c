@@ -50,6 +50,10 @@
 #define YPATH_ALIASES_DEFAULT		false
 #define DISABLE_FLOW_MARKERS_DEFAULT	false
 #define DUMP_PATH_DEFAULT		false
+#define DOCUMENT_EVENT_STREAM_DEFAULT	false
+#define COLLECT_ERRORS_DEFAULT		false
+#define ALLOW_DUPLICATE_KEYS_DEFAULT	false
+#define STRIP_EMPTY_KV_DEFAULT		false
 
 #define OPT_DUMP			1000
 #define OPT_TESTSUITE			1001
@@ -77,6 +81,10 @@
 #define OPT_YPATH_ALIASES		2013
 #define OPT_DISABLE_FLOW_MARKERS	2014
 #define OPT_DUMP_PATH			2015
+#define OPT_DOCUMENT_EVENT_STREAM	2016
+#define OPT_COLLECT_ERRORS		2017
+#define OPT_ALLOW_DUPLICATE_KEYS	2018
+#define OPT_STRIP_EMPTY_KV		2019
 
 #define OPT_DISABLE_DIAG		3000
 #define OPT_ENABLE_DIAG			3001
@@ -131,8 +139,12 @@ static struct option lopts[] = {
 	{"ypath-aliases",	no_argument,		0,	OPT_YPATH_ALIASES },
 	{"disable-flow-markers",no_argument,		0,	OPT_DISABLE_FLOW_MARKERS },
 	{"dump-pathexpr",	no_argument,		0,	OPT_DUMP_PATHEXPR },
+	{"document-event-stream",no_argument,		0,	OPT_DOCUMENT_EVENT_STREAM },
 	{"noexec",		no_argument,		0,	OPT_NOEXEC },
 	{"null-output",		no_argument,		0,	OPT_NULL_OUTPUT },
+	{"collect-errors",	no_argument,		0,	OPT_COLLECT_ERRORS },
+	{"allow-duplicate-keys",no_argument,		0,	OPT_ALLOW_DUPLICATE_KEYS },
+	{"strip-empty-kv",	no_argument,		0,	OPT_STRIP_EMPTY_KV },
 	{"to",			required_argument,	0,	'T' },
 	{"from",		required_argument,	0,	'F' },
 	{"quiet",		no_argument,		0,	'q' },
@@ -153,7 +165,7 @@ static void display_usage(FILE *fp, char *progname, int tool_mode)
 						DEBUG_LEVEL_DEFAULT);
 	fprintf(fp, "\t--disable-diag <x>      : Disable diag error module <x>\n");
 	fprintf(fp, "\t--enable-diag <x>       : Enable diag error module <x>\n");
-	fprintf(fp, "\t--show-diag-diag <x>    : Show diag option <x>\n");
+	fprintf(fp, "\t--show-diag <x>         : Show diag option <x>\n");
 	fprintf(fp, "\t--hide-diag <x>         : Hide diag optione <x>\n");
 
 	fprintf(fp, "\t--indent, -i <indent>    : Set dump indent to <indent>"
@@ -207,6 +219,15 @@ static void display_usage(FILE *fp, char *progname, int tool_mode)
 	fprintf(fp, "\t--ypath-aliases          : Use YPATH aliases (default %s)\n",
 						YPATH_ALIASES_DEFAULT ? "true" : "false");
 	fprintf(fp, "\t--null-output            : Do not generate output (for scanner profiling)\n");
+	fprintf(fp, "\t--collect-errors         : Collect errors instead of outputting directly"
+						" (default %s)\n",
+						COLLECT_ERRORS_DEFAULT ? "true" : "false");
+	fprintf(fp, "\t--allow-duplicate-keys   : Allow duplicate keys"
+						" (default %s)\n",
+						ALLOW_DUPLICATE_KEYS_DEFAULT ? "true" : "false");
+	fprintf(fp, "\t--strip-empty-kv         : Strip keys with empty values when emitting (not available in streaming mode)"
+						" (default %s)\n",
+						STRIP_EMPTY_KV_DEFAULT ? "true" : "false");
 	fprintf(fp, "\t--quiet, -q              : Quiet operation, do not "
 						"output messages (default %s)\n",
 						QUIET_DEFAULT ? "true" : "false");
@@ -220,12 +241,15 @@ static void display_usage(FILE *fp, char *progname, int tool_mode)
 		fprintf(fp, "\t--comment, -c            : Output comments (experimental)"
 							" (default %s)\n",
 							COMMENT_DEFAULT ? "true" : "false");
-		fprintf(fp, "\t--mode, -m <mode>        : Output mode can be one of original, block, flow, flow-oneline, json, json-tp, json-oneline, dejson"
+		fprintf(fp, "\t--mode, -m <mode>        : Output mode can be one of original, block, flow, flow-oneline, json, json-tp, json-oneline, dejson, pretty|yamlfmt"
 							" (default %s)\n",
 							MODE_DEFAULT);
 		fprintf(fp, "\t--disable-flow-markers   : Disable testsuite's flow-markers"
 							" (default %s)\n",
 							DISABLE_FLOW_MARKERS_DEFAULT ? "true" : "false");
+		fprintf(fp, "\t--document-event-stream  : Generate a document and then produce the event stream"
+							" (default %s)\n",
+							DOCUMENT_EVENT_STREAM_DEFAULT ? "true" : "false");
 		if (tool_mode == OPT_TOOL || tool_mode == OPT_DUMP)
 			fprintf(fp, "\t--streaming              : Use streaming output mode"
 								" (default %s)\n",
@@ -365,6 +389,8 @@ static int apply_mode_flags(const char *what, enum fy_emitter_cfg_flags *flagsp)
 		{ .name = "json-tp",		.value = FYECF_MODE_JSON_TP },
 		{ .name = "json-oneline",	.value = FYECF_MODE_JSON_ONELINE },
 		{ .name = "dejson",		.value = FYECF_MODE_DEJSON },
+		{ .name = "pretty",		.value = FYECF_MODE_PRETTY },
+		{ .name = "yamlfmt",		.value = FYECF_MODE_PRETTY },	/* alias for pretty */
 	};
 	unsigned int i;
 
@@ -1176,7 +1202,7 @@ compose_process_event(struct fy_parser *fyp, struct fy_event *fye, struct fy_pat
 				fy_path_in_mapping(path) ? 'M' : '-',
 				fy_path_in_mapping_key(path) ? 'K' :
 					fy_path_in_mapping_value(path) ? 'V' : '-',
-				fy_path_is_collection_root(path) ? '/' : '-',
+				fy_path_in_collection_root(path) ? '/' : '-',
 				fy_path_depth(path),
 				fy_path_get_text_alloca(path));
 	}
@@ -1395,8 +1421,12 @@ int main(int argc, char *argv[])
 	bool stdin_input;
 	void *res_iter;
 	bool disable_flow_markers = false;
+	bool document_event_stream = DOCUMENT_EVENT_STREAM_DEFAULT;
+	bool collect_errors = COLLECT_ERRORS_DEFAULT;
+	bool allow_duplicate_keys = ALLOW_DUPLICATE_KEYS_DEFAULT;
 	struct composer_data cd;
 	bool dump_path = DUMP_PATH_DEFAULT;
+	const char *input_arg;
 
 	fy_valgrind_check(&argc, &argv);
 
@@ -1668,6 +1698,18 @@ int main(int argc, char *argv[])
 		case OPT_DISABLE_FLOW_MARKERS:
 			disable_flow_markers = true;
 			break;
+		case OPT_DOCUMENT_EVENT_STREAM:
+			document_event_stream = true;
+			break;
+		case OPT_COLLECT_ERRORS:
+			collect_errors = true;
+			break;
+		case OPT_ALLOW_DUPLICATE_KEYS:
+			allow_duplicate_keys = true;
+			break;
+		case OPT_STRIP_EMPTY_KV:
+			emit_flags |= FYECF_STRIP_EMPTY_KV;
+			break;
 		case 'h' :
 		default:
 			if (opt != 'h')
@@ -1710,6 +1752,13 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "fy_diag_create() failed\n");
 		goto cleanup;
 	}
+
+	/* collect errors, instead of outputting directly */
+	if (collect_errors)
+		fy_diag_set_collect_errors(diag, true);
+
+	if (allow_duplicate_keys)
+		cfg.flags |= FYPCF_ALLOW_DUPLICATE_KEYS;
 
 	/* all set, use fy_diag for error reporting, debugging now */
 
@@ -1760,27 +1809,93 @@ int main(int argc, char *argv[])
 			fprintf(stderr, "failed to create token iterator\n");
 			goto cleanup;
 		}
-		while ((fyev = fy_parser_parse(fyp)) != NULL) {
+
+		if (!document_event_stream) {
+			/* regular test suite */
+			while ((fyev = fy_parser_parse(fyp)) != NULL) {
+				dump_testsuite_event(fyp, fyev, du.colorize, iter, disable_flow_markers);
+				fy_parser_event_free(fyp, fyev);
+			}
+		} else {
+			struct fy_document_iterator *fydi;
+
+			fydi = fy_document_iterator_create();
+			assert(fydi);
+
+			fyev = fy_document_iterator_stream_start(fydi);
+			if (!fyev) {
+				fprintf(stderr, "failed to create document iterator's stream start event\n");
+				goto cleanup;
+			}
 			dump_testsuite_event(fyp, fyev, du.colorize, iter, disable_flow_markers);
-			fy_parser_event_free(fyp, fyev);
+			fy_document_iterator_event_free(fydi, fyev);
+
+			/* convert to document and then process the generator event stream it */
+			while ((fyd = fy_parse_load_document(fyp)) != NULL) {
+
+				fyev = fy_document_iterator_document_start(fydi, fyd);
+				if (!fyev) {
+					fprintf(stderr, "failed to create document iterator's document start event\n");
+					goto cleanup;
+				}
+				dump_testsuite_event(fyp, fyev, du.colorize, iter, disable_flow_markers);
+				fy_document_iterator_event_free(fydi, fyev);
+
+				while ((fyev = fy_document_iterator_body_next(fydi)) != NULL) {
+					dump_testsuite_event(fyp, fyev, du.colorize, iter, disable_flow_markers);
+					fy_document_iterator_event_free(fydi, fyev);
+				}
+
+				fyev = fy_document_iterator_document_end(fydi);
+				if (!fyev) {
+					fprintf(stderr, "failed to create document iterator's stream document end\n");
+					goto cleanup;
+				}
+				dump_testsuite_event(fyp, fyev, du.colorize, iter, disable_flow_markers);
+				fy_document_iterator_event_free(fydi, fyev);
+
+				fy_parse_document_destroy(fyp, fyd);
+				if (rc)
+					break;
+
+			}
+
+			fyev = fy_document_iterator_stream_end(fydi);
+			if (!fyev) {
+				fprintf(stderr, "failed to create document iterator's stream end event\n");
+				goto cleanup;
+			}
+			dump_testsuite_event(fyp, fyev, du.colorize, iter, disable_flow_markers);
+			fy_document_iterator_event_free(fydi, fyev);
+
+			fy_document_iterator_destroy(fydi);
+			fydi = NULL;
 		}
+
 		fy_token_iter_destroy(iter);
 		iter = NULL;
+
 		if (fy_parser_get_stream_error(fyp))
 			goto cleanup;
 		break;
 
 	case OPT_DUMP:
-		if (optind >= argc) {
-			fprintf(stderr, "missing yaml file to dump\n");
-			goto cleanup;
-		}
-
 		count = 0;
-		for (i = optind; i < argc; i++) {
-			rc = set_parser_input(fyp, argv[i], false);
+		for (i = optind; ; i++) {
+
+			if (optind < argc) {
+				if (i >= argc)
+					break;
+				input_arg = argv[i];
+			} else {
+				if (i >= argc + 1)
+					break;
+				input_arg = "-";
+			}
+
+			rc = set_parser_input(fyp, input_arg, false);
 			if (rc) {
-				fprintf(stderr, "failed to set parser input to '%s' for dump\n", argv[i]);
+				fprintf(stderr, "failed to set parser input to '%s' for dump\n", input_arg);
 				goto cleanup;
 			}
 
@@ -1881,10 +1996,21 @@ int main(int argc, char *argv[])
 		}
 
 		fyd_join = NULL;
-		for (i = optind; i < argc; i++) {
-			rc = set_parser_input(fyp, argv[i], false);
+		for (i = optind; ; i++) {
+
+			if (optind < argc) {
+				if (i >= argc)
+					break;
+				input_arg = argv[i];
+			} else {
+				if (i >= argc + 1)
+					break;
+				input_arg = "-";
+			}
+
+			rc = set_parser_input(fyp, input_arg, false);
 			if (rc) {
-				fprintf(stderr, "failed to set parser input to '%s' for join\n", argv[i]);
+				fprintf(stderr, "failed to set parser input to '%s' for join\n", input_arg);
 				goto cleanup;
 			}
 
@@ -2168,8 +2294,19 @@ cleanup:
 	if (fyp)
 		fy_parser_destroy(fyp);
 
-	if (diag)
+	if (diag) {
+		if (collect_errors) {
+			struct fy_diag_error *err;
+			void *iter;
+
+			iter = NULL;
+			while ((err = fy_diag_errors_iterate(diag, &iter)) != NULL) {
+				fprintf(stderr, "%s:%d:%d %s\n", err->file, err->line, err->column, err->msg);
+			}
+
+		}
 		fy_diag_destroy(diag);
+	}
 
 	return exitcode;
 }

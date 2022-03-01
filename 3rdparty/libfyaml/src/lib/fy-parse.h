@@ -32,6 +32,7 @@
 #include "fy-event.h"
 #include "fy-docstate.h"
 #include "fy-doc.h"
+#include "fy-docbuilder.h"
 #include "fy-emit.h"
 #include "fy-accel.h"
 #include "fy-emit-accum.h"
@@ -149,6 +150,7 @@ struct fy_parser {
 	bool stream_end_produced : 1;
 	bool stream_end_reached : 1;
 	bool simple_key_allowed : 1;
+	bool tab_used_for_ws : 1;
 	bool stream_error : 1;
 	bool generated_block_map : 1;
 	bool last_was_comma : 1;
@@ -164,6 +166,7 @@ struct fy_parser {
 	struct fy_mark pending_complex_key_mark;
 	int last_block_mapping_key_line;
 	struct fy_mark last_comma_mark;
+	struct fy_mark last_tab_used_for_ws_mark;
 
 	/* copy of stream_end token */
 	struct fy_token *stream_end_token;
@@ -199,9 +202,13 @@ struct fy_parser {
 	struct fy_indent_list recycled_indent;
 	struct fy_simple_key_list recycled_simple_key;
 	struct fy_parse_state_log_list recycled_parse_state_log;
-	struct fy_eventp_list recycled_eventp;
 	struct fy_flow_list recycled_flow;
+
+	struct fy_eventp_list recycled_eventp;
 	struct fy_token_list recycled_token;
+
+	struct fy_eventp_list *recycled_eventp_list;
+	struct fy_token_list *recycled_token_list;
 
 	/* the diagnostic object */
 	struct fy_diag *diag;
@@ -215,6 +222,7 @@ struct fy_parser {
 	/* when using the composer interface */
 	struct fy_composer *fyc;
 	fy_parse_composer_cb fyc_cb;
+	void *fyc_userdata;
 };
 
 static inline struct fy_input *
@@ -263,6 +271,11 @@ static inline enum fy_flow_ws_mode fyp_fws_mode(const struct fy_parser *fyp)
 {
 	assert(fyp);
 	return fy_reader_flow_ws_mode(fyp->reader);
+}
+
+static inline bool fyp_block_mode(struct fy_parser *fyp)
+{
+	return !fyp_json_mode(fyp) && !fyp->flow_level;
 }
 
 static inline bool fyp_is_lb(const struct fy_parser *fyp, int c)
@@ -371,14 +384,14 @@ fy_parse_strncmp(struct fy_parser *fyp, const char *str, size_t n)
 	return fy_reader_strncmp(fyp->reader, str, n);
 }
 
-static inline int
+static FY_ALWAYS_INLINE inline int
 fy_parse_peek_at_offset(struct fy_parser *fyp, size_t offset)
 {
 	assert(fyp);
 	return fy_reader_peek_at_offset(fyp->reader, offset);
 }
 
-static inline int
+static FY_ALWAYS_INLINE inline int
 fy_parse_peek_at_internal(struct fy_parser *fyp, int pos, ssize_t *offsetp)
 {
 	assert(fyp);
@@ -406,49 +419,49 @@ fy_is_generic_blankz_at_offset(struct fy_parser *fyp, size_t offset)
 	return fy_reader_is_generic_blankz(fyp->reader, fy_reader_peek_at_offset(fyp->reader, offset));
 }
 
-static inline int
+static FY_ALWAYS_INLINE inline int
 fy_parse_peek_at(struct fy_parser *fyp, int pos)
 {
 	assert(fyp);
 	return fy_reader_peek_at_internal(fyp->reader, pos, NULL);
 }
 
-static inline int
+static FY_ALWAYS_INLINE inline int
 fy_parse_peek(struct fy_parser *fyp)
 {
 	assert(fyp);
 	return fy_reader_peek(fyp->reader);
 }
 
-static inline void
+static FY_ALWAYS_INLINE inline void
 fy_advance(struct fy_parser *fyp, int c)
 {
 	assert(fyp);
 	fy_reader_advance(fyp->reader, c);
 }
 
-static inline void
+static FY_ALWAYS_INLINE inline void
 fy_advance_ws(struct fy_parser *fyp, int c)
 {
 	assert(fyp);
 	fy_reader_advance_ws(fyp->reader, c);
 }
 
-static inline void
+static FY_ALWAYS_INLINE inline void
 fy_advance_space(struct fy_parser *fyp)
 {
 	assert(fyp);
 	fy_reader_advance_space(fyp->reader);
 }
 
-static inline int
+static FY_ALWAYS_INLINE inline int
 fy_parse_get(struct fy_parser *fyp)
 {
 	assert(fyp);
 	return fy_reader_get(fyp->reader);
 }
 
-static inline int
+static FY_ALWAYS_INLINE inline int
 fy_advance_by(struct fy_parser *fyp, int count)
 {
 	assert(fyp);
@@ -572,12 +585,6 @@ void fy_reader_skip_space(struct fy_reader *fyr);
 static inline int fy_document_state_version_compare(struct fy_document_state *fyds, const struct fy_version *vb)
 {
 	return fy_version_compare(fy_document_state_version(fyds), vb);
-}
-
-static inline struct fy_token_list *
-fy_parse_recycled_token(struct fy_parser *fyp)
-{
-	return fyp && !fyp->suppress_recycling ? &fyp->recycled_token : NULL;
 }
 
 int fy_parse_set_composer(struct fy_parser *fyp, fy_parse_composer_cb cb, void *userdata);
