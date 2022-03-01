@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -62,7 +62,7 @@ class MatrixBase : public MatrixVectorBase<Scalar, Derived>
 	}
 	void setIdentity(const std::size_t N) { setDiagonal(N, 1); }
 
-	static Derived Identity()
+	[[nodiscard]] static Derived Identity()
 	{
 		ASSERTMSG_(
 			Derived::RowsAtCompileTime > 0 && Derived::ColsAtCompileTime > 0,
@@ -72,7 +72,7 @@ class MatrixBase : public MatrixVectorBase<Scalar, Derived>
 		m.setIdentity();
 		return m;
 	}
-	static Derived Identity(const std::size_t N)
+	[[nodiscard]] static Derived Identity(const std::size_t N)
 	{
 		Derived m;
 		m.setIdentity(N);
