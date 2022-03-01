@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -64,6 +64,8 @@ TEST(TEnumType, value2str)
 	EXPECT_EQ(TEnumType<Directions>::value2name(East), "East");
 
 	EXPECT_EQ(mrpt::typemeta::enum2str(East), "East");
+
+	EXPECT_EQ(mrpt::typemeta::str2enum<Directions>("East"), East);
 
 	EXPECT_THROW(
 		TEnumType<TestColors>::value2name(static_cast<TestColors>(5)),

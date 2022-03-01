@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2021, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -122,6 +122,9 @@ mrpt::containers::yaml CSetOfObjects::asYAML() const
 		const auto obj = m_objects.at(i);
 		mrpt::containers::yaml de = mrpt::containers::yaml::Map();
 
+		// class-specific properties:
+		obj->toYAMLMap(de);
+
 		de["index"] = i;  // type for "i" must be a stdint type
 		if (!obj)
 		{
@@ -129,8 +132,6 @@ mrpt::containers::yaml CSetOfObjects::asYAML() const
 			continue;
 		}
 		de["class"] = obj->GetRuntimeClass()->className;
-		de["name"] = obj->m_name;
-		de["location"] = obj->getPose().asString();
 
 		// Single obj:
 		if (obj->GetRuntimeClass() ==
