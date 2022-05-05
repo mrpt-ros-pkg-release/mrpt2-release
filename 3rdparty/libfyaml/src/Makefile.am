@@ -38,9 +38,7 @@ libfyaml_la_LDFLAGS = $(AM_LDFLAGS) $(AM_LIBLDFLAGS) \
 bin_PROGRAMS =
 noinst_PROGRAMS =
 
-# libfyaml-parser needs both LIBYAML and static
 if HAVE_LIBYAML
-if HAVE_STATIC
 
 noinst_PROGRAMS += libfyaml-parser
 
@@ -55,8 +53,7 @@ libfyaml_parser_CPPFLAGS = $(AM_CPPFLAGS) \
 libfyaml_parser_LDADD = $(AM_LDADD) $(LIBYAML_LIBS) libfyaml.la
 libfyaml_parser_CFLAGS = $(AM_CFLAGS) $(LIBYAML_CFLAGS)
 
-libfyaml_parser_LDFLAGS = $(AM_LDFLAGS) -static
-endif
+libfyaml_parser_LDFLAGS = $(AM_LDFLAGS)
 endif
 
 bin_PROGRAMS += fy-tool
