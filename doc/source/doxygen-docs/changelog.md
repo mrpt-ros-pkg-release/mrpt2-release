@@ -1,8 +1,29 @@
 \page changelog Change Log
 
+# Version 2.4.8: Released May 26th, 2022
+- Build system:
+  - Fixed various ROS-level public dependencies.
+
+# Version 2.4.7: Released May 26th, 2022
+- Examples:
+  - gui_depth_camera_distortion: Added option to change distortion model.
+- Build system
+  - Fixed ROS-level public dependency on suitesparse.
+  - Enable tinyxml2 for ROS builds.
+- Changes in libraries:
+  - \ref mrpt_maps_grp
+    - Method mrpt::maps::CPointsMap::addFrom() removed, it overlapped with mrpt::maps::CPointsMap::insertAnotherMap()
+    - New optional parameter in mrpt::maps::CPointsMap::insertAnotherMap()
+  - \ref mrpt_obs_grp
+    - New option mrpt::obs::T3DPointsProjectionParams::onlyPointsWithIntensityColor
+
+# Version 2.4.6: Released May 24th, 2022
+- Build system
+  - Fixed ROS-level public dependencies via package.xml
+
 # Version 2.4.5: Released May 22nd, 2022
 - Changes in libraries:
-  - New module mrpt_ros2bridge_grp to support conversions to/from ROS2 data types and MRPT classes.
+  - New module \ref mrpt_ros2bridge_grp to support conversions to/from ROS2 data types and MRPT classes.
 - Build system:
   - Fix detection of dependencies for both ROS1 and ROS2.
 
