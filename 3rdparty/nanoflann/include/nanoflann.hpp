@@ -54,10 +54,11 @@
 #include <limits>  // std::reference_wrapper
 #include <ostream>
 #include <stdexcept>
+#include <unordered_set>
 #include <vector>
 
 /** Library version: 0xMmP (M=Major,m=minor,P=patch) */
-#define NANOFLANN_VERSION 0x140
+#define NANOFLANN_VERSION 0x142
 
 // Avoid conflicting declaration of min/max macros in windows headers
 #if !defined(NOMINMAX) && \
@@ -67,6 +68,10 @@
 #undef max
 #undef min
 #endif
+#endif
+// Avoid conflicts with X11 headers
+#ifdef None
+#undef None
 #endif
 
 namespace nanoflann
@@ -168,7 +173,7 @@ class KNNResultSet
     CountType     count;
 
    public:
-    inline KNNResultSet(CountType capacity_)
+    explicit inline KNNResultSet(CountType capacity_)
         : indices(0), dists(0), capacity(capacity_), count(0)
     {
     }
@@ -255,7 +260,7 @@ class RadiusResultSet
 
     std::vector<std::pair<IndexType, DistanceType>>& m_indices_dists;
 
-    inline RadiusResultSet(
+    explicit inline RadiusResultSet(
         DistanceType                                     radius_,
         std::vector<std::pair<IndexType, DistanceType>>& indices_dists)
         : radius(radius_), m_indices_dists(indices_dists)
@@ -392,7 +397,9 @@ struct L1_Adaptor
         /* Process last 0-3 components.  Not needed for standard vector lengths.
          */
         while (a < last)
-        { result += std::abs(*a++ - data_source.kdtree_get_pt(b_idx, d++)); }
+        {
+            result += std::abs(*a++ - data_source.kdtree_get_pt(b_idx, d++));
+        }
         return result;
     }
 
@@ -648,15 +655,32 @@ struct metric_SO3 : public Metric
 /** @addtogroup param_grp Parameter structs
  * @{ */
 
+enum class KDTreeSingleIndexAdaptorFlags
+{
+    None                  = 0,
+    SkipInitialBuildIndex = 1
+};
+
+inline std::underlying_type<KDTreeSingleIndexAdaptorFlags>::type operator&(
+    KDTreeSingleIndexAdaptorFlags lhs, KDTreeSingleIndexAdaptorFlags rhs)
+{
+    using underlying =
+        typename std::underlying_type<KDTreeSingleIndexAdaptorFlags>::type;
+    return static_cast<underlying>(lhs) & static_cast<underlying>(rhs);
+}
+
 /**  Parameters (see README.md) */
 struct KDTreeSingleIndexAdaptorParams
 {
-    KDTreeSingleIndexAdaptorParams(size_t _leaf_max_size = 10)
-        : leaf_max_size(_leaf_max_size)
+    KDTreeSingleIndexAdaptorParams(
+        size_t _leaf_max_size = 10, KDTreeSingleIndexAdaptorFlags _flags =
+                                        KDTreeSingleIndexAdaptorFlags::None)
+        : leaf_max_size(_leaf_max_size), flags(_flags)
     {
     }
 
-    size_t leaf_max_size;
+    size_t                        leaf_max_size;
+    KDTreeSingleIndexAdaptorFlags flags;
 };
 
 /** Search options for KDTreeSingleIndexAdaptor::findNeighbors() */
@@ -858,7 +882,8 @@ struct array_or_vector_selector<-1, T>
  * and KDTreeSingleIndexDynamicAdaptor_.
  *
  * \tparam Derived The name of the class which inherits this class.
- * \tparam DatasetAdaptor The user-provided adaptor (see comments above).
+ * \tparam DatasetAdaptor The user-provided adaptor, which must be ensured to
+ *         have a lifetime equal or longer than the instance of this class.
  * \tparam Distance The distance metric to use, these are all classes derived
  * from nanoflann::Metric \tparam DIM Dimensionality of data points (e.g. 3 for
  * 3D points) \tparam AccessorType Will be typically size_t or int
@@ -1265,7 +1290,8 @@ class KDTreeBaseClass
  *
  *  \endcode
  *
- * \tparam DatasetAdaptor The user-provided adaptor (see comments above).
+ * \tparam DatasetAdaptor The user-provided adaptor, which must be ensured to
+ *         have a lifetime equal or longer than the instance of this class.
  * \tparam Distance The distance metric to use: nanoflann::metric_L1,
  * nanoflann::metric_L2, nanoflann::metric_L2_Simple, etc. \tparam DIM
  * Dimensionality of data points (e.g. 3 for 3D points) \tparam IndexType Will
@@ -1281,9 +1307,9 @@ class KDTreeSingleIndexAdaptor
 {
    public:
     /** Deleted copy constructor*/
-    KDTreeSingleIndexAdaptor(const KDTreeSingleIndexAdaptor<
-                             Distance, DatasetAdaptor, DIM, AccessorType>&) =
-        delete;
+    explicit KDTreeSingleIndexAdaptor(
+        const KDTreeSingleIndexAdaptor<
+            Distance, DatasetAdaptor, DIM, AccessorType>&) = delete;
 
     /**
      * The dataset used by this index
@@ -1330,7 +1356,8 @@ class KDTreeSingleIndexAdaptor
      *  - The \a DIM template parameter if >0 (highest priority)
      *  - Otherwise, the \a dimensionality parameter of this constructor.
      *
-     * @param inputData Dataset with the input features
+     * @param inputData Dataset with the input features. Its lifetime must be
+     *  equal or longer than that of the instance of this class.
      * @param params Basically, the maximum leaf node size
      *
      * Note that there is a variable number of optional additional parameters
@@ -1339,12 +1366,28 @@ class KDTreeSingleIndexAdaptor
      *
      */
     template <class... Args>
-    KDTreeSingleIndexAdaptor(
+    explicit KDTreeSingleIndexAdaptor(
         const Dimension dimensionality, const DatasetAdaptor& inputData,
-        const KDTreeSingleIndexAdaptorParams& params = {}, Args&&... args)
+        const KDTreeSingleIndexAdaptorParams& params, Args&&... args)
         : dataset(inputData),
           index_params(params),
           distance(inputData, std::forward<Args>(args)...)
+    {
+        init(dimensionality, params);
+    }
+
+    explicit KDTreeSingleIndexAdaptor(
+        const Dimension dimensionality, const DatasetAdaptor& inputData,
+        const KDTreeSingleIndexAdaptorParams& params = {})
+        : dataset(inputData), index_params(params), distance(inputData)
+    {
+        init(dimensionality, params);
+    }
+
+   private:
+    void init(
+        const Dimension                       dimensionality,
+        const KDTreeSingleIndexAdaptorParams& params)
     {
         BaseClassRef::root_node             = nullptr;
         BaseClassRef::m_size                = dataset.kdtree_get_point_count();
@@ -1353,9 +1396,14 @@ class KDTreeSingleIndexAdaptor
         if (DIM > 0) BaseClassRef::dim = DIM;
         BaseClassRef::m_leaf_max_size = params.leaf_max_size;
 
-        buildIndex();
+        if (!(params.flags &
+              KDTreeSingleIndexAdaptorFlags::SkipInitialBuildIndex))
+        {
+            buildIndex();
+        }
     }
 
+   public:
     /**
      * Builds the index
      */
@@ -1731,7 +1779,8 @@ class KDTreeSingleIndexDynamicAdaptor_
      *  - The \a DIM template parameter if >0 (highest priority)
      *  - Otherwise, the \a dimensionality parameter of this constructor.
      *
-     * @param inputData Dataset with the input features
+     * @param inputData Dataset with the input features. Its lifetime must be
+     *  equal or longer than that of the instance of this class.
      * @param params Basically, the maximum leaf node size
      */
     KDTreeSingleIndexDynamicAdaptor_(
@@ -1751,6 +1800,10 @@ class KDTreeSingleIndexDynamicAdaptor_
         if (DIM > 0) BaseClassRef::dim = DIM;
         BaseClassRef::m_leaf_max_size = params.leaf_max_size;
     }
+
+    /** Explicitly default the copy constructor */
+    KDTreeSingleIndexDynamicAdaptor_(
+        const KDTreeSingleIndexDynamicAdaptor_& rhs) = default;
 
     /** Assignment operator definiton */
     KDTreeSingleIndexDynamicAdaptor_ operator=(
@@ -2072,13 +2125,14 @@ class KDTreeSingleIndexDynamicAdaptor
         treeIndex;  //!< treeIndex[idx] is the index of tree in which
                     //!< point at idx is stored. treeIndex[idx]=-1
                     //!< means that point has been removed.
+    std::unordered_set<int> removedPoints;
 
     KDTreeSingleIndexAdaptorParams index_params;
 
     Dimension dim;  //!< Dimensionality of each data point
 
-    using index_container_t =
-        KDTreeSingleIndexDynamicAdaptor_<Distance, DatasetAdaptor, DIM>;
+    using index_container_t = KDTreeSingleIndexDynamicAdaptor_<
+        Distance, DatasetAdaptor, DIM, AccessorType>;
     std::vector<index_container_t> index;
 
    public:
@@ -2105,8 +2159,8 @@ class KDTreeSingleIndexDynamicAdaptor
     /** Creates multiple empty trees to handle dynamic support */
     void init()
     {
-        using my_kd_tree_t =
-            KDTreeSingleIndexDynamicAdaptor_<Distance, DatasetAdaptor, DIM>;
+        using my_kd_tree_t = KDTreeSingleIndexDynamicAdaptor_<
+            Distance, DatasetAdaptor, DIM, AccessorType>;
         std::vector<my_kd_tree_t> index_(
             treeCount,
             my_kd_tree_t(dim /*dim*/, dataset, treeIndex, index_params));
@@ -2127,17 +2181,18 @@ class KDTreeSingleIndexDynamicAdaptor
      *  - The \a DIM template parameter if >0 (highest priority)
      *  - Otherwise, the \a dimensionality parameter of this constructor.
      *
-     * @param inputData Dataset with the input features
+     * @param inputData Dataset with the input features. Its lifetime must be
+     *  equal or longer than that of the instance of this class.
      * @param params Basically, the maximum leaf node size
      */
-    KDTreeSingleIndexDynamicAdaptor(
+    explicit KDTreeSingleIndexDynamicAdaptor(
         const int dimensionality, const DatasetAdaptor& inputData,
         const KDTreeSingleIndexAdaptorParams& params =
             KDTreeSingleIndexAdaptorParams(),
         const size_t maximumPointCount = 1000000000U)
         : dataset(inputData), index_params(params), distance(inputData)
     {
-        treeCount  = static_cast<size_t>(std::log2(maximumPointCount));
+        treeCount  = static_cast<size_t>(std::log2(maximumPointCount)) + 1;
         pointCount = 0U;
         dim        = dimensionality;
         treeIndex.clear();
@@ -2149,20 +2204,29 @@ class KDTreeSingleIndexDynamicAdaptor
     }
 
     /** Deleted copy constructor*/
-    KDTreeSingleIndexDynamicAdaptor(
+    explicit KDTreeSingleIndexDynamicAdaptor(
         const KDTreeSingleIndexDynamicAdaptor<
             Distance, DatasetAdaptor, DIM, AccessorType>&) = delete;
 
     /** Add points to the set, Inserts all points from [start, end] */
     void addPoints(AccessorType start, AccessorType end)
     {
-        Size count = end - start + 1;
+        const Size count    = end - start + 1;
+        int        maxIndex = 0;
         treeIndex.resize(treeIndex.size() + count);
         for (AccessorType idx = start; idx <= end; idx++)
         {
-            int pos = First0Bit(pointCount);
-            index[pos].vAcc.clear();
+            const int pos         = First0Bit(pointCount);
+            maxIndex              = std::max(pos, maxIndex);
             treeIndex[pointCount] = pos;
+
+            const auto it = removedPoints.find(idx);
+            if (it != removedPoints.end())
+            {
+                removedPoints.erase(it);
+                treeIndex[idx] = pos;
+            }
+
             for (int i = 0; i < pos; i++)
             {
                 for (int j = 0; j < static_cast<int>(index[i].vAcc.size()); j++)
@@ -2172,11 +2236,15 @@ class KDTreeSingleIndexDynamicAdaptor
                         treeIndex[index[i].vAcc[j]] = pos;
                 }
                 index[i].vAcc.clear();
-                index[i].freeIndex(index[i]);
             }
             index[pos].vAcc.push_back(idx);
-            index[pos].buildIndex();
             pointCount++;
+        }
+
+        for (int i = 0; i <= maxIndex; ++i)
+        {
+            index[i].freeIndex(index[i]);
+            if (!index[i].vAcc.empty()) index[i].buildIndex();
         }
     }
 
@@ -2184,6 +2252,7 @@ class KDTreeSingleIndexDynamicAdaptor
     void removePoint(size_t idx)
     {
         if (idx >= pointCount) return;
+        removedPoints.insert(idx);
         treeIndex[idx] = -1;
     }
 
@@ -2206,7 +2275,9 @@ class KDTreeSingleIndexDynamicAdaptor
         const SearchParams& searchParams) const
     {
         for (size_t i = 0; i < treeCount; i++)
-        { index[i].findNeighbors(result, &vec[0], searchParams); }
+        {
+            index[i].findNeighbors(result, &vec[0], searchParams);
+        }
         return result.full();
     }
 };
@@ -2225,7 +2296,6 @@ class KDTreeSingleIndexDynamicAdaptor
  *
  * const int max_leaf = 10;
  * my_kd_tree_t mat_index(mat, max_leaf);
- * mat_index.index->buildIndex();
  * mat_index.index->...
  * \endcode
  *
@@ -2262,7 +2332,7 @@ struct KDTreeEigenMatrixAdaptor
     using Dimension = typename index_t::Dimension;
 
     /// Constructor: takes a const ref to the matrix object with the data points
-    KDTreeEigenMatrixAdaptor(
+    explicit KDTreeEigenMatrixAdaptor(
         const Dimension                                 dimensionality,
         const std::reference_wrapper<const MatrixType>& mat,
         const int                                       leaf_max_size = 10)
@@ -2280,7 +2350,6 @@ struct KDTreeEigenMatrixAdaptor
         index = new index_t(
             dims, *this /* adaptor */,
             nanoflann::KDTreeSingleIndexAdaptorParams(leaf_max_size));
-        index->buildIndex();
     }
 
    public:
