@@ -1,7 +1,7 @@
 /***********************************************************************
  * Software License Agreement (BSD License)
  *
- * Copyright 2011-2016 Jose Luis Blanco (joseluisblancoc@gmail.com).
+ * Copyright 2011-2022 Jose Luis Blanco (joseluisblancoc@gmail.com).
  *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -52,7 +52,6 @@ void kdtree_demo(const size_t N)
     dump_mem_usage();
 
     my_kd_tree_t index(1 /*dim*/, cloud, {10 /* max leaf */});
-    index.buildIndex();
 
     dump_mem_usage();
     {

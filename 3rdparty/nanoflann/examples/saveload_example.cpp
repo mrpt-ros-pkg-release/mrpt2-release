@@ -1,7 +1,7 @@
 /***********************************************************************
  * Software License Agreement (BSD License)
  *
- * Copyright 2011-2016 Jose Luis Blanco (joseluisblancoc@gmail.com).
+ * Copyright 2011-2022 Jose Luis Blanco (joseluisblancoc@gmail.com).
  *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -55,7 +55,6 @@ void kdtree_save_load_demo(const size_t N)
         my_kd_tree_t index(
             3 /*dim*/, cloud,
             nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */));
-        index.buildIndex();
 
         std::ofstream f("index.bin", std::ofstream::binary);
 
@@ -70,9 +69,11 @@ void kdtree_save_load_demo(const size_t N)
     {
         // Important: construct the index associated to the same dataset, since
         // data points are NOT stored in the binary file.
+        // Note - set KDTreeSingleIndexAdaptor::SkipInitialBuildIndex, otherwise the tree
+        // builds an index that'll be overwritten via loadIndex
         my_kd_tree_t index(
             3 /*dim*/, cloud,
-            nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */));
+            nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */, nanoflann::KDTreeSingleIndexAdaptorFlags::SkipInitialBuildIndex));
 
         std::ifstream f("index.bin", std::ofstream::binary);
 
