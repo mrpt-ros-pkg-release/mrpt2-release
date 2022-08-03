@@ -2,13 +2,14 @@
 
 # nanoflann
 [![CircleCI](https://circleci.com/gh/jlblancoc/nanoflann/tree/master.svg?style=svg)](https://circleci.com/gh/jlblancoc/nanoflann/tree/master)
+[![Windows build status](https://ci.appveyor.com/api/projects/status/h8k1apfogxyqhskd/branch/master?svg=true)](https://ci.appveyor.com/project/jlblancoc/nanoflann/branch/master)
 
 
 ## 1. About
 
 *nanoflann* is a **C++11 [header-only](http://en.wikipedia.org/wiki/Header-only) library** for building KD-Trees of datasets with different topologies: R<sup>2</sup>, R<sup>3</sup> (point clouds), SO(2) and SO(3) (2D and 3D rotation groups). No support for approximate NN is provided. *nanoflann* does not require compiling or installing. You just need to `#include <nanoflann.hpp>` in your code.
 
-This library is a *fork* of the [flann library](http://www.cs.ubc.ca/research/flann/) ([git](https://github.com/mariusmuja/flann)) by Marius Muja and David G. Lowe, and born as a child project of [MRPT](https://www.mrpt.org/). Following the original license terms, *nanoflann* is distributed under the BSD license. Please, for bugs use the issues button or fork and open a pull request.
+This library is a *fork* of the [flann library](https://github.com/flann-lib/flann) by Marius Muja and David G. Lowe, and born as a child project of [MRPT](https://www.mrpt.org/). Following the original license terms, *nanoflann* is distributed under the BSD license. Please, for bugs use the issues button or fork and open a pull request.
 
 Cite as:
 ```
@@ -23,6 +24,10 @@ Cite as:
 ### 1.1. Obtaining the code
 
 * Easiest way: clone this GIT repository and take the `include/nanoflann.hpp` file for use where you need it.
+* Debian or Ubuntu ([21.04 or newer](https://packages.ubuntu.com/source/hirsute/nanoflann)) users can install it simply with:
+  ```bash 
+  sudo apt install libnanoflann-dev
+  ```
 * macOS users can install `nanoflann` with [Homebrew](https://brew.sh) with:
   ```shell
   $ brew install brewsci/science/nanoflann
@@ -32,7 +37,7 @@ Cite as:
   $ brew tap brewsci/science
   $ brew install nanoflann
   ```
-* Linux users can install it with [Linuxbrew](https://linuxbrew.sh/) with: `brew install homebrew/science/nanoflann`
+* Linux users can also install it with [Linuxbrew](https://linuxbrew.sh/) with: `brew install homebrew/science/nanoflann`
 * List of [**stable releases**](https://github.com/jlblancoc/nanoflann/releases). Check out the [CHANGELOG](https://raw.githubusercontent.com/jlblancoc/nanoflann/master/CHANGELOG.txt)
 
 Although nanoflann itself doesn't have to be compiled, you can build some examples and tests with:
