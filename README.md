@@ -21,12 +21,12 @@
 Mobile Robot Programming Toolkit (MRPT) provides C++ libraries aimed at researchers
 in mobile robotics and computer vision. Libraries include [SLAM solutions](https://www.mrpt.org/List_of_SLAM_algorithms), [2D and 3D spatial transformations](https://www.mrpt.org/tutorials/programming/maths-and-geometry/2d_3d_geometry/), [SE(2)/SE(3) Lie groups](https://ingmec.ual.es/~jlblanco/papers/jlblanco2010geometry3D_techrep.pdf),
 [probability density functions (pdfs)](https://docs.mrpt.org/reference/latest/class_mrpt_math_CProbabilityDensityFunction.html) over points, landmarks, poses and maps,
-Bayesian inference ([Kalman filters](https://www.mrpt.org/Kalman_Filters), [particle filters](https://www.mrpt.org/tutorials/programming/statistics-and-bayes-filtering/particle_filters/)), [image processing](https://www.mrpt.org/tutorials/programming/images-image-processing-camera-models/), [obstacle avoidance](https://www.mrpt.org/Obstacle_avoidance), [etc](https://reference.mrpt.org/devel/modules.html).
-MRPT also provides GUI apps for [Stereo camera calibration](https://www.mrpt.org/list-of-mrpt-apps/application-kinect-stereo-calib/), [dataset inspection](https://www.mrpt.org/list-of-mrpt-apps/rawlogviewer/),
-and [much more](https://www.mrpt.org/list-of-mrpt-apps/).
+Bayesian inference ([Kalman filters](https://www.mrpt.org/Kalman_Filters), [particle filters](https://www.mrpt.org/tutorials/programming/statistics-and-bayes-filtering/particle_filters/)), [image processing](https://www.mrpt.org/tutorials/programming/images-image-processing-camera-models/), [obstacle avoidance](https://www.mrpt.org/Obstacle_avoidance), [etc](https://docs.mrpt.org/reference/latest/modules.html).
+MRPT also provides GUI apps for [camera calibration](https://docs.mrpt.org/reference/latest/app_camera-calib.html), [dataset inspection](https://docs.mrpt.org/reference/latest/app_RawLogViewer.html),
+and [much more](https://docs.mrpt.org/reference/latest/applications.html).
 
 ## 2. Resources
-  * Download the latest unstable code with: `git clone https://github.com/MRPT/mrpt.git --depth 1`
+  * Download the latest unstable code with: `git clone https://github.com/MRPT/mrpt.git --recursive`
   * Ask questions at: [this Google group](https://www.mrpt.org/forum/) or at [stackoverflow](https://stackoverflow.com/search?q=mrpt) (please, use the tag `mrpt`!)
   * [Main project website](https://www.mrpt.org/), including [sources and Windows installer downloads](https://www.mrpt.org/download-mrpt/)
   * [C++ API reference](https://docs.mrpt.org/reference/)
@@ -42,10 +42,6 @@ and [much more](https://www.mrpt.org/list-of-mrpt-apps/).
   * MRPT is used in the [MOLA modular SLAM framework](https://github.com/MOLAorg/mola/).
 
 ## 3. Install
-
-<a href="https://repology.org/project/mrpt/versions"> 
-  <img align="right" src="https://repology.org/badge/vertical-allrepos/mrpt.svg" alt="Packaging status">
-</a>
 
 ### 3.1. Ubuntu
 
@@ -78,19 +74,17 @@ sudo apt install ros-$ROS_DISTRO-mrpt2
 
 `mrpt2` status in ROS build farms:
 
-| Distro | `develop` branch  | Stable release |
-|---|---|---|
-| ROS1 Melodic @ u18.04 | [![Build Status](https://build.ros.org/job/Mdev__mrpt2__ubuntu_bionic_amd64/badge/icon)](https://build.ros.org/job/Mdev__mrpt2__ubuntu_bionic_amd64/) | [![Build Status](https://build.ros.org/job/Mbin_ubv8_uBv8__mrpt2__ubuntu_bionic_arm64__binary/badge/icon)](https://build.ros.org/job/Mbin_ubv8_uBv8__mrpt2__ubuntu_bionic_arm64__binary/) |
-| ROS1 Noetic @ u20.04 | [![Build Status](https://build.ros.org/job/Ndev__mrpt2__ubuntu_focal_amd64/badge/icon)](https://build.ros.org/job/Ndev__mrpt2__ubuntu_focal_amd64/) | [![Build Status](https://build.ros.org/job/Nbin_uF64__mrpt2__ubuntu_focal_amd64__binary/badge/icon)](https://build.ros.org/job/Nbin_uF64__mrpt2__ubuntu_focal_amd64__binary/) |
-| ROS2 Foxy @ u20.04 | [![Build Status](https://build.ros2.org/job/Fdev__mrpt2__ubuntu_focal_amd64/badge/icon)](https://build.ros2.org/job/Fdev__mrpt2__ubuntu_focal_amd64/) | [![Build Status](https://build.ros2.org/job/Fbin_uF64__mrpt2__ubuntu_focal_amd64__binary/badge/icon)](https://build.ros2.org/job/Fbin_uF64__mrpt2__ubuntu_focal_amd64__binary/) |
-| ROS2 Galactic @ u20.04 | [![Build Status](https://build.ros2.org/job/Gdev__mrpt2__ubuntu_focal_amd64/badge/icon)](https://build.ros2.org/job/Gdev__mrpt2__ubuntu_focal_amd64/) | [![Build Status](https://build.ros2.org/job/Gbin_uF64__mrpt2__ubuntu_focal_amd64__binary/badge/icon)](https://build.ros2.org/job/Gbin_uF64__mrpt2__ubuntu_focal_amd64__binary/) |
-| ROS2 Humble @ u22.04 | [![Build Status](https://build.ros2.org/job/Hdev__mrpt2__ubuntu_jammy_amd64/badge/icon)](https://build.ros2.org/job/Hdev__mrpt2__ubuntu_jammy_amd64/) | [![Build Status](https://build.ros2.org/job/Hbin_uJ64__mrpt2__ubuntu_jammy_amd64__binary/badge/icon)](https://build.ros2.org/job/Hbin_uJ64__mrpt2__ubuntu_jammy_amd64__binary/) |
-| ROS2 Rolling @ u22.04 | [![Build Status](https://build.ros2.org/job/Rdev__mrpt2__ubuntu_jammy_amd64/badge/icon)](https://build.ros2.org/job/Rdev__mrpt2__ubuntu_jammy_amd64/) | [![Build Status](https://build.ros2.org/job/Rbin_uJ64__mrpt2__ubuntu_jammy_amd64__binary/badge/icon)](https://build.ros2.org/job/Rbin_uJ64__mrpt2__ubuntu_jammy_amd64__binary/) |
+| Distro | `develop` branch  | Stable release | Next builds |
+|---|---|---|---|
+| ROS1 Melodic @ u18.04 | [![Build Status](https://build.ros.org/job/Mdev__mrpt2__ubuntu_bionic_amd64/badge/icon)](https://build.ros.org/job/Mdev__mrpt2__ubuntu_bionic_amd64/) | [![Version](https://img.shields.io/ros/v/melodic/mrpt2)](https://index.ros.org/search/?term=mrpt2) | [![Build Status](https://build.ros.org/job/Mbin_uB64__mrpt2__ubuntu_bionic_amd64__binary/badge/icon)](https://build.ros.org/job/Mbin_uB64__mrpt2__ubuntu_bionic_amd64__binary/) |
+| ROS1 Noetic @ u20.04 | [![Build Status](https://build.ros.org/job/Ndev__mrpt2__ubuntu_focal_amd64/badge/icon)](https://build.ros.org/job/Ndev__mrpt2__ubuntu_focal_amd64/) | [![Version](https://img.shields.io/ros/v/noetic/mrpt2)](https://index.ros.org/search/?term=mrpt2) | [![Build Status](https://build.ros.org/job/Nbin_uF64__mrpt2__ubuntu_focal_amd64__binary/badge/icon)](https://build.ros.org/job/Nbin_uF64__mrpt2__ubuntu_focal_amd64__binary/) |
+| ROS2 Foxy @ u20.04 | [![Build Status](https://build.ros2.org/job/Fdev__mrpt2__ubuntu_focal_amd64/badge/icon)](https://build.ros2.org/job/Fdev__mrpt2__ubuntu_focal_amd64/) | [![Version](https://img.shields.io/ros/v/foxy/mrpt2)](https://index.ros.org/search/?term=mrpt2) | [![Build Status](https://build.ros2.org/job/Fbin_uF64__mrpt2__ubuntu_focal_amd64__binary/badge/icon)](https://build.ros2.org/job/Fbin_uF64__mrpt2__ubuntu_focal_amd64__binary/) |
+| ROS2 Humble @ u22.04 | [![Build Status](https://build.ros2.org/job/Hdev__mrpt2__ubuntu_jammy_amd64/badge/icon)](https://build.ros2.org/job/Hdev__mrpt2__ubuntu_jammy_amd64/) | [![Version](https://img.shields.io/ros/v/humble/mrpt2)](https://index.ros.org/search/?term=mrpt2) | [![Build Status](https://build.ros2.org/job/Hbin_uJ64__mrpt2__ubuntu_jammy_amd64__binary/badge/icon)](https://build.ros2.org/job/Hbin_uJ64__mrpt2__ubuntu_jammy_amd64__binary/) | 
+| ROS2 Rolling @ u22.04 | [![Build Status](https://build.ros2.org/job/Rdev__mrpt2__ubuntu_jammy_amd64/badge/icon)](https://build.ros2.org/job/Rdev__mrpt2__ubuntu_jammy_amd64/) |  [![Version](https://img.shields.io/ros/v/rolling/mrpt2)](https://index.ros.org/search/?term=mrpt2) | [![Build Status](https://build.ros2.org/job/Rbin_uJ64__mrpt2__ubuntu_jammy_amd64__binary/badge/icon)](https://build.ros2.org/job/Rbin_uJ64__mrpt2__ubuntu_jammy_amd64__binary/) | 
 
 ## 4. License
 MRPT is released under the [new BSD license](http://www.mrpt.org/License/).
 
+## 5. Versions in repositories
 
-## Stargazers over time
-
-[![Stargazers over time](https://starchart.cc/MRPT/mrpt.svg)](https://starchart.cc/MRPT/mrpt)
+![Repology](https://repology.org/badge/vertical-allrepos/mrpt.svg)
