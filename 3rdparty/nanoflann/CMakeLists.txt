@@ -60,6 +60,9 @@ if(NOT DEFINED PKGCONFIG_INSTALL_DIR)
   set(PKGCONFIG_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
 endif()
 
+# Save all executables (unit tests & examples) in the same place:
+set(EXECUTABLE_OUTPUT_PATH ${${PROJECT_NAME}_BINARY_DIR}/bin CACHE PATH "Output directory for executables")
+
 # Define nanoflann lib (header-only)
 add_library(nanoflann INTERFACE)
 
@@ -84,16 +87,6 @@ add_library(nanoflann::nanoflann ALIAS nanoflann)
 option(NANOFLANN_BUILD_EXAMPLES "Build examples" ON)
 if(NANOFLANN_BUILD_EXAMPLES)
 	add_subdirectory(examples)
-endif()
-
-# Benchmarks
-option(NANOFLANN_BUILD_BENCHMARKS "Build benchmarks" OFF)
-if(NANOFLANN_BUILD_BENCHMARKS)
-        # 3rdparty Libraries
-        include(3rdparty/CMakeLists-flann.txt)
-        include(3rdparty/CMakeLists-fastann.txt)
-        include(3rdparty/CMakeLists-libkdtree.txt)
-	add_subdirectory(benchmarkTool)
 endif()
 
 # Tests
