@@ -189,7 +189,7 @@ void TestRANSAC()
 
 		const mrpt::poses::CPose2D GT_pose_inv = -GT_pose;
 
-		std::vector<std::pair<size_t, float>> idxs;
+		std::vector<nanoflann::ResultItem<size_t, float>> idxs;
 		the_map.kdTreeRadiusSearch2D(GT_pose.x(), GT_pose.y(), 1000, idxs);
 		ASSERT_(idxs.size() >= nObs);
 
@@ -399,11 +399,6 @@ int main()
 	catch (const std::exception& e)
 	{
 		std::cerr << "MRPT error: " << mrpt::exception_to_str(e) << std::endl;
-		return -1;
-	}
-	catch (...)
-	{
-		printf("Untyped exception!!");
 		return -1;
 	}
 }

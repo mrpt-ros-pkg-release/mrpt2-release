@@ -58,7 +58,7 @@
 #include <vector>
 
 /** Library version: 0xMmP (M=Major,m=minor,P=patch) */
-#define NANOFLANN_VERSION 0x142
+#define NANOFLANN_VERSION 0x150
 
 // Avoid conflicting declaration of min/max macros in windows headers
 #if !defined(NOMINMAX) && \
@@ -173,12 +173,12 @@ class KNNResultSet
     CountType     count;
 
    public:
-    explicit inline KNNResultSet(CountType capacity_)
+    explicit KNNResultSet(CountType capacity_)
         : indices(0), dists(0), capacity(capacity_), count(0)
     {
     }
 
-    inline void init(IndexType* indices_, DistanceType* dists_)
+    void init(IndexType* indices_, DistanceType* dists_)
     {
         indices = indices_;
         dists   = dists_;
@@ -187,23 +187,23 @@ class KNNResultSet
             dists[capacity - 1] = (std::numeric_limits<DistanceType>::max)();
     }
 
-    inline CountType size() const { return count; }
+    CountType size() const { return count; }
 
-    inline bool full() const { return count == capacity; }
+    bool full() const { return count == capacity; }
 
     /**
      * Called during search to add an element matching the criteria.
      * @return true if the search should be continued, false if the results are
      * sufficient
      */
-    inline bool addPoint(DistanceType dist, IndexType index)
+    bool addPoint(DistanceType dist, IndexType index)
     {
         CountType i;
         for (i = count; i > 0; --i)
         {
-#ifdef NANOFLANN_FIRST_MATCH  // If defined and two points have the same
-                              // distance, the one with the lowest-index will be
-                              // returned first.
+            /** If defined and two points have the same distance, the one with
+             *  the lowest-index will be returned first. */
+#ifdef NANOFLANN_FIRST_MATCH
             if ((dists[i - 1] > dist) ||
                 ((dist == dists[i - 1]) && (indices[i - 1] > index)))
             {
@@ -231,18 +231,39 @@ class KNNResultSet
         return true;
     }
 
-    inline DistanceType worstDist() const { return dists[capacity - 1]; }
+    DistanceType worstDist() const { return dists[capacity - 1]; }
 };
 
 /** operator "<" for std::sort() */
 struct IndexDist_Sorter
 {
-    /** PairType will be typically: std::pair<IndexType,DistanceType> */
+    /** PairType will be typically: ResultItem<IndexType,DistanceType> */
     template <typename PairType>
-    inline bool operator()(const PairType& p1, const PairType& p2) const
+    bool operator()(const PairType& p1, const PairType& p2) const
     {
         return p1.second < p2.second;
     }
+};
+
+/**
+ * Each result element in RadiusResultSet. Note that distances and indices
+ * are named `first` and `second` to keep backward-compatibility with the
+ * `std::pair<>` type used in the past. In contrast, this structure is ensured
+ * to be `std::is_standard_layout` so it can be used in wrappers to other
+ * languages.
+ * See: https://github.com/jlblancoc/nanoflann/issues/166
+ */
+template <typename IndexType = size_t, typename DistanceType = double>
+struct ResultItem
+{
+    ResultItem() = default;
+    ResultItem(const IndexType index, const DistanceType distance)
+        : first(index), second(distance)
+    {
+    }
+
+    IndexType    first;  //!< Index of the sample in the dataset
+    DistanceType second;  //!< Distance from sample to query point
 };
 
 /**
@@ -258,50 +279,48 @@ class RadiusResultSet
    public:
     const DistanceType radius;
 
-    std::vector<std::pair<IndexType, DistanceType>>& m_indices_dists;
+    std::vector<ResultItem<IndexType, DistanceType>>& m_indices_dists;
 
-    explicit inline RadiusResultSet(
-        DistanceType                                     radius_,
-        std::vector<std::pair<IndexType, DistanceType>>& indices_dists)
+    explicit RadiusResultSet(
+        DistanceType                                      radius_,
+        std::vector<ResultItem<IndexType, DistanceType>>& indices_dists)
         : radius(radius_), m_indices_dists(indices_dists)
     {
         init();
     }
 
-    inline void init() { clear(); }
-    inline void clear() { m_indices_dists.clear(); }
+    void init() { clear(); }
+    void clear() { m_indices_dists.clear(); }
 
-    inline size_t size() const { return m_indices_dists.size(); }
+    size_t size() const { return m_indices_dists.size(); }
+    size_t empty() const { return m_indices_dists.empty(); }
 
-    inline bool full() const { return true; }
+    bool full() const { return true; }
 
     /**
      * Called during search to add an element matching the criteria.
      * @return true if the search should be continued, false if the results are
      * sufficient
      */
-    inline bool addPoint(DistanceType dist, IndexType index)
+    bool addPoint(DistanceType dist, IndexType index)
     {
-        if (dist < radius)
-            m_indices_dists.push_back(std::make_pair(index, dist));
+        if (dist < radius) m_indices_dists.emplace_back(index, dist);
         return true;
     }
 
-    inline DistanceType worstDist() const { return radius; }
+    DistanceType worstDist() const { return radius; }
 
     /**
-     * Find the worst result (furtherest neighbor) without copying or sorting
+     * Find the worst result (farthest neighbor) without copying or sorting
      * Pre-conditions: size() > 0
      */
-    std::pair<IndexType, DistanceType> worst_item() const
+    ResultItem<IndexType, DistanceType> worst_item() const
     {
         if (m_indices_dists.empty())
             throw std::runtime_error(
                 "Cannot invoke RadiusResultSet::worst_item() on "
                 "an empty list of results.");
-        using DistIt = typename std::vector<
-            std::pair<IndexType, DistanceType>>::const_iterator;
-        DistIt it = std::max_element(
+        auto it = std::max_element(
             m_indices_dists.begin(), m_indices_dists.end(), IndexDist_Sorter());
         return *it;
     }
@@ -370,7 +389,7 @@ struct L1_Adaptor
 
     L1_Adaptor(const DataSource& _data_source) : data_source(_data_source) {}
 
-    inline DistanceType evalMetric(
+    DistanceType evalMetric(
         const T* a, const AccessorType b_idx, size_t size,
         DistanceType worst_dist = -1) const
     {
@@ -397,20 +416,18 @@ struct L1_Adaptor
         /* Process last 0-3 components.  Not needed for standard vector lengths.
          */
         while (a < last)
-        {
-            result += std::abs(*a++ - data_source.kdtree_get_pt(b_idx, d++));
-        }
+        { result += std::abs(*a++ - data_source.kdtree_get_pt(b_idx, d++)); }
         return result;
     }
 
     template <typename U, typename V>
-    inline DistanceType accum_dist(const U a, const V b, const size_t) const
+    DistanceType accum_dist(const U a, const V b, const size_t) const
     {
         return std::abs(a - b);
     }
 };
 
-/** Squared Euclidean distance functor (generic version, optimized for
+/** **Squared** Euclidean distance functor (generic version, optimized for
  * high-dimensionality data sets). Corresponding distance traits:
  * nanoflann::metric_L2
  *
@@ -432,7 +449,7 @@ struct L2_Adaptor
 
     L2_Adaptor(const DataSource& _data_source) : data_source(_data_source) {}
 
-    inline DistanceType evalMetric(
+    DistanceType evalMetric(
         const T* a, const AccessorType b_idx, size_t size,
         DistanceType worst_dist = -1) const
     {
@@ -469,13 +486,13 @@ struct L2_Adaptor
     }
 
     template <typename U, typename V>
-    inline DistanceType accum_dist(const U a, const V b, const size_t) const
+    DistanceType accum_dist(const U a, const V b, const size_t) const
     {
         return (a - b) * (a - b);
     }
 };
 
-/** Squared Euclidean (L2) distance functor (suitable for low-dimensionality
+/** **Squared** Euclidean (L2) distance functor (suitable for low-dimensionality
  * datasets, like 2D or 3D point clouds) Corresponding distance traits:
  * nanoflann::metric_L2_Simple
  *
@@ -500,7 +517,7 @@ struct L2_Simple_Adaptor
     {
     }
 
-    inline DistanceType evalMetric(
+    DistanceType evalMetric(
         const T* a, const AccessorType b_idx, size_t size) const
     {
         DistanceType result = DistanceType();
@@ -514,7 +531,7 @@ struct L2_Simple_Adaptor
     }
 
     template <typename U, typename V>
-    inline DistanceType accum_dist(const U a, const V b, const size_t) const
+    DistanceType accum_dist(const U a, const V b, const size_t) const
     {
         return (a - b) * (a - b);
     }
@@ -542,7 +559,7 @@ struct SO2_Adaptor
 
     SO2_Adaptor(const DataSource& _data_source) : data_source(_data_source) {}
 
-    inline DistanceType evalMetric(
+    DistanceType evalMetric(
         const T* a, const AccessorType b_idx, size_t size) const
     {
         return accum_dist(
@@ -552,7 +569,7 @@ struct SO2_Adaptor
     /** Note: this assumes that input angles are already in the range [-pi,pi]
      */
     template <typename U, typename V>
-    inline DistanceType accum_dist(const U a, const V b, const size_t) const
+    DistanceType accum_dist(const U a, const V b, const size_t) const
     {
         DistanceType result = DistanceType();
         DistanceType PI     = pi_const<DistanceType>();
@@ -591,14 +608,14 @@ struct SO3_Adaptor
     {
     }
 
-    inline DistanceType evalMetric(
+    DistanceType evalMetric(
         const T* a, const AccessorType b_idx, size_t size) const
     {
         return distance_L2_Simple.evalMetric(a, b_idx, size);
     }
 
     template <typename U, typename V>
-    inline DistanceType accum_dist(const U a, const V b, const size_t idx) const
+    DistanceType accum_dist(const U a, const V b, const size_t idx) const
     {
         return distance_L2_Simple.accum_dist(a, b, idx);
     }
@@ -613,7 +630,8 @@ struct metric_L1 : public Metric
         using distance_t = L1_Adaptor<T, DataSource, T, AccessorType>;
     };
 };
-/** Metaprogramming helper traits class for the L2 (Euclidean) metric */
+/** Metaprogramming helper traits class for the L2 (Euclidean) **squared**
+ * distance metric */
 struct metric_L2 : public Metric
 {
     template <class T, class DataSource, typename AccessorType = uint32_t>
@@ -622,7 +640,8 @@ struct metric_L2 : public Metric
         using distance_t = L2_Adaptor<T, DataSource, T, AccessorType>;
     };
 };
-/** Metaprogramming helper traits class for the L2_simple (Euclidean) metric */
+/** Metaprogramming helper traits class for the L2_simple (Euclidean)
+ * **squared** distance metric */
 struct metric_L2_Simple : public Metric
 {
     template <class T, class DataSource, typename AccessorType = uint32_t>
@@ -684,17 +703,13 @@ struct KDTreeSingleIndexAdaptorParams
 };
 
 /** Search options for KDTreeSingleIndexAdaptor::findNeighbors() */
-struct SearchParams
+struct SearchParameters
 {
-    /** Note: The first argument (checks_IGNORED_) is ignored, but kept for
-     * compatibility with the FLANN interface */
-    SearchParams(int checks_IGNORED_ = 32, float eps_ = 0, bool sorted_ = true)
-        : checks(checks_IGNORED_), eps(eps_), sorted(sorted_)
+    SearchParameters(float eps_ = 0, bool sorted_ = true)
+        : eps(eps_), sorted(sorted_)
     {
     }
 
-    int checks;  //!< Ignored parameter (Kept for compatibility with the FLANN
-                 //!< interface).
     float eps;  //!< search for eps-approximate neighbours (default: 0)
     bool  sorted;  //!< only for radius search, require neighbours sorted by
                   //!< distance (default: true)
@@ -863,15 +878,15 @@ class PooledAllocator
  * when DIM=-1. Fixed size version for a generic DIM:
  */
 template <int32_t DIM, typename T>
-struct array_or_vector_selector
+struct array_or_vector
 {
-    using container_t = std::array<T, DIM>;
+    using type = std::array<T, DIM>;
 };
 /** Dynamic size version */
 template <typename T>
-struct array_or_vector_selector<-1, T>
+struct array_or_vector<-1, T>
 {
-    using container_t = std::vector<T>;
+    using type = std::vector<T>;
 };
 
 /** @} */
@@ -885,10 +900,11 @@ struct array_or_vector_selector<-1, T>
  * \tparam DatasetAdaptor The user-provided adaptor, which must be ensured to
  *         have a lifetime equal or longer than the instance of this class.
  * \tparam Distance The distance metric to use, these are all classes derived
- * from nanoflann::Metric \tparam DIM Dimensionality of data points (e.g. 3 for
- * 3D points) \tparam AccessorType Will be typically size_t or int
+ * from nanoflann::Metric
+ * \tparam DIM Dimensionality of data points (e.g. 3 for 3D points)
+ * \tparam AccessorType Type of the arguments with which the data can be
+ * accessed (e.g. float, double, int64_t, T*)
  */
-
 template <
     class Derived, typename Distance, class DatasetAdaptor, int32_t DIM = -1,
     typename AccessorType = uint32_t>
@@ -916,7 +932,8 @@ class KDTreeBaseClass
     using Size      = typename decltype(vAcc)::size_type;
     using Dimension = int32_t;
 
-    /*--------------------- Internal Data Structures
+    /*---------------------------
+     * Internal Data Structures
      * --------------------------*/
     struct Node
     {
@@ -930,13 +947,14 @@ class KDTreeBaseClass
             } lr;
             struct nonleaf
             {
-                Dimension    divfeat;  //!< Dimension used for subdivision.
-                DistanceType divlow,
-                    divhigh;  //!< The values used for subdivision.
+                Dimension divfeat;  //!< Dimension used for subdivision.
+                /// The values used for subdivision.
+                DistanceType divlow, divhigh;
             } sub;
         } node_type;
+
         /** Child nodes (both=nullptr mean its a leaf node) */
-        Node *child1, *child2;
+        Node *child1 = nullptr, *child2;
     };
 
     using NodePtr = Node*;
@@ -946,27 +964,25 @@ class KDTreeBaseClass
         ElementType low, high;
     };
 
-    NodePtr root_node;
+    NodePtr root_node = nullptr;
 
-    Size m_leaf_max_size;
+    Size m_leaf_max_size = 0;
 
-    Size m_size;  //!< Number of current points in the dataset
-    Size m_size_at_index_build;  //!< Number of points in the dataset when the
-                                 //!< index was built
-    Dimension dim;  //!< Dimensionality of each data point
+    /// Number of current points in the dataset
+    Size m_size = 0;
+    /// Number of points in the dataset when the index was built
+    Size      m_size_at_index_build = 0;
+    Dimension dim                   = 0;  //!< Dimensionality of each data point
 
     /** Define "BoundingBox" as a fixed-size or variable-size container
      * depending on "DIM" */
-    using BoundingBox =
-        typename array_or_vector_selector<DIM, Interval>::container_t;
+    using BoundingBox = typename array_or_vector<DIM, Interval>::type;
 
     /** Define "distance_vector_t" as a fixed-size or variable-size container
      * depending on "DIM" */
-    using distance_vector_t =
-        typename array_or_vector_selector<DIM, DistanceType>::container_t;
+    using distance_vector_t = typename array_or_vector<DIM, DistanceType>::type;
 
     /** The KD-tree used to find neighbours */
-
     BoundingBox root_bbox;
 
     /**
@@ -985,7 +1001,7 @@ class KDTreeBaseClass
     Size veclen(const Derived& obj) { return DIM > 0 ? DIM : obj.dim; }
 
     /// Helper accessor to the dataset points:
-    inline ElementType dataset_get(
+    ElementType dataset_get(
         const Derived& obj, AccessorType element, Dimension component) const
     {
         return obj.dataset.kdtree_get_pt(element, component);
@@ -1269,11 +1285,11 @@ class KDTreeBaseClass
  *
  *  \code
  *   // Must return the number of data poins
- *   inline size_t kdtree_get_point_count() const { ... }
+ *   size_t kdtree_get_point_count() const { ... }
  *
  *
  *   // Must return the dim'th component of the idx'th point in the class:
- *   inline T kdtree_get_pt(const size_t idx, const size_t dim) const { ... }
+ *   T kdtree_get_pt(const size_t idx, const size_t dim) const { ... }
  *
  *   // Optional bounding-box computation: return false to default to a standard
  * bbox computation loop.
@@ -1389,7 +1405,6 @@ class KDTreeSingleIndexAdaptor
         const Dimension                       dimensionality,
         const KDTreeSingleIndexAdaptorParams& params)
     {
-        BaseClassRef::root_node             = nullptr;
         BaseClassRef::m_size                = dataset.kdtree_get_point_count();
         BaseClassRef::m_size_at_index_build = BaseClassRef::m_size;
         BaseClassRef::dim                   = dimensionality;
@@ -1398,9 +1413,7 @@ class KDTreeSingleIndexAdaptor
 
         if (!(params.flags &
               KDTreeSingleIndexAdaptorFlags::SkipInitialBuildIndex))
-        {
-            buildIndex();
-        }
+        { buildIndex(); }
     }
 
    public:
@@ -1440,7 +1453,7 @@ class KDTreeSingleIndexAdaptor
     template <typename RESULTSET>
     bool findNeighbors(
         RESULTSET& result, const ElementType* vec,
-        const SearchParams& searchParams) const
+        const SearchParameters& searchParams = {}) const
     {
         assert(vec);
         if (this->size(*this) == 0) return false;
@@ -1450,38 +1463,34 @@ class KDTreeSingleIndexAdaptor
                 "index.");
         float epsError = 1 + searchParams.eps;
 
-        distance_vector_t
-             dists;  // fixed or variable-sized container (depending on DIM)
-        auto zero = static_cast<decltype(result.worstDist())>(0);
-        assign(
-            dists, (DIM > 0 ? DIM : BaseClassRef::dim),
-            zero);  // Fill it with zeros.
+        // fixed or variable-sized container (depending on DIM)
+        distance_vector_t dists;
+        // Fill it with zeros.
+        auto              zero = static_cast<decltype(result.worstDist())>(0);
+        assign(dists, (DIM > 0 ? DIM : BaseClassRef::dim), zero);
         DistanceType distsq = this->computeInitialDistances(*this, vec, dists);
         searchLevel(
-            result, vec, BaseClassRef::root_node, distsq, dists,
-            epsError);  // "count_leaf" parameter removed since was neither
-                        // used nor returned to the user.
+            result, vec, BaseClassRef::root_node, distsq, dists, epsError);
         return result.full();
     }
 
     /**
      * Find the "num_closest" nearest neighbors to the \a query_point[0:dim-1].
-     * Their indices are stored inside the result object. \sa radiusSearch,
-     * findNeighbors \note nChecks_IGNORED is ignored but kept for compatibility
-     * with the original FLANN interface. \return Number `N` of valid points in
-     * the result set. Only the first `N` entries in `out_indices` and
+     * Their indices are stored inside the result object.
+     * \sa radiusSearch, findNeighbors
+     * \return Number `N` of valid points in the result set.
+     * Only the first `N` entries in `out_indices` and
      * `out_distances_sq` will be valid. Return may be less than `num_closest`
      * only if the number of elements in the tree is less than `num_closest`.
      */
     Size knnSearch(
         const ElementType* query_point, const Size num_closest,
-        AccessorType* out_indices, DistanceType* out_distances_sq,
-        const int /* nChecks_IGNORED */ = 10) const
+        AccessorType* out_indices, DistanceType* out_distances_sq) const
     {
         nanoflann::KNNResultSet<DistanceType, AccessorType> resultSet(
             num_closest);
         resultSet.init(out_indices, out_distances_sq);
-        this->findNeighbors(resultSet, query_point, nanoflann::SearchParams());
+        this->findNeighbors(resultSet, query_point);
         return resultSet.size();
     }
 
@@ -1503,8 +1512,8 @@ class KDTreeSingleIndexAdaptor
      */
     Size radiusSearch(
         const ElementType* query_point, const DistanceType& radius,
-        std::vector<std::pair<AccessorType, DistanceType>>& IndicesDists,
-        const SearchParams&                                 searchParams) const
+        std::vector<ResultItem<AccessorType, DistanceType>>& IndicesDists,
+        const SearchParameters& searchParams = {}) const
     {
         RadiusResultSet<DistanceType, AccessorType> resultSet(
             radius, IndicesDists);
@@ -1524,7 +1533,7 @@ class KDTreeSingleIndexAdaptor
     template <class SEARCH_CALLBACK>
     Size radiusSearchCustomCallback(
         const ElementType* query_point, SEARCH_CALLBACK& resultSet,
-        const SearchParams& searchParams = SearchParams()) const
+        const SearchParameters& searchParams = {}) const
     {
         this->findNeighbors(resultSet, query_point, searchParams);
         return resultSet.size();
@@ -1597,8 +1606,6 @@ class KDTreeSingleIndexAdaptor
         /* If this is a leaf node, then do check and return. */
         if ((node->child1 == nullptr) && (node->child2 == nullptr))
         {
-            // count_leaf += (node->lr.right-node->lr.left);  // Removed since
-            // was neither used nor returned to the user.
             DistanceType worst_dist = result_set.worstDist();
             for (Offset i = node->node_type.lr.left;
                  i < node->node_type.lr.right; ++i)
@@ -1692,15 +1699,15 @@ class KDTreeSingleIndexAdaptor
  * Contains the k-d trees and other information for indexing a set of points
  * for nearest-neighbor matching.
  *
- *  The class "DatasetAdaptor" must provide the following interface (can be
+ * The class "DatasetAdaptor" must provide the following interface (can be
  * non-virtual, inlined methods):
  *
  *  \code
  *   // Must return the number of data poins
- *   inline size_t kdtree_get_point_count() const { ... }
+ *   size_t kdtree_get_point_count() const { ... }
  *
  *   // Must return the dim'th component of the idx'th point in the class:
- *   inline T kdtree_get_pt(const size_t idx, const size_t dim) const { ... }
+ *   T kdtree_get_pt(const size_t idx, const size_t dim) const { ... }
  *
  *   // Optional bounding-box computation: return false to default to a standard
  * bbox computation loop.
@@ -1719,9 +1726,10 @@ class KDTreeSingleIndexAdaptor
  *
  * \tparam DatasetAdaptor The user-provided adaptor (see comments above).
  * \tparam Distance The distance metric to use: nanoflann::metric_L1,
- * nanoflann::metric_L2, nanoflann::metric_L2_Simple, etc. \tparam DIM
- * Dimensionality of data points (e.g. 3 for 3D points) \tparam AccessorType
- * Will be typically size_t or int
+ * nanoflann::metric_L2, nanoflann::metric_L2_Simple, etc.
+ * \tparam DIM Dimensionality of data points (e.g. 3 for 3D points)
+ * \tparam AccessorType Type of the arguments with which the data can be
+ * accessed (e.g. float, double, int64_t, T*)
  */
 template <
     typename Distance, class DatasetAdaptor, int32_t DIM = -1,
@@ -1793,10 +1801,10 @@ class KDTreeSingleIndexDynamicAdaptor_
           treeIndex(treeIndex_),
           distance(inputData)
     {
-        BaseClassRef::root_node             = nullptr;
         BaseClassRef::m_size                = 0;
         BaseClassRef::m_size_at_index_build = 0;
-        BaseClassRef::dim                   = dimensionality;
+        for (auto& v : BaseClassRef::root_bbox) v = {};
+        BaseClassRef::dim = dimensionality;
         if (DIM > 0) BaseClassRef::dim = DIM;
         BaseClassRef::m_leaf_max_size = params.leaf_max_size;
     }
@@ -1859,7 +1867,7 @@ class KDTreeSingleIndexDynamicAdaptor_
     template <typename RESULTSET>
     bool findNeighbors(
         RESULTSET& result, const ElementType* vec,
-        const SearchParams& searchParams) const
+        const SearchParameters& searchParams = {}) const
     {
         assert(vec);
         if (this->size(*this) == 0) return false;
@@ -1874,30 +1882,27 @@ class KDTreeSingleIndexDynamicAdaptor_
             static_cast<typename distance_vector_t::value_type>(0));
         DistanceType distsq = this->computeInitialDistances(*this, vec, dists);
         searchLevel(
-            result, vec, BaseClassRef::root_node, distsq, dists,
-            epsError);  // "count_leaf" parameter removed since was neither
-                        // used nor returned to the user.
+            result, vec, BaseClassRef::root_node, distsq, dists, epsError);
         return result.full();
     }
 
     /**
      * Find the "num_closest" nearest neighbors to the \a query_point[0:dim-1].
      * Their indices are stored inside the result object. \sa radiusSearch,
-     * findNeighbors \note nChecks_IGNORED is ignored but kept for compatibility
-     * with the original FLANN interface. \return Number `N` of valid points in
+     * findNeighbors
+     * \return Number `N` of valid points in
      * the result set. Only the first `N` entries in `out_indices` and
      * `out_distances_sq` will be valid. Return may be less than `num_closest`
      * only if the number of elements in the tree is less than `num_closest`.
      */
     Size knnSearch(
         const ElementType* query_point, const Size num_closest,
-        AccessorType* out_indices, DistanceType* out_distances_sq,
-        const int /* nChecks_IGNORED */ = 10) const
+        AccessorType* out_indices, DistanceType* out_distances_sq) const
     {
         nanoflann::KNNResultSet<DistanceType, AccessorType> resultSet(
             num_closest);
         resultSet.init(out_indices, out_distances_sq);
-        this->findNeighbors(resultSet, query_point, nanoflann::SearchParams());
+        this->findNeighbors(resultSet, query_point);
         return resultSet.size();
     }
 
@@ -1919,8 +1924,8 @@ class KDTreeSingleIndexDynamicAdaptor_
      */
     Size radiusSearch(
         const ElementType* query_point, const DistanceType& radius,
-        std::vector<std::pair<AccessorType, DistanceType>>& IndicesDists,
-        const SearchParams&                                 searchParams) const
+        std::vector<ResultItem<AccessorType, DistanceType>>& IndicesDists,
+        const SearchParameters& searchParams = {}) const
     {
         RadiusResultSet<DistanceType, AccessorType> resultSet(
             radius, IndicesDists);
@@ -1940,7 +1945,7 @@ class KDTreeSingleIndexDynamicAdaptor_
     template <class SEARCH_CALLBACK>
     Size radiusSearchCustomCallback(
         const ElementType* query_point, SEARCH_CALLBACK& resultSet,
-        const SearchParams& searchParams = SearchParams()) const
+        const SearchParameters& searchParams = {}) const
     {
         this->findNeighbors(resultSet, query_point, searchParams);
         return resultSet.size();
@@ -2000,8 +2005,6 @@ class KDTreeSingleIndexDynamicAdaptor_
         /* If this is a leaf node, then do check and return. */
         if ((node->child1 == nullptr) && (node->child2 == nullptr))
         {
-            // count_leaf += (node->lr.right-node->lr.left);  // Removed since
-            // was neither used nor returned to the user.
             DistanceType worst_dist = result_set.worstDist();
             for (Offset i = node->node_type.lr.left;
                  i < node->node_type.lr.right; ++i)
@@ -2272,12 +2275,10 @@ class KDTreeSingleIndexDynamicAdaptor
     template <typename RESULTSET>
     bool findNeighbors(
         RESULTSET& result, const ElementType* vec,
-        const SearchParams& searchParams) const
+        const SearchParameters& searchParams = {}) const
     {
         for (size_t i = 0; i < treeCount; i++)
-        {
-            index[i].findNeighbors(result, &vec[0], searchParams);
-        }
+        { index[i].findNeighbors(result, &vec[0], searchParams); }
         return result.full();
     }
 };
@@ -2300,11 +2301,12 @@ class KDTreeSingleIndexDynamicAdaptor
  * \endcode
  *
  *  \tparam DIM If set to >0, it specifies a compile-time fixed dimensionality
- * for the points in the data set, allowing more compiler optimizations. \tparam
- * Distance The distance metric to use: nanoflann::metric_L1,
- * nanoflann::metric_L2, nanoflann::metric_L2_Simple, etc. \tparam row_major
- * If set to true the rows of the matrix are used as the points, if set to false
- * the columns of the matrix are used as the points.
+ * for the points in the data set, allowing more compiler optimizations.
+ * \tparam Distance The distance metric to use: nanoflann::metric_L1,
+ * nanoflann::metric_L2, nanoflann::metric_L2_Simple, etc.
+ * \tparam row_major If set to true the rows of the matrix are used as the
+ *         points, if set to false  the columns of the matrix are used as the
+ *         points.
  */
 template <
     class MatrixType, int32_t DIM = -1, class Distance = nanoflann::metric_L2,
@@ -2363,17 +2365,15 @@ struct KDTreeEigenMatrixAdaptor
     /** Query for the \a num_closest closest points to a given point (entered as
      * query_point[0:dim-1]). Note that this is a short-cut method for
      * index->findNeighbors(). The user can also call index->... methods as
-     * desired. \note nChecks_IGNORED is ignored but kept for compatibility with
-     * the original FLANN interface.
+     * desired.
      */
-    inline void query(
+    void query(
         const num_t* query_point, const Size num_closest,
-        IndexType* out_indices, num_t* out_distances_sq,
-        const int /* nChecks_IGNORED */ = 10) const
+        IndexType* out_indices, num_t* out_distances_sq) const
     {
         nanoflann::KNNResultSet<num_t, IndexType> resultSet(num_closest);
         resultSet.init(out_indices, out_distances_sq);
-        index->findNeighbors(resultSet, query_point, nanoflann::SearchParams());
+        index->findNeighbors(resultSet, query_point);
     }
 
     /** @name Interface expected by KDTreeSingleIndexAdaptor
@@ -2383,7 +2383,7 @@ struct KDTreeEigenMatrixAdaptor
     self_t&       derived() { return *this; }
 
     // Must return the number of data points
-    inline Size kdtree_get_point_count() const
+    Size kdtree_get_point_count() const
     {
         if (row_major)
             return m_data_matrix.get().rows();
@@ -2392,7 +2392,7 @@ struct KDTreeEigenMatrixAdaptor
     }
 
     // Returns the dim'th component of the idx'th point in the class:
-    inline num_t kdtree_get_pt(const IndexType idx, size_t dim) const
+    num_t kdtree_get_pt(const IndexType idx, size_t dim) const
     {
         if (row_major)
             return m_data_matrix.get().coeff(idx, IndexType(dim));
