@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -88,7 +88,9 @@ mrpt::serialization::CArchive& operator>>(
  * \ingroup mrpt_img_grp */
 struct TColorf
 {
-	TColorf(float r = 0, float g = 0, float b = 0, float alpha = 1.0f)
+	TColorf() = default;
+
+	TColorf(float r, float g, float b, float alpha = 1.0f)
 		: R(r), G(g), B(b), A(alpha)
 	{
 	}
@@ -105,7 +107,7 @@ struct TColorf
 			mrpt::f2u8(R), mrpt::f2u8(G), mrpt::f2u8(B), mrpt::f2u8(A));
 	}
 
-	float R, G, B, A;
+	float R = .0f, G = .0f, B = .0f, A = 1.0f;
 };
 #pragma pack(pop)
 

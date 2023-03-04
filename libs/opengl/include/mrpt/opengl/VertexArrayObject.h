@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -21,11 +21,11 @@ namespace mrpt::opengl
  * \ingroup mrpt_opengl_grp
  * \note OpenGL VAOs *cannot* be shared among threads/GL contexts.
  */
-class COpenGLVertexArrayObject
+class VertexArrayObject
 {
    public:
-	COpenGLVertexArrayObject();
-	~COpenGLVertexArrayObject() = default;
+	VertexArrayObject();
+	~VertexArrayObject() = default;
 
 	/** Calls create() only if the buffer has not been created yet. */
 	void createOnce()

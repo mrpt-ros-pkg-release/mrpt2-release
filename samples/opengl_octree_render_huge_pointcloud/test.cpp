@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -81,7 +81,7 @@ void TestOctreeRenderHugePointCloud()
 
 	CDisplayWindow3D win("Demo of MRPT's octree pointclouds", 640, 480);
 
-	COpenGLScene::Ptr& theScene = win.get3DSceneAndLock();
+	Scene::Ptr& theScene = win.get3DSceneAndLock();
 
 	// CPointCloud
 	opengl::CPointCloud::Ptr gl_pointcloud = opengl::CPointCloud::Create();
@@ -138,7 +138,7 @@ void TestOctreeRenderHugePointCloud()
 
 	win.setCameraZoom(600);
 	{
-		mrpt::opengl::COpenGLViewport::Ptr view = theScene->getViewport("main");
+		mrpt::opengl::Viewport::Ptr view = theScene->getViewport("main");
 		view->setViewportClipDistances(0.1f, 1e6f);
 	}
 

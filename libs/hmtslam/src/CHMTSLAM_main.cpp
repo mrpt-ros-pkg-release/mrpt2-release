@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -532,7 +532,7 @@ THypothesisID CHMTSLAM::generateHypothesisID() { return m_nextHypID++; }
 /*---------------------------------------------------------------
 						getAs3DScene
   ---------------------------------------------------------------*/
-void CHMTSLAM::getAs3DScene([[maybe_unused]] COpenGLScene& scene3D) {}
+void CHMTSLAM::getAs3DScene([[maybe_unused]] Scene& scene3D) {}
 
 /*---------------------------------------------------------------
 						abortedDueToErrors

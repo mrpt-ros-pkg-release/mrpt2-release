@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -54,7 +54,7 @@ void CAngularObservationMesh::addTriangle(
 	t.vertices[1].xyzrgba.pt = p2;
 	t.vertices[2].xyzrgba.pt = p3;
 	t.computeNormals();
-	t.setColor(m_color);
+	t.setColor(getColor_u8());
 
 	triangles.emplace_back(std::move(t));
 	CRenderizable::notifyChange();
@@ -214,7 +214,7 @@ void CAngularObservationMesh::onUpdateBuffers_Triangles()
 	// All faces, all vertices, same color:
 	for (auto& t : tris)
 	{
-		t.setColor(m_color);
+		t.setColor(getColor_u8());
 		t.computeNormals();
 	}
 }

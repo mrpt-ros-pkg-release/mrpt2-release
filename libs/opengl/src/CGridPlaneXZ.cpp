@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -55,7 +55,7 @@ void CGridPlaneXZ::onUpdateBuffers_Wireframe()
 		m_vertex_buffer_data.emplace_back(x, m_plane_y, m_zMax);
 	}
 	// The same color to all vertices:
-	m_color_buffer_data.assign(m_vertex_buffer_data.size(), m_color);
+	m_color_buffer_data.assign(m_vertex_buffer_data.size(), getColor_u8());
 }
 
 uint8_t CGridPlaneXZ::serializeGetVersion() const { return 1; }

@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -71,7 +71,7 @@ static void test_opengl_CFBORender(const bool useCameraFromIntrinsics)
 		"/tests/CFBORender_expected_depth_"s +
 		(useCameraFromIntrinsics ? "camInt"s : "camFOV"s) + ".png"s;
 
-	COpenGLScene scene;
+	Scene scene;
 
 	{
 		auto obj = mrpt::opengl::CGridPlaneXY::Create(-20, 20, -20, 20, 0, 5);

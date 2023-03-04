@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -409,8 +409,7 @@ void CActionRobotMovement2D::computeFromOdometry_modelGaussian(
 	auto* aux = dynamic_cast<CPosePDFGaussian*>(poseChange.get());
 	ASSERT_(aux != nullptr);
 
-	// See https://www.mrpt.org/Probabilistic_Motion_Models
-	// -----------------------------------
+	// See: https://docs.mrpt.org/reference/latest/tutorial-motion-models.html
 
 	// Build the odometry noise matrix:
 	double Al = odometryIncrement.norm();

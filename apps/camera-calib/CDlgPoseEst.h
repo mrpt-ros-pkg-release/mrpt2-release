@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -138,7 +138,7 @@ class CDlgPoseEst : public wxDialog
 	mrpt::vision::pnp::CPnP pnp_algos;
 	Eigen::MatrixXd obj_pts, img_pts, pose_mat, cam_intrinsic, I3;
 
-	mrpt::opengl::COpenGLScene::Ptr scene;
+	mrpt::opengl::Scene::Ptr scene;
 	mrpt::opengl::CSetOfObjects::Ptr cor, cor1;
 	mrpt::opengl::CGridPlaneXY::Ptr grid;
 

@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -91,7 +91,7 @@ void Example_GMRF()
 
 	mrpt::gui::CDisplayWindow3D win("Map", 640, 480);
 
-	mrpt::opengl::COpenGLScene::Ptr& scene = win.get3DSceneAndLock();
+	mrpt::opengl::Scene::Ptr& scene = win.get3DSceneAndLock();
 	scene->insert(mrpt::opengl::stock_objects::CornerXYZSimple(1.0f, 4.0f));
 	scene->insert(gl_data);
 	scene->insert(glObj);

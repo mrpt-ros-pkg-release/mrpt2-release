@@ -2,17 +2,17 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #pragma once
 
-#include <mrpt/opengl/COpenGLBuffer.h>
-#include <mrpt/opengl/COpenGLVertexArrayObject.h>
+#include <mrpt/opengl/Buffer.h>
 #include <mrpt/opengl/CRenderizable.h>
 #include <mrpt/opengl/TTriangle.h>
+#include <mrpt/opengl/VertexArrayObject.h>
 
 #include <shared_mutex>
 
@@ -20,7 +20,7 @@ namespace mrpt::opengl
 {
 /** Renderizable generic renderer for objects using the triangles shader.
  *
- *  \sa opengl::COpenGLScene
+ *  \sa opengl::Scene
  *
  * \ingroup mrpt_opengl_grp
  */
@@ -81,8 +81,8 @@ class CRenderizableShaderTriangles : public virtual CRenderizable
 	void params_deserialize(mrpt::serialization::CArchive& in);
 
    private:
-	mutable COpenGLBuffer m_trianglesBuffer;
-	mutable COpenGLVertexArrayObject m_vao;
+	mutable Buffer m_trianglesBuffer;
+	mutable VertexArrayObject m_vao;
 
 	bool m_enableLight = true;
 	TCullFace m_cullface = TCullFace::NONE;

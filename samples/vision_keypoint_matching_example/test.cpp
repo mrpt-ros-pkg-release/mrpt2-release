@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -11,7 +11,7 @@
 #include <mrpt/gui/CDisplayWindow3D.h>
 #include <mrpt/maps/CLandmarksMap.h>
 #include <mrpt/opengl/CGridPlaneXY.h>
-#include <mrpt/opengl/COpenGLScene.h>
+#include <mrpt/opengl/Scene.h>
 #include <mrpt/vision/CFeatureExtraction.h>
 
 #include <iostream>
@@ -89,7 +89,7 @@ void TestExtractMatchProjectAndPaint()
 	mrpt::vision::projectMatchedFeatures(mHarris, stereoOptions, outMap);
 
 	CDisplayWindow3D win3D("3D Map");
-	COpenGLScene::Ptr& scene3D = win3D.get3DSceneAndLock();
+	Scene::Ptr& scene3D = win3D.get3DSceneAndLock();
 	CGridPlaneXY::Ptr gridXY = CGridPlaneXY::Create(-10, 10, -10, 10, 0, 1);
 	scene3D->insert(gridXY);
 

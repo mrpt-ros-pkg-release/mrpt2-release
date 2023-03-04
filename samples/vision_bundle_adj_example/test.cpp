@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -39,6 +39,7 @@
 
 #include <iostream>
 
+using namespace mrpt::literals;	 // _deg
 using namespace mrpt;
 using namespace mrpt::gui;
 using namespace mrpt::math;
@@ -448,7 +449,7 @@ int main(int argc, char** argv)
 		// -------------------------------
 		gui::CDisplayWindow3D win("Bundle adjustment demo", 800, 600);
 
-		COpenGLScene::Ptr& scene = win.get3DSceneAndLock();
+		Scene::Ptr& scene = win.get3DSceneAndLock();
 
 		{  // Ground plane:
 			auto obj = CGridPlaneXY::Create(-200, 200, -200, 200, 0, 5);

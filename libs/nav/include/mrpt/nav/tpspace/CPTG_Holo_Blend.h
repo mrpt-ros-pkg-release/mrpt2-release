@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -20,7 +20,6 @@ namespace mrpt::nav
  * - **Compatible robot shape**: Circular robots
  * - **PTG parameters**: Use the app `ptg-configurator`
  *
- * \note [New in MRPT 1.5.0]
  *  \ingroup nav_tpspace
  */
 class CPTG_Holo_Blend : public CPTG_RobotShape_Circular

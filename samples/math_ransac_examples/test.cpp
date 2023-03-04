@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -91,7 +91,7 @@ void TestRANSACPlanes()
 	// --------------------------
 	win = mrpt::gui::CDisplayWindow3D::Create("RANSAC: 3D planes", 500, 500);
 
-	opengl::COpenGLScene::Ptr scene = opengl::COpenGLScene::Create();
+	opengl::Scene::Ptr scene = opengl::Scene::Create();
 
 	scene->insert(opengl::CGridPlaneXY::Create(-20, 20, -20, 20, 0, 1));
 	scene->insert(opengl::stock_objects::CornerXYZ());

@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -40,7 +40,7 @@ class MRPT2NanoguiGLCanvas : public nanogui::GLCanvas
 	/** The scene to render in this control.
 	 * \note Users must lock the mutex scene_mtx while modifying this variable.
 	 */
-	mrpt::opengl::COpenGLScene::Ptr scene;
+	mrpt::opengl::Scene::Ptr scene;
 	std::mutex scene_mtx;
 
 	CGlCanvasBase& camera() { return m_headless_canvas; }

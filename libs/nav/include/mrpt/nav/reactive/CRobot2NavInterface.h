@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -26,11 +26,11 @@ namespace mrpt::nav
  *   all pure virtual and the desired virtual methods according to the
  * documentation in this class.
  *
- * [New in MRPT 1.5.0] This class does not make assumptions about the kinematic
+ * This class does not make assumptions about the kinematic
  * model of the robot, so it can work with either
- *  Ackermann, differential-driven or holonomic robots. It will depend on the
+ * Ackermann, differential-driven or holonomic robots. It will depend on the
  * used PTGs, so checkout
- *  each PTG documentation for the lenght and meaning of velocity commands.
+ * each PTG documentation for the length and meaning of velocity commands.
  *
  * If used for a simulator, users may prefer to inherit from one of these
  * classes, which already provide partial implementations:

@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -600,7 +600,7 @@ void KFSLAMApp::Run_KF_SLAM()
 			// Save 3D view of the filter state:
 			if (win3d || (SAVE_3D_SCENES && !(step % SAVE_LOG_FREQUENCY)))
 			{
-				COpenGLScene::Ptr scene3D = std::make_shared<COpenGLScene>();
+				Scene::Ptr scene3D = std::make_shared<Scene>();
 				{
 					opengl::CGridPlaneXY::Ptr grid =
 						std::make_shared<opengl::CGridPlaneXY>(
@@ -736,8 +736,7 @@ void KFSLAMApp::Run_KF_SLAM()
 
 				if (win3d)
 				{
-					mrpt::opengl::COpenGLScene::Ptr& scn =
-						win3d->get3DSceneAndLock();
+					mrpt::opengl::Scene::Ptr& scn = win3d->get3DSceneAndLock();
 					scn = scene3D;
 
 					// Update text messages:

@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -412,7 +412,7 @@ int main(int argc, char** argv)
 #if MRPT_HAS_OPENGL_GLUT && MRPT_HAS_WXWIDGETS
 			mrpt::gui::CDisplayWindow3D win("Final simulation", 400, 300);
 
-			mrpt::opengl::COpenGLScene::Ptr& scene = win.get3DSceneAndLock();
+			mrpt::opengl::Scene::Ptr& scene = win.get3DSceneAndLock();
 
 			scene->insert(mrpt::opengl::CGridPlaneXY::Create(
 				min_x - 10, max_x + 10, min_y - 10, max_y + 10, 0));

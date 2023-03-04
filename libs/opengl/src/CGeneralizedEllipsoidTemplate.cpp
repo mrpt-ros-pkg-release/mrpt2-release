@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -39,7 +39,7 @@ void CGeneralizedEllipsoidTemplate<2>::implUpdate_Wireframe()
 	}
 
 	// All lines, same color:
-	cbd.assign(vbd.size(), m_color);
+	cbd.assign(vbd.size(), getColor_u8());
 }
 
 template <>
@@ -113,7 +113,7 @@ void CGeneralizedEllipsoidTemplate<3>::implUpdate_Wireframe()
 	}
 
 	// All lines, same color:
-	cbd.assign(vbd.size(), m_color);
+	cbd.assign(vbd.size(), getColor_u8());
 }
 
 template <>
@@ -140,7 +140,7 @@ void CGeneralizedEllipsoidTemplate<2>::implUpdate_Triangles()
 
 	// All faces, all vertices, same color:
 	for (auto& t : tris)
-		t.setColor(m_color);
+		t.setColor(getColor_u8());
 }
 
 template <>
@@ -222,7 +222,7 @@ void CGeneralizedEllipsoidTemplate<3>::implUpdate_Triangles()
 
 	// All faces, all vertices, same color:
 	for (auto& t : tris)
-		t.setColor(m_color);
+		t.setColor(getColor_u8());
 }
 
 template <>
