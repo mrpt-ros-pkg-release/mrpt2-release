@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -88,7 +88,7 @@ void TestGuiWindowsEvents()
 	CDisplayWindow3D win3D("3D window", 300, 300);
 
 	{
-		mrpt::opengl::COpenGLScene::Ptr& scene = win3D.get3DSceneAndLock();
+		mrpt::opengl::Scene::Ptr& scene = win3D.get3DSceneAndLock();
 		scene->insert(mrpt::opengl::CGridPlaneXY::Create());
 		win3D.unlockAccess3DScene();
 		win3D.repaint();

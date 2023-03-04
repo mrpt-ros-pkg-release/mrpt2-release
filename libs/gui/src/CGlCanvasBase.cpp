@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -229,7 +229,7 @@ bool CGlCanvasBase::isCameraProjective() const
 void CGlCanvasBase::setCameraFOV(float FOV) { m_cameraParams.cameraFOV = FOV; }
 float CGlCanvasBase::cameraFOV() const { return m_cameraParams.cameraFOV; }
 
-void CGlCanvasBase::setOpenGLSceneRef(COpenGLScene::Ptr scene)
+void CGlCanvasBase::setOpenGLSceneRef(Scene::Ptr scene)
 {
 	m_openGLScene = scene;
 }
@@ -298,8 +298,7 @@ double CGlCanvasBase::renderCanvas(int width, int height)
 			// Set the camera params in the scene:
 			if (!useCameraFromScene)
 			{
-				if (COpenGLViewport::Ptr view =
-						m_openGLScene->getViewport("main");
+				if (Viewport::Ptr view = m_openGLScene->getViewport("main");
 					view)
 				{
 					mrpt::opengl::CCamera& cam = view->getCamera();

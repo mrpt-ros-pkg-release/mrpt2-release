@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -30,7 +30,7 @@ namespace mrpt::opengl
  * The structure is memory packed to 1-byte, to ensure it can be used in GPU
  * memory vertex arrays without unexpected paddings.
  *
- * \sa opengl::COpenGLScene, CSetOfTexturedTriangles
+ * \sa opengl::Scene, CSetOfTexturedTriangles
  * \ingroup mrpt_opengl_grp
  */
 struct TTriangle

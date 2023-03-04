@@ -2,13 +2,13 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 
 #pragma once
-#include <mrpt/opengl/COpenGLScene.h>
+#include <mrpt/opengl/Scene.h>
 
 namespace mrpt::opengl
 {
@@ -219,11 +219,8 @@ class CGlCanvasBase
 	canvas destructor.
 	 * This function returns a smart pointer to the opengl scene
 	getOpenGLSceneRef		  */
-	mrpt::opengl::COpenGLScene::Ptr& getOpenGLSceneRef()
-	{
-		return m_openGLScene;
-	}
-	void setOpenGLSceneRef(mrpt::opengl::COpenGLScene::Ptr scene);
+	mrpt::opengl::Scene::Ptr& getOpenGLSceneRef() { return m_openGLScene; }
+	void setOpenGLSceneRef(mrpt::opengl::Scene::Ptr scene);
 
    protected:
 	virtual void swapBuffers() = 0;
@@ -235,8 +232,7 @@ class CGlCanvasBase
 
    private:
 	bool useCameraFromScene = false;
-	mrpt::opengl::COpenGLScene::Ptr m_openGLScene =
-		mrpt::opengl::COpenGLScene::Create();
+	mrpt::opengl::Scene::Ptr m_openGLScene = mrpt::opengl::Scene::Create();
 	int m_mouseLastX = 0, m_mouseLastY = 0;
 	int m_mouseClickX = 0, m_mouseClickY = 0;
 	bool mouseClicked = false;

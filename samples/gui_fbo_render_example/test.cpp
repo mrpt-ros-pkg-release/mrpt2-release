@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -13,15 +13,15 @@
 #include <mrpt/opengl/CBox.h>
 #include <mrpt/opengl/CFBORender.h>
 #include <mrpt/opengl/CGridPlaneXY.h>
-#include <mrpt/opengl/COpenGLScene.h>
 #include <mrpt/opengl/CSphere.h>
+#include <mrpt/opengl/Scene.h>
 #include <mrpt/system/CTimeLogger.h>
 
 #include <chrono>
 #include <iostream>
 #include <thread>
 
-using namespace mrpt;
+using namespace mrpt::literals;	 // _deg
 using namespace mrpt::gui;
 using namespace mrpt::opengl;
 using namespace mrpt::img;
@@ -32,18 +32,17 @@ using namespace std::literals;
 // ------------------------------------------------------
 void TestDisplay3D()
 {
-	COpenGLScene scene;
+	Scene scene;
 
 	// Modify the scene:
 	// ------------------------------------------------------
 	{
-		opengl::CGridPlaneXY::Ptr obj =
-			opengl::CGridPlaneXY::Create(-20, 20, -20, 20, 0, 1);
+		auto obj = mrpt::opengl::CGridPlaneXY::Create(-20, 20, -20, 20, 0, 1);
 		obj->setColor(0.4f, 0.4f, 0.4f);
 		scene.insert(obj);
 	}
 	{
-		auto obj = opengl::CBox::Create(
+		auto obj = mrpt::opengl::CBox::Create(
 			mrpt::math::TPoint3D(0, 0, 0), mrpt::math::TPoint3D(.1, .1, .1));
 		obj->setColor(1.0f, 0.f, 0.f);
 		obj->setName("x");
@@ -52,7 +51,7 @@ void TestDisplay3D()
 		scene.insert(obj);
 	}
 	{
-		auto obj = opengl::CBox::Create(
+		auto obj = mrpt::opengl::CBox::Create(
 			mrpt::math::TPoint3D(0, 0, 0), mrpt::math::TPoint3D(.1, .1, .1));
 		obj->setColor(0.0f, 1.f, 0.f);
 		obj->setName("y");
@@ -61,14 +60,14 @@ void TestDisplay3D()
 		scene.insert(obj);
 	}
 	{
-		auto obj = opengl::CTexturedPlane::Create();
+		auto obj = mrpt::opengl::CTexturedPlane::Create();
 		obj->setPlaneCorners(-10, 10, -10, 10);
 		obj->setColor_u8(0x00, 0xff, 0xff, 0xff);
 		obj->setLocation(0, 0, -14);
 		scene.insert(obj);
 	}
 	{
-		opengl::CSphere::Ptr obj = opengl::CSphere::Create();
+		auto obj = mrpt::opengl::CSphere::Create();
 		obj->setColor(0, 0, 1);
 		obj->setRadius(1.0f);
 		obj->setLocation(0, 1, 0);
@@ -76,7 +75,7 @@ void TestDisplay3D()
 		scene.insert(obj);
 	}
 	{
-		opengl::CSphere::Ptr obj = opengl::CSphere::Create();
+		auto obj = mrpt::opengl::CSphere::Create();
 		obj->setColor(1, 0, 0);
 		obj->setRadius(2.f);
 		obj->setLocation(-3, -1, 1);
@@ -91,7 +90,7 @@ void TestDisplay3D()
 	int width = 500, height = 400;
 	const double cameraFOVdeg = 90.0;
 
-	CFBORender renderer(width, height);
+	mrpt::opengl::CFBORender renderer(width, height);
 	CImage frame(width, height, CH_RGB);
 	mrpt::math::CMatrixFloat depth;
 
@@ -154,10 +153,10 @@ void TestDisplay3D()
 			1 + cos(t + 0.2) * 2, -2 + sin(t + 0.9) * 4, sin(t + 1.2) * 5);
 
 		obj = scene.getByName("ball_2");
+		const auto p1 = obj->getPose();
 		obj->setLocation(
-			obj->getPoseX() + cos(obj->getPoseY() / 2) * 0.01,
-			obj->getPoseY() - sin(obj->getPoseX() / 2) * 0.09,
-			obj->getPoseZ() - sin(obj->getPoseX() / 2) * 0.08);
+			p1.x + cos(p1.y / 2) * 0.01, p1.y - sin(p1.x / 2) * 0.09,
+			p1.z - sin(p1.x / 2) * 0.08);
 
 		tl.enter("render_RGBD");
 		renderer.render_RGBD(scene, frame, depth);

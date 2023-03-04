@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -88,66 +88,31 @@ bool CSetOfTriangles::traceRay(
 	const mrpt::poses::CPose3D& o, double& dist) const
 {
 	if (!polygonsUpToDate) updatePolygons();
-	return mrpt::math::traceRay(m_polygons, (o - this->m_pose).asTPose(), dist);
+	return mrpt::math::traceRay(m_polygons, (o - getCPose()).asTPose(), dist);
 }
 CRenderizable& CSetOfTriangles::setColor_u8(const mrpt::img::TColor& c)
 {
 	CRenderizable::notifyChange();
+	setColor_u8(c);
 	std::unique_lock<std::shared_mutex> trisLck(
 		CRenderizableShaderTriangles::m_trianglesMtx.data);
 	auto& tris = CRenderizableShaderTriangles::m_triangles;
 
-	m_color = c;
 	for (auto& t : tris)
 		t.setColor(c);
-	return *this;
-}
-
-CRenderizable& CSetOfTriangles::setColorR_u8(const uint8_t r)
-{
-	CRenderizable::notifyChange();
-	std::unique_lock<std::shared_mutex> trisLck(
-		CRenderizableShaderTriangles::m_trianglesMtx.data);
-	auto& tris = CRenderizableShaderTriangles::m_triangles;
-	m_color.R = r;
-	for (auto& t : tris)
-		t.setColor(m_color);
-	return *this;
-}
-
-CRenderizable& CSetOfTriangles::setColorG_u8(const uint8_t g)
-{
-	CRenderizable::notifyChange();
-	std::unique_lock<std::shared_mutex> trisLck(
-		CRenderizableShaderTriangles::m_trianglesMtx.data);
-	auto& tris = CRenderizableShaderTriangles::m_triangles;
-	m_color.G = g;
-	for (auto& t : tris)
-		t.setColor(m_color);
-	return *this;
-}
-
-CRenderizable& CSetOfTriangles::setColorB_u8(const uint8_t b)
-{
-	CRenderizable::notifyChange();
-	std::unique_lock<std::shared_mutex> trisLck(
-		CRenderizableShaderTriangles::m_trianglesMtx.data);
-	auto& tris = CRenderizableShaderTriangles::m_triangles;
-	m_color.B = b;
-	for (auto& t : tris)
-		t.setColor(m_color);
 	return *this;
 }
 
 CRenderizable& CSetOfTriangles::setColorA_u8(const uint8_t a)
 {
 	CRenderizable::notifyChange();
+	setColorA_u8(a);
 	std::unique_lock<std::shared_mutex> trisLck(
 		CRenderizableShaderTriangles::m_trianglesMtx.data);
 	auto& tris = CRenderizableShaderTriangles::m_triangles;
-	m_color.A = a;
+
 	for (auto& t : tris)
-		t.setColor(m_color);
+		t.setColor(getColor_u8());
 	return *this;
 }
 

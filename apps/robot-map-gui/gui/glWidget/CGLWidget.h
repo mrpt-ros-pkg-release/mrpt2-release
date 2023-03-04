@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)               |
    |                          https://www.mrpt.org/                            |
    |                                                                           |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file        |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file        |
    | See: https://www.mrpt.org/Authors - All rights reserved.                  |
    | Released under BSD License. See details in https://www.mrpt.org/License   |
    +---------------------------------------------------------------------------+
@@ -108,7 +108,7 @@ class CGlWidget : public mrpt::gui::CQtGlCanvasBase
 	bool deselectAll();
 	CRobotPose::Ptr getRobotPose(size_t index);
 
-	mrpt::opengl::COpenGLViewport::Ptr m_miniMapViewport;
+	mrpt::opengl::Viewport::Ptr m_miniMapViewport;
 	mrpt::opengl::CSetOfObjects::Ptr m_map;
 	mrpt::opengl::CGridPlaneXY::Ptr m_groundPlane;
 

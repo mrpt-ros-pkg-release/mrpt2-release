@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -123,7 +123,7 @@ void Test_HOKUYO()
 
 		if (thereIsObservation)
 		{
-			double FPS = 1.0 / tictac.Tac();
+			// double FPS = 1.0 / tictac.Tac();
 
 			obs.getDescriptionAsText(std::cout);
 
@@ -135,7 +135,7 @@ void Test_HOKUYO()
 			// map.save2D_to_text_file("_out_scan.txt");
 
 			/*
-			COpenGLScene			scene3D;
+			Scene			scene3D;
 			opengl::CPointCloud::Ptr	points =
 			opengl::CPointCloud::Create();
 			points->loadFromPointsMap(&map);

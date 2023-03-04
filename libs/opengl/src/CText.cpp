@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -44,9 +44,9 @@ void CText::onUpdateBuffers_Text()
 		m_str, tris, vbd, mrpt::opengl::FILL, text_spacing, text_kerning);
 
 	// All lines & triangles, the same color:
-	cbd.assign(vbd.size(), m_color);
+	cbd.assign(vbd.size(), getColor_u8());
 	for (auto& tri : m_triangles)
-		tri.setColor(m_color);
+		tri.setColor(getColor_u8());
 }
 
 std::pair<double, double> CText::computeTextExtension() const

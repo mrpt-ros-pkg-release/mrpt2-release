@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -21,9 +21,8 @@ namespace mrpt::tfest
  * @{ */
 
 /** Least-squares (L2 norm) solution to finding the optimal SE(3) transform
- * between two reference frames using the "quaternion" or Horn's method:
- *  - "Closed-form solution of absolute orientation using unit quaternions",
- * BKP Horn, Journal of the Optical Society of America, 1987.
+ * between two reference frames using the "quaternion" or Horn's method
+ * \cite horn1987closed
  *
  *  The optimal transformation `q` fulfills \f$ p_{this} = q \oplus p_{other}
  * \f$, that is, the
@@ -116,9 +115,7 @@ struct TSE3RobustResult
 
 /** Least-squares (L2 norm) solution to finding the optimal SE(3) transform
  * between two reference frames using RANSAC and the "quaternion" or Horn's
- * method:
- *  - "Closed-form solution of absolute orientation using unit quaternions",
- * BKP Horn, Journal of the Optical Society of America, 1987.
+ * method \cite horn1987closed
  *
  *  The optimal transformation `q` fulfills \f$ p_{this} = q \oplus p_{other}
  * \f$, that is, the

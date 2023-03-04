@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -25,7 +25,7 @@ namespace mrpt::opengl
  *
  * ![mrpt::opengl::CMeshFast](preview_CMeshFast.png)
  *
- *  \sa opengl::COpenGLScene
+ *  \sa opengl::Scene
  * \ingroup mrpt_opengl_grp
  */
 class CMeshFast : public CRenderizableShaderPoints
@@ -57,10 +57,7 @@ class CMeshFast : public CRenderizableShaderPoints
 		  yMin(yMin_p),
 		  yMax(yMax_p)
 	{
-		m_color.A = 255;
-		m_color.R = 0;
-		m_color.G = 0;
-		m_color.B = 150;
+		setColor_u8(0, 0, 150);
 	}
 	virtual ~CMeshFast() override = default;
 

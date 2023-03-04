@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -83,7 +83,7 @@ bool CEllipsoid2D::traceRay(const mrpt::poses::CPose3D& o, double& dist) const
 #if 0  // Update, someday...
 	if (m_cov.rows() != 3) return false;
 	TLine3D lin, lin2;
-	createFromPoseX((o - this->m_pose).asTPose(), lin);
+	createFromPoseX((o - getCPose()).asTPose(), lin);
 	lin.unitarize();  // By adding this line, distance from any point of the
 	// line to its base is exactly equal to the "t".
 	for (size_t i = 0; i < 3; i++)

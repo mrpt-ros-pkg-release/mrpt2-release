@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -824,9 +824,8 @@ void hmtMapViewerFrame::updateLocalMapView()
 
 						ellip->setCovMatrix(C);
 						ellip->setQuantiles(3);
-						ellip->setLocation(
-							ellip->getPoseX(), ellip->getPoseY(),
-							ellip->getPoseZ() + 0.5);
+						const auto p = ellip->getPose().translation();
+						ellip->setLocation(p.x, p.y, p.z + 0.5);
 						ellip->setColor(1, 0, 0);
 						ellip->setLineWidth(3);
 

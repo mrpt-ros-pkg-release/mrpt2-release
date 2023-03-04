@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -1158,7 +1158,7 @@ kinect_calibrate_guiDialog::kinect_calibrate_guiDialog(
 	// Prepare 3D scene: (of live view)
 	// ------------------------------------------
 	auto openGLSceneRef = m_plot3D->getOpenGLSceneRef();
-	openGLSceneRef = mrpt::opengl::COpenGLScene::Create();
+	openGLSceneRef = mrpt::opengl::Scene::Create();
 
 	// Ground plane:
 	{
@@ -2697,8 +2697,7 @@ void kinect_calibrate_guiDialog::CalibUpdate3DViewCameras()
 {
 	WX_START_TRY
 
-	mrpt::opengl::COpenGLScene::Ptr scene =
-		mrpt::opengl::COpenGLScene::Create();
+	mrpt::opengl::Scene::Ptr scene = mrpt::opengl::Scene::Create();
 
 	// Ground plane:
 	{

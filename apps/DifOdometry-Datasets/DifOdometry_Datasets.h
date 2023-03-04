@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -12,7 +12,7 @@
 #include <mrpt/img/CImage.h>
 #include <mrpt/obs/CObservation3DRangeScan.h>
 #include <mrpt/obs/CRawlog.h>
-#include <mrpt/opengl/COpenGLScene.h>
+#include <mrpt/opengl/Scene.h>
 #include <mrpt/vision/CDifodo.h>
 
 #include <Eigen/Dense>
@@ -28,7 +28,7 @@ class CDifodoDatasets : public mrpt::vision::CDifodo
 	mrpt::poses::CPose3D gt_oldpose;
 
 	/** Opengl scene */
-	mrpt::opengl::COpenGLScene::Ptr scene;
+	mrpt::opengl::Scene::Ptr scene;
 	mrpt::gui::CDisplayWindow3D window;
 	mrpt::obs::CRawlog dataset;
 	std::ifstream f_gt;

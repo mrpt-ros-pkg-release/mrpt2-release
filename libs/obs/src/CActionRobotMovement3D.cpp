@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -91,6 +91,8 @@ void CActionRobotMovement3D::computeFromOdometry_model6DOF(
 	// F. Sacchi, D. G. Sorrenti An effective 6DoF motion model for 3D-6DoF
 	// Monte Carlo Localization 4th Workshop on Planning, Perception and
 	// Navigation for Intelligent Vehicles, IROS, 2012
+	//
+	// \cite ballardini2012effective
 
 	/*
 		The brief description:

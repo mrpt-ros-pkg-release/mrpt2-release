@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -120,7 +120,7 @@ void TestRANSAC()
 	mrpt::opengl::CSetOfLines::Ptr gl_lines =
 		mrpt::opengl::CSetOfLines::Create();
 	{
-		mrpt::opengl::COpenGLScene::Ptr& scene = win.get3DSceneAndLock();
+		mrpt::opengl::Scene::Ptr& scene = win.get3DSceneAndLock();
 
 		scene->getViewport("main")->setCustomBackgroundColor(
 			TColorf(0.8f, 0.8f, 0.8f));
@@ -311,7 +311,7 @@ void TestRANSAC()
 		cout << "Ground truth pose: " << GT_pose << endl;
 
 		{
-			// mrpt::opengl::COpenGLScene::Ptr &scene =
+			// mrpt::opengl::Scene::Ptr &scene =
 			win.get3DSceneAndLock();
 
 			win.addTextMessage(

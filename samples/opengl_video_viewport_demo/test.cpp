@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -43,9 +43,9 @@ void TestOpenGLVideo()
 
 	// Win #1:
 	//  Get the smart pointer to the main viewport object in this window:
-	COpenGLViewport::Ptr gl_view_main;
+	Viewport::Ptr gl_view_main;
 	{
-		COpenGLScene::Ptr& theScene = win.get3DSceneAndLock();
+		Scene::Ptr& theScene = win.get3DSceneAndLock();
 		gl_view_main = theScene->getViewport("main");
 		ASSERT_(gl_view_main);
 		// IMPORTANT!!! IF NOT UNLOCKED, THE WINDOW WILL NOT BE UPDATED!
@@ -54,9 +54,9 @@ void TestOpenGLVideo()
 
 	// Win #2:
 	//  Get the smart pointer to the main viewport object in this window:
-	COpenGLViewport::Ptr gl_view_aux;
+	Viewport::Ptr gl_view_aux;
 	{
-		COpenGLScene::Ptr& theScene = win2.get3DSceneAndLock();
+		Scene::Ptr& theScene = win2.get3DSceneAndLock();
 		theScene->insert(mrpt::opengl::CGridPlaneXY::Create());
 
 		// Create small auxiliary viewport

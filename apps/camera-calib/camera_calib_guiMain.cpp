@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -799,8 +799,7 @@ void camera_calib_guiDialog::OnlbFilesSelect(wxCommandEvent& event)
 
 void camera_calib_guiDialog::show3Dview()
 {
-	mrpt::opengl::COpenGLScene::Ptr scene =
-		mrpt::opengl::COpenGLScene::Create();
+	mrpt::opengl::Scene::Ptr scene = mrpt::opengl::Scene::Create();
 
 	const unsigned int check_size_x = edSizeX->GetValue();
 	const unsigned int check_size_y = edSizeY->GetValue();

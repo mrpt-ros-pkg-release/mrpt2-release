@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -13,9 +13,9 @@
 #include <mrpt/opengl/CAngularObservationMesh.h>
 #include <mrpt/opengl/CDisk.h>
 #include <mrpt/opengl/CGridPlaneXY.h>
-#include <mrpt/opengl/COpenGLScene.h>
 #include <mrpt/opengl/CSetOfObjects.h>
 #include <mrpt/opengl/CSphere.h>
+#include <mrpt/opengl/Scene.h>
 #include <mrpt/opengl/stock_objects.h>
 #include <mrpt/poses/CPose3DPDF.h>
 #include <mrpt/poses/CPosePDF.h>
@@ -118,9 +118,9 @@ TEST_F(ICPTests, RayTracingICP3D)
 	CPose3D SCAN2_POSE_ERROR(0.15, -0.07, 0.10, -0.03, 0.1, 0.1);
 
 	// Create the reference objects:
-	COpenGLScene::Ptr scene1 = std::make_shared<COpenGLScene>();
-	COpenGLScene::Ptr scene2 = std::make_shared<COpenGLScene>();
-	COpenGLScene::Ptr scene3 = std::make_shared<COpenGLScene>();
+	Scene::Ptr scene1 = std::make_shared<Scene>();
+	Scene::Ptr scene2 = std::make_shared<Scene>();
+	Scene::Ptr scene3 = std::make_shared<Scene>();
 
 	opengl::CGridPlaneXY::Ptr plane1 =
 		std::make_shared<CGridPlaneXY>(-20, 20, -20, 20, 0, 1);

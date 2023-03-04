@@ -29,12 +29,19 @@ Note: This page is in the process of being imported from https://www.mrpt.org/tu
   range_only_localization_mapping
   tutorial-icp-alignment
   page_maps_observations
+  tutorial-motion-models
 
 .. toctree::
   :maxdepth: 2
   :caption: GUI and 3D graphics
 
   page_tutorial_3D_scenes
+
+.. toctree::
+  :maxdepth: 2
+  :caption: Motion planning
+
+  tutorial-motion-planning
 
 .. toctree::
   :maxdepth: 2

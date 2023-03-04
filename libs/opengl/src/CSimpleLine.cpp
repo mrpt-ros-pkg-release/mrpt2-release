@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -41,7 +41,7 @@ void CSimpleLine::onUpdateBuffers_Wireframe()
 	vbd[1] = {m_x1, m_y1, m_z1};
 
 	// The same color to all vertices:
-	m_color_buffer_data.assign(vbd.size(), m_color);
+	m_color_buffer_data.assign(vbd.size(), getColor_u8());
 }
 
 uint8_t CSimpleLine::serializeGetVersion() const { return 1; }

@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -58,7 +58,7 @@ void Test_SoG_Merge()
 #endif
 
 	{
-		COpenGLScene scene;
+		Scene scene;
 		CSetOfObjects::Ptr o = CSetOfObjects::Create();
 		pdf.getAs3DObject(o);
 		scene.insert(o);
@@ -68,7 +68,7 @@ void Test_SoG_Merge()
 		archiveFrom(f) << scene;
 
 #if MRPT_HAS_WXWIDGETS
-		COpenGLScene::Ptr sc = win_before.get3DSceneAndLock();
+		Scene::Ptr sc = win_before.get3DSceneAndLock();
 		*sc = scene;
 		win_before.unlockAccess3DScene();
 		win_before.setCameraZoom(5);
@@ -85,7 +85,7 @@ void Test_SoG_Merge()
 	cout << pdf.getCovariance() << endl << endl;
 
 	{
-		COpenGLScene scene;
+		Scene scene;
 		CSetOfObjects::Ptr o = CSetOfObjects::Create();
 		pdf.getAs3DObject(o);
 		scene.insert(o);
@@ -95,7 +95,7 @@ void Test_SoG_Merge()
 		archiveFrom(f) << scene;
 
 #if MRPT_HAS_WXWIDGETS
-		COpenGLScene::Ptr sc = win_after.get3DSceneAndLock();
+		Scene::Ptr sc = win_after.get3DSceneAndLock();
 		*sc = scene;
 		win_after.unlockAccess3DScene();
 		win_after.setCameraZoom(5);

@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -12,7 +12,7 @@
 // Implementation file for CWindowObserver class
 #include <mrpt/graphslam/misc/CWindowObserver.h>
 #include <mrpt/gui/CBaseGUIWindow.h>
-#include <mrpt/opengl/COpenGLViewport.h>
+#include <mrpt/opengl/Viewport.h>
 
 using namespace mrpt::graphslam;
 
@@ -128,7 +128,7 @@ void CWindowObserver::OnEvent(const mrpt::system::mrptEvent& e)
 	else if (e.isOfType<mrpt::opengl::mrptEventGLPostRender>())
 	{
 		/*
-		 * An event sent by an mrpt::opengl::COpenGLViewport AFTER calling
+		 * An event sent by an mrpt::opengl::Viewport AFTER calling
 		 * the
 		 * SCENE OPENGL DRAWING PRIMITIVES and before doing a glSwapBuffers.
 		 */
