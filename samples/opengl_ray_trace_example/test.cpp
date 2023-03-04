@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -156,8 +156,8 @@ void display()
 	CDisplayWindow3D window("Ray trace demo", 640, 480);
 	window.setPos(10, 10);
 	std::this_thread::sleep_for(20ms);
-	COpenGLScene::Ptr scene1 = COpenGLScene::Create();
-	// COpenGLScene::Ptr &scene1=window.get3DSceneAndLock();
+	Scene::Ptr scene1 = Scene::Create();
+	// Scene::Ptr &scene1=window.get3DSceneAndLock();
 	opengl::CGridPlaneXY::Ptr plane1 =
 		CGridPlaneXY::Create(-20, 20, -20, 20, 0, 1);
 	plane1->setColor(GRID_R, GRID_G, GRID_B);
@@ -207,7 +207,7 @@ void display()
 	window.get3DSceneAndLock() = scene1;
 	window.unlockAccess3DScene();
 	window.setCameraElevationDeg(25.0f);
-	COpenGLScene::Ptr& scene2 = window2.get3DSceneAndLock();
+	Scene::Ptr& scene2 = window2.get3DSceneAndLock();
 	scene2->insert(aom);
 	opengl::CGridPlaneXY::Ptr plane2 =
 		CGridPlaneXY::Create(-20, 20, -20, 20, 0, 1);

@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -60,7 +60,7 @@ void GravityDemo()
 	win.setCameraElevationDeg(50.0f);
 	win.setCameraZoom(1000);
 
-	COpenGLScene::Ptr& theScene = win.get3DSceneAndLock();
+	Scene::Ptr& theScene = win.get3DSceneAndLock();
 
 	// Modify the scene:
 	// ------------------------------------------------------

@@ -2,14 +2,14 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 #pragma once
 
 #include <mrpt/obs/CObservation.h>
-#include <mrpt/opengl/COpenGLScene.h>
+#include <mrpt/opengl/Scene.h>
 #include <mrpt/opengl/Visualizable.h>
 #include <mrpt/poses/CPose3D.h>
 #include <mrpt/serialization/CSerializable.h>
@@ -35,7 +35,7 @@ class CObservation3DScene : public CObservation,
 	~CObservation3DScene() override = default;
 
 	/** The payload: a 3D scene smart pointer. */
-	mrpt::opengl::COpenGLScene::Ptr scene;
+	mrpt::opengl::Scene::Ptr scene;
 
 	/** The pose of the sensor on the robot. It does not have any predefined
 	 * meaning in this particular class. Ignore it unless you want it to have

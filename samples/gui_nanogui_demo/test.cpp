@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -49,7 +49,7 @@ void TestGUI()
 		subWin2->setPosition({10, 300});
 
 		{
-			auto scene = mrpt::opengl::COpenGLScene::Create();
+			auto scene = mrpt::opengl::Scene::Create();
 			scene->insert(mrpt::opengl::stock_objects::CornerXYZSimple());
 
 			glControl->camera().setZoomDistance(5.0f);
@@ -73,7 +73,7 @@ void TestGUI()
 
 		// add a background scene:
 		{
-			auto scene = mrpt::opengl::COpenGLScene::Create();
+			auto scene = mrpt::opengl::Scene::Create();
 			scene->insert(mrpt::opengl::CGridPlaneXY::Create());
 
 			std::lock_guard<std::mutex> lck(win.background_scene_mtx);

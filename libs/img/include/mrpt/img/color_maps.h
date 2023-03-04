@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -29,11 +29,10 @@ void rgb2hsv(float r, float g, float b, float& h, float& s, float& v);
 /** Different colormaps for use in mrpt::img::colormap() */
 enum TColormap
 {
-	/** Undefined colormap [New in MRPT 2.0] */
+	/** Undefined colormap */
 	cmNONE = -1,
 	cmGRAYSCALE = 0,
 	cmJET,
-	/** [New in MRPT 1.5.0] */
 	cmHOT
 };
 

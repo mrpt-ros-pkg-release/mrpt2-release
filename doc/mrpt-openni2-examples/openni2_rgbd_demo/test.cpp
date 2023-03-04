@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -14,10 +14,10 @@
 #endif
 #include <OpenNI.h>
 #include <PS1080.h>
-
 #include <mrpt/gui.h>
-#include <mrpt/opengl.h>
 #include <mrpt/maps/CColouredPointsMap.h>
+#include <mrpt/opengl.h>
+
 #include <iostream>
 
 using namespace mrpt;
@@ -160,7 +160,7 @@ int main(int argc, char** argv)
 	//										Create scene
 	//========================================================================================
 	gui::CDisplayWindow3D window;
-	opengl::COpenGLScene::Ptr scene;
+	opengl::Scene::Ptr scene;
 	mrpt::global_settings::OCTREE_RENDER_MAX_POINTS_PER_NODE(1000000);
 	window.setWindowTitle("RGB-D camera frame");
 	window.resize(800, 600);

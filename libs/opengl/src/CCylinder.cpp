@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -103,7 +103,7 @@ void CCylinder::onUpdateBuffers_Triangles()
 
 	// All faces, same color:
 	for (auto& t : tris)
-		t.setColor(m_color);
+		t.setColor(getColor_u8());
 }
 
 void CCylinder::serializeTo(mrpt::serialization::CSchemeArchiveBase& out) const
@@ -210,7 +210,7 @@ bool solveEqn(double a, double b, double c, double& t)
 bool CCylinder::traceRay(const mrpt::poses::CPose3D& o, double& dist) const
 {
 	TLine3D lin;
-	mrpt::math::createFromPoseX((o - this->m_pose).asTPose(), lin);
+	mrpt::math::createFromPoseX((o - getCPose()).asTPose(), lin);
 	lin.unitarize();  // By adding this line, distance from any point of the
 
 	const float zz = d2f(lin.pBase.z);

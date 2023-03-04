@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -31,10 +31,10 @@
 #include <mrpt/gui/CMyRedirector.h>
 #include <mrpt/opengl/CAxis.h>
 #include <mrpt/opengl/CMesh.h>
-#include <mrpt/opengl/COpenGLViewport.h>
 #include <mrpt/opengl/CPointCloud.h>
 #include <mrpt/opengl/CSetOfLines.h>
 #include <mrpt/opengl/CSetOfObjects.h>
+#include <mrpt/opengl/Viewport.h>
 
 // JLBC: Unix X headers have these funny things...
 #ifdef Button1
@@ -245,7 +245,7 @@ class ptgConfiguratorframe : public wxFrame
 	TCursorPickState m_cursorPickState;
 
 	// ========= Opengl View =======
-	mrpt::opengl::COpenGLViewport::Ptr gl_view_WS, gl_view_TPSpace;
+	mrpt::opengl::Viewport::Ptr gl_view_WS, gl_view_TPSpace;
 	mrpt::opengl::CSetOfObjects::Ptr gl_TPSpace_TP_obstacles;
 	mrpt::opengl::CMesh::Ptr gl_TPSpace_clearance, gl_TPSpace_clearance_interp;
 	mrpt::opengl::CCamera::Ptr gl_view_TPSpace_cam;

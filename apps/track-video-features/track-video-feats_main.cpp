@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -126,9 +126,9 @@ int DoTrackingDemo(CCameraSensor::Ptr cam, bool DO_SAVE_VIDEO)
 
 	cout << endl << "TO END THE PROGRAM: Close the window.\n";
 
-	mrpt::opengl::COpenGLViewport::Ptr gl_view;
+	mrpt::opengl::Viewport::Ptr gl_view;
 	{
-		mrpt::opengl::COpenGLScene::Ptr scene = win->get3DSceneAndLock();
+		mrpt::opengl::Scene::Ptr scene = win->get3DSceneAndLock();
 		gl_view = scene->getViewport("main");
 		win->unlockAccess3DScene();
 	}

@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -282,7 +282,7 @@ CDlgPoseEst::CDlgPoseEst(
 	pose_mat << -25, 25, 100, -0.1, 0.25, 0.5;
 	//*)
 
-	scene = mrpt::opengl::COpenGLScene::Create();
+	scene = mrpt::opengl::Scene::Create();
 	cor = mrpt::opengl::stock_objects::CornerXYZ();
 	cor1 = mrpt::opengl::stock_objects::CornerXYZ();
 

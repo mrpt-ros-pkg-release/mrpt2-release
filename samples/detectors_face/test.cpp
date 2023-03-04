@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -76,8 +76,8 @@ void TestCamera3DFaceDetection(CCameraSensor::Ptr cam)
 	win3D.setCameraZoom(6.0);
 	win3D.setCameraPointingToPoint(2.5, 0, 0);
 
-	mrpt::opengl::COpenGLScene::Ptr& scene = win3D.get3DSceneAndLock();
-	mrpt::opengl::COpenGLScene::Ptr scene2;
+	mrpt::opengl::Scene::Ptr& scene = win3D.get3DSceneAndLock();
+	mrpt::opengl::Scene::Ptr scene2;
 
 	mrpt::opengl::CPointCloudColoured::Ptr gl_points =
 		mrpt::opengl::CPointCloudColoured::Create();

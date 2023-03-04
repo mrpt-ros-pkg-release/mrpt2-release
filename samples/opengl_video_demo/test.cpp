@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -65,7 +65,7 @@ void TestOpenGLVideo()
 
 	// Insert objects in scene:
 	{
-		COpenGLScene::Ptr& theScene = win.get3DSceneAndLock();
+		Scene::Ptr& theScene = win.get3DSceneAndLock();
 		theScene->insert(gl_ground);
 		theScene->insert(gl_plane1);
 		theScene->insert(gl_plane2);

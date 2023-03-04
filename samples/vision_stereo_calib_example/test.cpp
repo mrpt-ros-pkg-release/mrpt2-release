@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -95,10 +95,9 @@ int TestStereoCalibrate(int argc, char** argv)
 		{
 			mrpt::gui::CDisplayWindow3D win("Calibration results", 1000, 480);
 
-			mrpt::opengl::COpenGLViewport::Ptr view1, view2;
+			mrpt::opengl::Viewport::Ptr view1, view2;
 			{
-				mrpt::opengl::COpenGLScene::Ptr& scene =
-					win.get3DSceneAndLock();
+				mrpt::opengl::Scene::Ptr& scene = win.get3DSceneAndLock();
 				view1 = scene->getViewport("main");
 				view2 = scene->createViewport("right");
 

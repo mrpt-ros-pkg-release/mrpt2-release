@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -23,7 +23,7 @@
 #include <mrpt/obs/CObservationVisualLandmarks.h>
 #include <mrpt/opengl/CEllipsoid3D.h>
 #include <mrpt/opengl/CGridPlaneXY.h>
-#include <mrpt/opengl/COpenGLScene.h>
+#include <mrpt/opengl/Scene.h>
 #include <mrpt/poses/CPointPDFGaussian.h>
 #include <mrpt/random.h>
 #include <mrpt/system/os.h>
@@ -2405,7 +2405,7 @@ void CLandmarksMap::saveMetricMapRepresentationToFile(
 	saveToMATLABScript3D(fil1);
 
 	// 3D Scene:
-	opengl::COpenGLScene scene;
+	opengl::Scene scene;
 
 	opengl::CGridPlaneXY::Ptr objGround =
 		std::make_shared<opengl::CGridPlaneXY>(-100, 100, -100, 100, 0, 1);

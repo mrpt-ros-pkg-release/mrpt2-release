@@ -2,17 +2,19 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
 #pragma once
 
+#include <mrpt/containers/NonCopiableData.h>
 #include <mrpt/opengl/CRenderizable.h>
 #include <mrpt/opengl/CText.h>
 #include <mrpt/opengl/opengl_fonts.h>
 
 #include <map>
+#include <shared_mutex>
 
 namespace mrpt::opengl
 {
@@ -65,6 +67,8 @@ class CTextMessageCapable
 
 	struct TListTextMessages
 	{
+		mutable mrpt::containers::NonCopiableData<std::shared_mutex> mtx;
+
 		std::map<uint32_t, DataPerText> messages;
 
 		/** (re)generate all CText objects in the gl_text fields */

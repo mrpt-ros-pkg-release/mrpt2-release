@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -1088,7 +1088,7 @@ bool CHierarchicalMapMHPartition::areNodesNeightbour(
   ---------------------------------------------------------------*/
 
 void CHierarchicalMapMHPartition::getAs3DScene(
-	COpenGLScene& outScene, const CHMHMapNode::TNodeID& idReferenceNode,
+	Scene& outScene, const CHMHMapNode::TNodeID& idReferenceNode,
 	const THypothesisID& hypothesisID,
 	const unsigned int& numberOfIterationsForOptimalGlobalPoses,
 	bool showRobotPoseIDs) const

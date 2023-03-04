@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -30,8 +30,11 @@ TEST(CObservationRotatingScan, fromKittiUndistorted)
 	//	read_ok = pts->loadXYZI_from_text_file("0000000060.txt");
 	EXPECT_TRUE(read_ok);
 
-	pts->saveToKittiVelodyneFile("/tmp/a.bin.gz");
-	pts->saveXYZI_to_text_file("/tmp/a.txt");
+	const auto filBin = mrpt::system::getTempFileName();
+	const auto filTxt = mrpt::system::getTempFileName();
+
+	pts->saveToKittiVelodyneFile(filBin);
+	pts->saveXYZI_to_text_file(filTxt);
 
 	mrpt::obs::CObservationPointCloud obsPcl;
 	//	obsPcl.

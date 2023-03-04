@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2022, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -68,7 +68,7 @@ void TextureSizes_test()
 
 	CDisplayWindow3D win("Test of MRPT's OpenGL textures", 640, 480);
 
-	COpenGLScene::Ptr& theScene = win.get3DSceneAndLock();
+	Scene::Ptr& theScene = win.get3DSceneAndLock();
 
 	double off_x = 0;
 	const double off_y_label = 4;
