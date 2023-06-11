@@ -37,6 +37,30 @@ override_dh_auto_configure:
 	dh_auto_configure -- \
 		-DCMAKE_INSTALL_PREFIX="@(InstallationPrefix)" \
 		-DCMAKE_PREFIX_PATH="@(InstallationPrefix)" \
+		-DBUILD_APP_DifOdometry-Camera=OFF \
+		-DBUILD_APP_DifOdometry-Datasets=OFF \
+		-DBUILD_APP_GridmapNavSimul=OFF \
+		-DBUILD_APP_ReactiveNav3D-Demo=OFF \
+		-DBUILD_APP_benchmarking-image-features=OFF \
+		-DBUILD_APP_carmen2rawlog=OFF \
+		-DBUILD_APP_carmen2simplemap=OFF \
+		-DBUILD_APP_features-matching=OFF \
+		-DBUILD_APP_graph-slam=OFF \
+		-DBUILD_APP_graphslam-engine=OFF \
+		-DBUILD_APP_grid-matching=OFF \
+		-DBUILD_APP_holonomic-navigator-demo=OFF \
+		-DBUILD_APP_icp-slam-live=OFF \
+		-DBUILD_APP_kf-slam=OFF \
+		-DBUILD_APP_kinect-3d-slam=OFF \
+		-DBUILD_APP_kinect-3d-view=OFF \
+		-DBUILD_APP_map-partition=OFF \
+		-DBUILD_APP_mrpt-performance=OFF \
+		-DBUILD_APP_ro-localization=OFF \
+		-DBUILD_APP_robotic-arm-kinematics=OFF \
+		-DBUILD_APP_simul-beacons=OFF \
+		-DBUILD_APP_simul-gridmap=OFF \
+		-DBUILD_APP_simul-landmarks=OFF \
+		-DBUILD_APP_track-video-features=OFF \
 		$(BUILD_TESTING_ARG)
 
 override_dh_auto_build:
