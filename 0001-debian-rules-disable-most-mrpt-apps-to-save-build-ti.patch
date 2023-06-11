@@ -1,0 +1,47 @@
+From 162ce92034fd225607a91500d56500a81e235a04 Mon Sep 17 00:00:00 2001
+From: Jose Luis Blanco-Claraco <joseluisblancoc@gmail.com>
+Date: Sun, 11 Jun 2023 23:55:24 +0200
+Subject: [PATCH] debian/rules: disable most mrpt apps to save build time
+
+---
+ debian/rules.em | 24 ++++++++++++++++++++++++
+ 1 file changed, 24 insertions(+)
+
+diff --git a/debian/rules.em b/debian/rules.em
+index 284a0714..268ef67d 100755
+--- a/debian/rules.em
++++ b/debian/rules.em
+@@ -37,6 +37,30 @@ override_dh_auto_configure:
+ 	dh_auto_configure -- \
+ 		-DCMAKE_INSTALL_PREFIX="@(InstallationPrefix)" \
+ 		-DCMAKE_PREFIX_PATH="@(InstallationPrefix)" \
++		-DBUILD_APP_DifOdometry-Camera=OFF \
++		-DBUILD_APP_DifOdometry-Datasets=OFF \
++		-DBUILD_APP_GridmapNavSimul=OFF \
++		-DBUILD_APP_ReactiveNav3D-Demo=OFF \
++		-DBUILD_APP_benchmarking-image-features=OFF \
++		-DBUILD_APP_carmen2rawlog=OFF \
++		-DBUILD_APP_carmen2simplemap=OFF \
++		-DBUILD_APP_features-matching=OFF \
++		-DBUILD_APP_graph-slam=OFF \
++		-DBUILD_APP_graphslam-engine=OFF \
++		-DBUILD_APP_grid-matching=OFF \
++		-DBUILD_APP_holonomic-navigator-demo=OFF \
++		-DBUILD_APP_icp-slam-live=OFF \
++		-DBUILD_APP_kf-slam=OFF \
++		-DBUILD_APP_kinect-3d-slam=OFF \
++		-DBUILD_APP_kinect-3d-view=OFF \
++		-DBUILD_APP_map-partition=OFF \
++		-DBUILD_APP_mrpt-performance=OFF \
++		-DBUILD_APP_ro-localization=OFF \
++		-DBUILD_APP_robotic-arm-kinematics=OFF \
++		-DBUILD_APP_simul-beacons=OFF \
++		-DBUILD_APP_simul-gridmap=OFF \
++		-DBUILD_APP_simul-landmarks=OFF \
++		-DBUILD_APP_track-video-features=OFF \
+ 		$(BUILD_TESTING_ARG)
+ 
+ override_dh_auto_build:
+-- 
+2.34.1
+
