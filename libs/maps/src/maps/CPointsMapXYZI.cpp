@@ -86,7 +86,7 @@ void CPointsMapXYZI::resize(size_t newLength)
 	m_x.resize(newLength, 0);
 	m_y.resize(newLength, 0);
 	m_z.resize(newLength, 0);
-	m_intensity.resize(newLength, 1);
+	m_intensity.resize(newLength, 0);
 	mark_as_modified();
 }
 
