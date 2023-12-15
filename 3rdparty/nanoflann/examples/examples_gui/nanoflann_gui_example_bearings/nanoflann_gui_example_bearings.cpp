@@ -177,7 +177,7 @@ inline T my_angDistance(T from, T to)
 //
 template <
     class T, class DataSource, typename _DistanceType = T,
-    typename AccessorType = uint32_t>
+    typename IndexType = uint32_t>
 struct ThetaPhiMetric_Adaptor
 {
     using ElementType  = T;
@@ -191,7 +191,7 @@ struct ThetaPhiMetric_Adaptor
     }
 
     DistanceType evalMetric(
-        const T* a, const AccessorType b_idx, size_t /*size = 2*/) const
+        const T* a, const IndexType b_idx, size_t /*size = 2*/) const
     {
         DistanceType result =
             mrpt::square(
@@ -303,10 +303,10 @@ void kdtree_demo(const size_t N)
             }
 
             glFoundPts->clear();
-            for (size_t i = 0; i < numNN; i++)
+            for (size_t j = 0; j < numNN; j++)
             {
                 const auto pt =
-                    bearing_to_point(data.samples.at(nn_indices[i]));
+                    bearing_to_point(data.samples.at(nn_indices[j]));
                 glFoundPts->insertPoint(pt.x, pt.y, pt.z);
             }
 

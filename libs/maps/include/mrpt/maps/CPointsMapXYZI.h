@@ -9,11 +9,9 @@
 #pragma once
 
 #include <mrpt/maps/CPointsMap.h>
-#include <mrpt/math/CMatrixF.h>
-#include <mrpt/obs/CObservationImage.h>
 #include <mrpt/obs/obs_frwds.h>
+#include <mrpt/opengl/pointcloud_adapters.h>
 #include <mrpt/serialization/CSerializable.h>
-#include <mrpt/typemeta/TEnumType.h>
 
 namespace mrpt
 {
@@ -172,9 +170,14 @@ class CPointsMapXYZI : public CPointsMap
 	/** Provides a direct access to a read-only reference of the internal
 	 * intensity point buffer. \sa getPointsBufferRef_x() */
 	auto getPointsBufferRef_intensity() const
-		-> const mrpt::aligned_std_vector<float>&
+		-> const mrpt::aligned_std_vector<float>* override
 	{
-		return m_intensity;
+		return &m_intensity;
+	}
+	auto getPointsBufferRef_intensity()
+		-> mrpt::aligned_std_vector<float>* override
+	{
+		return &m_intensity;
 	}
 
 	/** Returns true if the point map has a color field for each point */
@@ -271,6 +274,14 @@ class CPointsMapXYZI : public CPointsMap
 		const mrpt::img::TColorf* pt_color = nullptr) override;
 
 	void PLY_import_set_vertex_count(size_t N) override;
+
+	void PLY_import_set_vertex_timestamp(
+		[[maybe_unused]] size_t idx,
+		[[maybe_unused]] const double unixTimestamp) override
+	{
+		// do nothing, this class ignores timestamps
+	}
+
 	/** @} */
 
 	/** @name Redefinition of PLY Export virtual methods from CPointsMap
@@ -289,7 +300,6 @@ class CPointsMapXYZI : public CPointsMap
 
 }  // namespace maps
 
-#include <mrpt/opengl/pointcloud_adapters.h>
 namespace opengl
 {
 /** Specialization
