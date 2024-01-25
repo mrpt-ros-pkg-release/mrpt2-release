@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2024, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -132,14 +132,7 @@ class CMetricMap : public mrpt::serialization::CSerializable,
 	 * \exception std::exception Some internal steps in invoked methods can
 	 * raise exceptions on invalid parameters, etc...
 	 */
-	void loadFromProbabilisticPosesAndObservations(
-		const mrpt::maps::CSimpleMap& Map);
-
-	///! \overload
-	inline void loadFromSimpleMap(const mrpt::maps::CSimpleMap& Map)
-	{
-		loadFromProbabilisticPosesAndObservations(Map);
-	}
+	void loadFromSimpleMap(const mrpt::maps::CSimpleMap& Map);
 
 	/** Insert the observation information into this map. This method must be
 	 * implemented in derived classes.

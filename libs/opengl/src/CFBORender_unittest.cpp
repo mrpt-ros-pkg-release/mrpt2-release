@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2024, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -44,6 +44,10 @@
 #endif
 // Idem with RISCV64 arch:
 #if defined(__riscv)
+#undef RUN_OFFSCREEN_RENDER_TESTS
+#endif
+// Idem with Loongarch arch:
+#if defined(__loongarch__)
 #undef RUN_OFFSCREEN_RENDER_TESTS
 #endif
 
