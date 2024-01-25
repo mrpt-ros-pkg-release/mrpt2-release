@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2024, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -815,7 +815,11 @@ void CPTG_DiffDrive_CollisionGridBased::internal_initialize(
 
 			}  // n
 
-			if (verbose) cout << k << "/" << Ki << ",";
+			if (verbose)
+			{
+				cout << k << "/" << Ki << ",";
+				cout.flush();
+			}
 		}  // k
 
 		if (verbose) cout << format("Done! [%.03f sec]\n", tictac.Tac());

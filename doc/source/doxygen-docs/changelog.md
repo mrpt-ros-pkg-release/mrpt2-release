@@ -1,5 +1,39 @@
 \page changelog Change Log
 
+# Version 2.11.7: Released Jan 25th, 2024
+- Changes in apps:
+  - carmen2rawlog: Generate valid timestamps.
+- Changes in libraries:
+  - rosbag2rawlog: Add support for `sensor_msgs/CompressedImage` topics.
+- BUG FIXES:
+  - mrpt::hwdrivers::CImageGrabber_dc1394 did not mark the right image as present in stereo cameras.
+  - kinect-stereo-calib: Fix exception un-distorting images.
+
+# Version 2.11.6: Released Jan 13th, 2024
+- Changes in libraries:
+  - \ref mrpt_obs_grp
+    - mrpt::obs::CObservation::load() is now protected with a std::mutex for safe multi-threading usage.
+  - \ref mrpt_nav_grp
+    - mrpt::nav::CPTG_DiffDrive_alpha now has a "K" parameter for generating backwards trajectories too.
+- BUG FIXES:
+  - Fix wrong filenames in `rawlog-edit --externalize` when sensor labels contain the `/` character (e.g. mimicking ROS topic names).
+  - Fix crash in mrpt::ros2bridge::toROS() for XYZIRT point clouds.
+  - Fix exception while rendering paths in the `ptg-configurator` application.
+  - Fix potential race condition in mrpt::obs::CObservation3DRangeScan.
+
+# Version 2.11.5: Released Dec 21st, 2023
+- Changes in libraries:
+  - \ref mrpt_maps_grp
+    - New method mrpt::maps::CPointsMap::insertPointFrom() (and associated auxiliary methods) to easily copy points between different point clouds with different fields (timestamp, ring, RGB, etc.).
+  - \ref mrpt_obs_grp
+    - mrpt::maps::CSimpleMap changes:
+      - Added an optional twist field.
+      - Simplified API for preferred usage with structured binding tuples.
+  - \ref mrpt_system_grp
+    - More readable results in mrpt::system::unitsFormat() for the special case of exactly `0`.
+- BUG FIXES:
+  - Fix filtering of NANs input point clouds in mrpt::maps::CPointsMap::insertAnotherMap().
+
 # Version 2.11.4: Released Dec 15th, 2023
 - Changes in apps:
   - RawLogViewer: visualize mrpt::obs::CObservationRotatingScan as point cloud  + range image + intensity image.

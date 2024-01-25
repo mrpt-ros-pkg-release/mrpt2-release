@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2024, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -1816,8 +1816,13 @@ void kinect_calibrate_guiDialog::ProcessNewSelectedImageListBox()
 				// ======= Undistorted image =======
 				case 3:
 				{
-					il.undistort(il, m_calib_result.cam_params.leftCamera);
-					ir.undistort(ir, m_calib_result.cam_params.rightCamera);
+					mrpt::img::CImage ilD;
+					il.undistort(ilD, m_calib_result.cam_params.leftCamera);
+					il = ilD;
+
+					mrpt::img::CImage irD;
+					ir.undistort(irD, m_calib_result.cam_params.rightCamera);
+					ir = irD;
 				}
 				break;
 				// ======= Rectified images =======
