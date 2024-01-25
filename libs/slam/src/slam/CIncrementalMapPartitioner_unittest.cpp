@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2024, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -30,11 +30,8 @@ TEST(CIncrementalMapPartitioner, test_dataset)
 	mrpt::maps::CSimpleMap in_map, out_map;
 	in_map.loadFromFile(map_file);
 
-	for (const auto& pair : in_map)
-	{
-		const auto& [posePDF, sf] = pair;
+	for (const auto& [posePDF, sf, twist] : in_map)
 		imp.addMapFrame(*sf, *posePDF);
-	}
 
 	std::vector<std::vector<uint32_t>> parts;
 	imp.updatePartitions(parts);

@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2024, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -116,7 +116,7 @@ void CMultiMetricMapPDF::clear(
 		p.d->robotPath.resize(nOldKeyframes);
 		for (size_t i = 0; i < nOldKeyframes; i++)
 		{
-			const auto [keyframe_pose, sfkeyframe_sf] = prevMap.get(i);
+			const auto [keyframe_pose, sfkeyframe_sf, twist] = prevMap.get(i);
 
 			// as pose, use: if the PDF is also a PF with the same number of
 			// samples, use those particles;
@@ -542,19 +542,17 @@ void CMultiMetricMapPDF::updateSensoryFrameSequence()
 {
 	MRPT_START
 	CPose3DPDFParticles posePartsPDF;
-	CPose3DPDF::Ptr previousPosePDF;
-	CSensoryFrame::Ptr dummy;
 
 	for (size_t i = 0; i < SFs.size(); i++)
 	{
 		// Get last estimation:
-		SFs.get(i, previousPosePDF, dummy);
+		auto& kf = SFs.get(i);
 
 		// Compute the new one:
 		getEstimatedPosePDFAtTime(SF2robotPath[i], posePartsPDF);
 
 		// Copy into SFs:
-		previousPosePDF->copyFrom(posePartsPDF);
+		kf.pose->copyFrom(posePartsPDF);
 	}
 
 	MRPT_END

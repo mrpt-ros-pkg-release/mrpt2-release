@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2024, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -36,7 +36,7 @@ class CMainWindow : public QMainWindow
 
 	void addRobotPosesFromMap(
 		std::vector<size_t> idx,
-		mrpt::maps::CSimpleMap::TPosePDFSensFramePairList posesObsPairs);
+		mrpt::maps::CSimpleMap::KeyframeList posesObsPairs);
 	void deleteRobotPosesFromMap(const std::vector<size_t>& idx);
 	void moveRobotPosesOnMap(
 		const std::vector<size_t>& idx, const QPointF& dist);

@@ -2,7 +2,7 @@
    |                     Mobile Robot Programming Toolkit (MRPT)            |
    |                          https://www.mrpt.org/                         |
    |                                                                        |
-   | Copyright (c) 2005-2023, Individual contributors, see AUTHORS file     |
+   | Copyright (c) 2005-2024, Individual contributors, see AUTHORS file     |
    | See: https://www.mrpt.org/Authors - All rights reserved.               |
    | Released under BSD License. See: https://www.mrpt.org/License          |
    +------------------------------------------------------------------------+ */
@@ -92,7 +92,7 @@ int main(int argc, char** argv)
 		// Build metric maps:
 		cout << "Building metric maps..." << std::endl;
 
-		metricMap.loadFromProbabilisticPosesAndObservations(simplemap);
+		metricMap.loadFromSimpleMap(simplemap);
 
 		cout << "done." << endl;
 
