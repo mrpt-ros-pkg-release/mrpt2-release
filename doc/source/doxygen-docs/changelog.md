@@ -1,9 +1,38 @@
 \page changelog Change Log
 
+# Version 2.11.9: Released Feb 11th, 2024
+- Changes in libraries:
+  - \ref mrpt_vision_grp:
+    - mrpt::vision::TStereoCalibParams::use_robust_kernel now defaults to `true`.
+  - \ref mrpt_img_grp:
+    - Fix const-correctness of arguments in mrpt::img::CImage::drawChessboardCorners()
+  - \ref mrpt_obs_grp:
+    - Added support for mrpt::typemeta::TEnumType to mrpt::obs::CActionRobotMovement3D::TDrawSampleMotionModel and mrpt::obs::CActionRobotMovement2D::TDrawSampleMotionModel.
+- BUG FIXES:
+  - Fix missing build dep on tf2_geometry_msgs for ROS 1 only.
+  - Application kinect-stereo-calib: fix exceptions when selecting images without a good chessboard detection on the left list box.
+
+# Version 2.11.8: Released Feb 7th, 2024
+- Changes in apps:
+  - RawLogViewer: Show pointcloud ring, intensity, and time min/max ranges.
+  - rawlog-edit: Show dataset duration as formatted time interval.
+  - rosbag2rawlog (ROS 1):
+    - Added support for XYZIRT point clouds.
+    - Finally, implemented automatic detection of sensor poses wrt `base_link` from `tf` messages, with an option to manually override sensor poses from YAML config.
+- Changes in libraries:
+  - \ref mrpt_maps_grp:
+    - Implement missing probabilistic observation models in mrpt::maps::CVoxelMap and mrpt::maps::CVoxelMapRGB
+    - Add debug env variable `MRPT_DEBUG_OBSPTS_LAZY_LOAD` to debug lazy-load point cloud observations.
+  - \ref mrpt_ros1bridge_grp:
+    - Add missing mrpt::ros1bridge::fromROS() for `PointCloud2` => mrpt::maps::CPointsMapXYZIRT conversions.
+  - \ref mrpt_ros2bridge_grp:
+    - Fix wrong macros leading to including obsolete header `<cv_bridge/cv_bridge.h>`.
+  - \ref mrpt_system_grp:
+    - New function mrpt::system::hyperlink() to generate clickable links in terminal messages.
+
 # Version 2.11.7: Released Jan 25th, 2024
 - Changes in apps:
   - carmen2rawlog: Generate valid timestamps.
-- Changes in libraries:
   - rosbag2rawlog: Add support for `sensor_msgs/CompressedImage` topics.
 - BUG FIXES:
   - mrpt::hwdrivers::CImageGrabber_dc1394 did not mark the right image as present in stereo cameras.
