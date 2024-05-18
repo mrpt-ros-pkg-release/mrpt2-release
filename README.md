@@ -1,3 +1,26 @@
+## mrpt2 (noetic) - 2.13.0-1
+
+The packages in the `mrpt2` repository were released into the `noetic` distro by running `/home/jlblanco/code/bloom-venv/bin/bloom-release -y -r noetic mrpt2` on `Sat, 18 May 2024 22:04:46 -0000`
+
+The `mrpt2` package was released.
+
+Version of package(s) in repository `mrpt2`:
+
+- upstream repository: https://github.com/MRPT/mrpt.git
+- release repository: https://github.com/mrpt-ros-pkg-release/mrpt2-release.git
+- rosdistro version: `2.12.2-1`
+- old version: `2.12.2-1`
+- new version: `2.13.0-1`
+
+Versions of tools used:
+
+- bloom version: `0.11.2`
+- catkin_pkg version: `0.5.2`
+- rosdep version: `0.22.2`
+- rosdistro version: `0.9.0`
+- vcstools version: `0.1.42`
+
+
 ## mrpt2 (noetic) - 2.12.2-1
 
 The packages in the `mrpt2` repository were released into the `noetic` distro by running `/home/jlblanco/code/bloom-venv/bin/bloom-release -r noetic -y mrpt2` on `Mon, 22 Apr 2024 23:50:32 -0000`
