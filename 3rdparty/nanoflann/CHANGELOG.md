@@ -1,3 +1,19 @@
+# nanoflann 1.6.0: Released Jul 11, 2024
+ - BUG FIX: nanoflann::SearchParameters::sorted was ignored for RadiusResultSet.
+ - ResultSet classes now must implement a sort() method.
+ - Added type IndexType to nanoflann:KDTreeBaseClass
+
+# nanoflann 1.5.5: Released Mar 12, 2024
+ - Potentially more efficient scheduling of multi-thread index building ([PR #236](https://github.com/jlblancoc/nanoflann/pull/236))
+ - Bump minimum required cmake version to 3.5 ([PR #230](https://github.com/jlblancoc/nanoflann/pull/230/))
+
+# nanoflann 1.5.4: Released Jan 10, 2024
+ - Fix outdated NANOFLANN_VERSION macro in header file
+ - Fix poll-allocator alignment problems
+ - Add NANOFLANN_USE_SYSTEM_GTEST option
+ - Look for Threads dependency in CMake config script
+
+
 # nanoflann 1.5.3: Released Dec 7, 2023
  * **Other changes**:
    - Save one redundant call to `computeMinMax()` in `middleSplit_` ([PR#220](https://github.com/jlblancoc/nanoflann/pull/220) by [qq422216549](https://github.com/qq422216549)).

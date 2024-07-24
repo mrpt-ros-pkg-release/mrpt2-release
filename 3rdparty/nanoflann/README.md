@@ -158,6 +158,12 @@ You can download and install nanoflann using the [vcpkg](https://github.com/Micr
 
 The nanoflann port in vcpkg is kept up to date by Microsoft team members and community contributors. If the version is out of date, please [create an issue or pull request](https://github.com/Microsoft/vcpkg) on the vcpkg repository.
 
+
+### 1.9. Compile time definitions
+
+  * `NANOFLANN_FIRST_MATCH`: If defined and two points have the same distance, the one with the lowest-index will be returned first. Otherwise there is no particular order.
+  * `NANOFLANN_NO_THREADS`: If defined, multithreading capabilities will be disabled, so that the library can be used without linking with pthreads. If one tries to use multiple threads, an exception will be thrown.
+
 ------
 
 ## 2. Any help choosing the KD-tree parameters?
@@ -196,6 +202,8 @@ This parameter is really ignored in `nanoflann`, but was kept for backward compa
 ### 2.3. `KDTreeSingleIndexAdaptorParams::n_thread_build`
 
 This parameter determines the maximum number of threads that can be called concurrently during the construction of the KD tree. The default value is 1. When the parameter is set to 0, `nanoflann` automatically determines the number of threads to use.
+
+See [this pull request](https://github.com/jlblancoc/nanoflann/pull/236) for some benchmarking showing that using the maximum number of threads is not always the most efficient approach. Do benchmarking on your data!
 
 -----
 
