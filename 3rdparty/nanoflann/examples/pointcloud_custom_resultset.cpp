@@ -1,7 +1,7 @@
 /***********************************************************************
  * Software License Agreement (BSD License)
  *
- * Copyright 2011-2022 Jose Luis Blanco (joseluisblancoc@gmail.com).
+ * Copyright 2011-2024 Jose Luis Blanco (joseluisblancoc@gmail.com).
  *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -82,6 +82,13 @@ class MyCustomResultSet
     }
 
     DistanceType worstDist() const { return radius; }
+
+    void sort()
+    {
+        std::sort(
+            m_indices_dists.begin(), m_indices_dists.end(),
+            nanoflann::IndexDist_Sorter());
+    }
 };
 
 void kdtree_demo(const size_t N)
