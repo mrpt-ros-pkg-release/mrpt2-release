@@ -1,7 +1,7 @@
 # ----------------------------------------------------------------------------
 # Root CMake file for nanoflann
 # ----------------------------------------------------------------------------
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.5)
 
 # Extract library version into "NANOFLANN_VERSION"
 # -----------------------------------------------------
@@ -57,14 +57,22 @@ endif()
 
 # Set relative install directories
 set(INSTALL_INCLUDE_DIR "${CMAKE_INSTALL_INCLUDEDIR}")
-set(INSTALL_CMAKE_DIR "${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME}/cmake/")
+set(INSTALL_CMAKE_DIR "${CMAKE_INSTALL_DATADIR}/cmake/${PROJECT_NAME}")
 set(INSTALL_COPYRIGHT_DIR "${CMAKE_INSTALL_DOCDIR}")
 if(NOT DEFINED PKGCONFIG_INSTALL_DIR)
   set(PKGCONFIG_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
 endif()
 
-# Save all executables (unit tests & examples) in the same place:
-set(EXECUTABLE_OUTPUT_PATH ${${PROJECT_NAME}_BINARY_DIR}/bin CACHE PATH "Output directory for executables")
+if (${CMAKE_CURRENT_SOURCE_DIR} STREQUAL ${CMAKE_SOURCE_DIR})
+	# This is the root project
+	set(MASTER_PROJECT ON)
+else()
+	set(MASTER_PROJECT OFF)
+endif()
+if (MASTER_PROJECT)
+	# Save all executables (unit tests & examples) in the same place:
+	set(EXECUTABLE_OUTPUT_PATH ${${PROJECT_NAME}_BINARY_DIR}/bin CACHE PATH "Output directory for executables")
+endif()
 
 # Define nanoflann lib (header-only)
 add_library(nanoflann INTERFACE)
@@ -84,7 +92,7 @@ target_include_directories(nanoflann
 install(TARGETS nanoflann
         EXPORT nanoflannTargets)
 
-# Since 2023-March, the parallel KD tree construction feature 
+# Since 2023-March, the parallel KD tree construction feature
 # needs pthreads for gcc:
 find_package(Threads)
 target_link_libraries(nanoflann INTERFACE Threads::Threads)
@@ -100,6 +108,7 @@ endif()
 
 # Tests
 option(NANOFLANN_BUILD_TESTS "Build unit tests" ON)
+option(NANOFLANN_USE_SYSTEM_GTEST "Use system GTest dependency" OFF)
 if(NANOFLANN_BUILD_TESTS)
 	enable_testing()
 	add_subdirectory(tests)
@@ -146,7 +155,9 @@ configure_file(
   "${nanoflann_BINARY_DIR}/cmake_uninstall.cmake"
   @ONLY IMMEDIATE)
 
-if (NOT TARGET uninstall)
+option(MASTER_PROJECT_HAS_TARGET_UNINSTALL "uninstall target to master project CMakeLists.txt" OFF)
+
+if(NOT MASTER_PROJECT_HAS_TARGET_UNINSTALL OR NOT TARGET uninstall)
   add_custom_target(uninstall
     "${CMAKE_COMMAND}" -P "${nanoflann_BINARY_DIR}/cmake_uninstall.cmake")
 else()
